@@ -40,6 +40,27 @@ Le modèle suit une architecture de type Séquence-à-Séquence (Seq2Seq) *end-t
 * **Configuration :** 6 couches, 4 à 8 têtes d'attention (selon la dimension de l'encodeur), dimension cachée alignée sur la sortie de l'encodeur (768 ou 1024).
 * **Mécanisme :** L'attention croisée (Cross-Attention) fait correspondre les requêtes textuelles (Queries) aux clés/valeurs acoustiques (Keys/Values) générées par Pantagruel.
 
+### 2.3 Architecture logicielle du pipeline
+
+Le code d'exécution est organisé en **un module Python par étape**, orchestré par une CLI unique :
+
+| Étape | Fichier | Subcommand `pipeline.py` | Rôle |
+| :--- | :--- | :--- | :--- |
+| Bootstrap | `scripts/bootstrap.sh` | — | Installation venv + dépendances Phase 1 |
+| 0 — Preflight | `scripts/0_preflight.py` | `preflight` | Validation machine distante (Linux + CUDA) |
+| 1 — Download | `scripts/1_download.py` | `download` | Téléchargement m-TEDx (OpenSLR-100) |
+| 2 — Prepare | `scripts/2_prepare.py` | `prepare` | Audio 16 kHz, manifests, normalisation texte |
+| 3 — SPM | `scripts/3_spm.py` | `spm` | Tokenizers SentencePiece (train uniquement) |
+| 4 — Train | `scripts/4_train.py` | `train` | Entraînement ST (encodeur + décodeur) |
+| 5 — Evaluate | `scripts/5_evaluate.py` | `evaluate` | Décodage + métriques SacreBLEU |
+| 6 — Infer | `scripts/6_infer.py` | `infer` | Inférence sur nouveaux audios |
+| Orchestrateur | `scripts/pipeline.py` | `run` (+ toutes les étapes) | Routeur CLI, enchaînement `--from-stage` / `--to-stage` |
+
+**Règles d'architecture :**
+* Chaque stage expose un point d'entrée (`main()` / `run_from_namespace(args)`) et peut être exécuté **directement** ou via `pipeline.py`.
+* `pipeline.py` ne contient pas la logique métier des stages : il délègue aux modules numérotés.
+* Les options CLI communes (`--verbose`, `--dry-run`, `--log-file`) sont homogènes entre stages.
+
 ---
 
 ## 3. Besoins Fonctionnels & Pipeline de Données
@@ -86,6 +107,7 @@ Le modèle suit une architecture de type Séquence-à-Séquence (Seq2Seq) *end-t
 Ce plan est conçu pour être exécuté de manière itérative. Chaque phase doit être validée avant de passer à la suivante.
 
 ### Phase 1 : Configuration de l'Environnement & Outillage (Jours 1-2)
+* Scripts : `scripts/bootstrap.sh`, `scripts/0_preflight.py`, orchestration via `scripts/pipeline.py preflight`.
 * Créer un environnement virtuel isolé (`conda` ou `venv` avec Python 3.10+).
 * Installer les dépendances clés : `torch`, `transformers`, `speechbrain`, `sacrebleu`, `sentencepiece`, `tensorboard`.
 * Configurer les accès au GPU (Vérification de `cuda.is_available()`).
@@ -94,6 +116,7 @@ Ce plan est conçu pour être exécuté de manière itérative. Chaque phase doi
 * **Jalon go/no-go :** environnement reproductible validé (dépendances figées + script de seed unique + test GPU OK).
 
 ### Phase 2 : Ingestion et Tokenisation m-TEDx (Jours 3-5)
+* Scripts : `scripts/1_download.py`, `scripts/2_prepare.py`, `scripts/3_spm.py`.
 * Télécharger les partitions `fr-en`, `fr-pt`, et `fr-es` de m-TEDx (OpenSLR 100).
 * Écrire le script de prétraitement audio (vérification/conversion du taux d'échantillonnage à 16 kHz via `torchaudio` ou `pydub`).
 * Générer les fichiers de manifestes (`train.tsv`, `valid.tsv`, `test.tsv`) contenant les chemins des fichiers audio, la durée et les textes cibles.
@@ -109,6 +132,7 @@ Ce plan est conçu pour être exécuté de manière itérative. Chaque phase doi
 * **Jalon go/no-go :** `forward` et `backward` valides sur batch fictif sans erreur mémoire.
 
 ### Phase 4 : Pipeline d'Entraînement & Alignement Hyperparamétrique (Jours 8-12)
+* Script : `scripts/4_train.py`.
 * Implémenter la boucle d'entraînement principale conforme aux paramètres de *LeBenchmark 2.0* (Parcollet et al., 2024).
 * Configurer l'optimiseur AdamW (`weight_decay=0.01`) et le scheduler de Learning Rate.
 * Intégrer les mécanismes de régularisation : Dropout (0.1) et SpecAugment (masquage temporel et fréquentiel sur les features acoustiques).
@@ -118,6 +142,7 @@ Ce plan est conçu pour être exécuté de manière itérative. Chaque phase doi
 * **Jalon go/no-go :** perte en baisse + `BLEU dev` supérieur à la baseline minimale sur `fr-es`.
 
 ### Phase 5 : Inférence, Génération et Évaluation (Jours 13-15)
+* Scripts : `scripts/5_evaluate.py`, `scripts/6_infer.py`.
 * Charger le meilleur checkpoint basé sur `BLEU dev` (loss comme signal secondaire).
 * Écrire le script de décodage autoregressif en mode *Beam Search*.
 * Traduire l'ensemble de test m-TEDx et sauvegarder les prédictions textuelles brutes.

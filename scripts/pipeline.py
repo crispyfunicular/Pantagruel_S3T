@@ -26,6 +26,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import sys
 from pathlib import Path
 from typing import Callable, Sequence
@@ -65,8 +66,20 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _load_preflight_module():
+    path = PROJECT_ROOT / "scripts" / "0_preflight.py"
+    spec = importlib.util.spec_from_file_location("s3t_preflight", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load preflight module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def cmd_preflight(args: argparse.Namespace) -> int:
-    not_yet("preflight")
+    preflight = _load_preflight_module()
+    return preflight.run_from_namespace(args)
 
 
 def cmd_download(args: argparse.Namespace) -> int:
@@ -160,13 +173,27 @@ def main(argv: Sequence[str] | None = None) -> int:
     add_common_args(p_preflight)
     p_preflight.add_argument("--min-disk-gb", type=int, default=200)
     p_preflight.add_argument("--min-vram-gb", type=int, default=8)
-    p_preflight.add_argument("--check-gpu", action="store_true", default=True)
-    p_preflight.add_argument("--check-network", action="store_true", default=True)
+    p_preflight.add_argument(
+        "--check-gpu",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    p_preflight.add_argument(
+        "--check-network",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
     p_preflight.add_argument(
         "--output",
         type=Path,
         default=PROJECT_ROOT / "artifacts" / "preflight_report.json",
     )
+    p_preflight.add_argument(
+        "--disk-path",
+        type=Path,
+        default=PROJECT_ROOT,
+    )
+    p_preflight.add_argument("--network-timeout", type=float, default=10.0)
     p_preflight.set_defaults(func=cmd_preflight)
 
     # --- download ---
