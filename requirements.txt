@@ -1,0 +1,12 @@
+# Phase 1 — Configuration de l'environnement & outillage (PRD.md)
+# Python 3.10+
+#
+# PyTorch : pour le GPU, installer la build CUDA adaptée si besoin, par ex. :
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+
+torch>=2.0
+transformers>=4.36
+speechbrain>=1.0
+sacrebleu>=2.3
+sentencepiece>=0.1.99
+tensorboard>=2.14
