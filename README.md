@@ -5,8 +5,10 @@ Réplication du système de **traduction de la parole end-to-end** décrit dans 
 | Document | Rôle |
 |----------|------|
 | [PRD.md](PRD.md) | Vision, exigences, hyperparamètres, risques |
+| [AGENTS.md](AGENTS.md) | Conventions agents, qualité, workflow avant commit |
 | [README_experiments.md](README_experiments.md) | Runbook détaillé, ablations, tracking |
 | [requirements.txt](requirements.txt) | Dépendances Phase 1 |
+| [requirements-dev.txt](requirements-dev.txt) | Ruff, pytest, pre-commit |
 
 ---
 
@@ -16,6 +18,31 @@ Réplication du système de **traduction de la parole end-to-end** décrit dans 
 - GPU CUDA recommandé
 - Accès réseau (OpenSLR, Hugging Face)
 - Espace disque ≥ 200 GB (corpus + runs)
+
+---
+
+## Développement et qualité
+
+**Langues :** code en anglais, documentation projet en français (voir [AGENTS.md](AGENTS.md)).
+
+Installation des outils dev :
+
+```bash
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+Avant **chaque commit** (obligatoire) :
+
+```bash
+ruff check .
+ruff format --check .
+pytest
+# ou : pre-commit run --all-files
+```
+
+Mettre à jour [PRD.md](PRD.md) et [README.md](README.md) dans le même commit si le comportement CLI, l'architecture ou les prérequis changent.
 
 ---
 
@@ -213,6 +240,10 @@ Options communes : `--verbose`, `--dry-run`, `--log-file`.
 
 ```text
 S3T/
+  AGENTS.md
+  tests/
+  pyproject.toml
+  .pre-commit-config.yaml
   scripts/
     bootstrap.sh        # Bootstrap environnement
     pipeline.py           # Orchestrateur CLI (routeur)

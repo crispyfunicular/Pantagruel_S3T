@@ -28,8 +28,8 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import sys
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Callable, Sequence
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -43,7 +43,9 @@ class NotYetImplemented(NotImplementedError):
 
 
 def not_yet(stage: str) -> None:
-    raise NotYetImplemented(f"NotYetImplemented: stage '{stage}' is not implemented yet.")
+    raise NotYetImplemented(
+        f"NotYetImplemented: stage '{stage}' is not implemented yet."
+    )
 
 
 def add_common_args(parser: argparse.ArgumentParser) -> None:
@@ -106,7 +108,9 @@ def cmd_infer(args: argparse.Namespace) -> int:
     not_yet("infer")
 
 
-def _run_stage(name: str, handler: Callable[[argparse.Namespace], int], args: argparse.Namespace) -> int:
+def _run_stage(
+    name: str, handler: Callable[[argparse.Namespace], int], args: argparse.Namespace
+) -> int:
     if args.dry_run:
         print(f"[dry-run] would run stage: {name}")
         return 0
@@ -169,7 +173,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # --- preflight ---
-    p_preflight = subparsers.add_parser("preflight", help="Validate environment and resources")
+    p_preflight = subparsers.add_parser(
+        "preflight", help="Validate environment and resources"
+    )
     add_common_args(p_preflight)
     p_preflight.add_argument("--min-disk-gb", type=int, default=200)
     p_preflight.add_argument("--min-vram-gb", type=int, default=8)
@@ -197,7 +203,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_preflight.set_defaults(func=cmd_preflight)
 
     # --- download ---
-    p_download = subparsers.add_parser("download", help="Download m-TEDx datasets (OpenSLR-100)")
+    p_download = subparsers.add_parser(
+        "download", help="Download m-TEDx datasets (OpenSLR-100)"
+    )
     add_common_args(p_download)
     p_download.add_argument(
         "--langpairs",
@@ -216,9 +224,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_prepare = subparsers.add_parser("prepare", help="Prepare audio and manifests")
     add_common_args(p_prepare)
     p_prepare.add_argument("--langpair", required=True, help="e.g. fr-es")
-    p_prepare.add_argument("--input-root", type=Path, default=PROJECT_ROOT / "datasets" / "raw")
-    p_prepare.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "datasets" / "processed")
-    p_prepare.add_argument("--manifests-root", type=Path, default=PROJECT_ROOT / "datasets" / "manifests")
+    p_prepare.add_argument(
+        "--input-root", type=Path, default=PROJECT_ROOT / "datasets" / "raw"
+    )
+    p_prepare.add_argument(
+        "--output-root", type=Path, default=PROJECT_ROOT / "datasets" / "processed"
+    )
+    p_prepare.add_argument(
+        "--manifests-root", type=Path, default=PROJECT_ROOT / "datasets" / "manifests"
+    )
     p_prepare.add_argument("--sample-rate", type=int, default=16000)
     p_prepare.add_argument("--min-duration", type=float, default=1.0)
     p_prepare.add_argument("--max-duration", type=float, default=30.0)

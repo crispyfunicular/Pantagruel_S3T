@@ -127,7 +127,9 @@ def _check_cuda_available(check_gpu: bool) -> CheckResult:
         critical=True,
         observed={"available": available, "device": device_name},
         required=True,
-        message=f"CUDA available: {device_name}" if available else "CUDA not available (required for remote GPU run)",
+        message=f"CUDA available: {device_name}"
+        if available
+        else "CUDA not available (required for remote GPU run)",
     )
 
 
@@ -223,7 +225,7 @@ def _check_url(url: str, timeout_s: float) -> bool:
                 return 200 <= resp.status < 400
         except URLError:
             return False
-    except (TimeoutError, socket.timeout, OSError):
+    except (TimeoutError, OSError):
         return False
 
 
@@ -334,7 +336,10 @@ def run_preflight(
     if passed:
         print("Preflight PASSED (no critical failures).")
     else:
-        print(f"Preflight FAILED ({failed_critical} critical failure(s)).", file=sys.stderr)
+        print(
+            f"Preflight FAILED ({failed_critical} critical failure(s)).",
+            file=sys.stderr,
+        )
 
     return report, exit_code
 
@@ -363,7 +368,9 @@ def _write_json_report(path: Path, report: PreflightReport) -> None:
         "summary": report.summary,
         "exit_code": report.exit_code,
     }
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:

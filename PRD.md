@@ -61,6 +61,15 @@ Le code d'exécution est organisé en **un module Python par étape**, orchestr�
 * `pipeline.py` ne contient pas la logique métier des stages : il délègue aux modules numérotés.
 * Les options CLI communes (`--verbose`, `--dry-run`, `--log-file`) sont homogènes entre stages.
 
+### 2.4 Qualité logicielle et workflow de contribution
+
+* **Langues :** code et commentaires en **anglais** ; documentation projet (`README.md`, `PRD.md`, `AGENTS.md`, etc.) en **français**.
+* **Lint / format :** **Ruff** obligatoire avant chaque commit (`ruff check`, `ruff format --check`).
+* **Tests :** **pytest** obligatoire avant chaque commit.
+* **Hooks :** configuration `pre-commit` recommandée (voir [AGENTS.md](AGENTS.md)).
+* **Documentation :** toute évolution fonctionnelle du pipeline doit mettre à jour **PRD.md** et **README.md** dans le même commit.
+* **Référence agents :** conventions détaillées dans [AGENTS.md](AGENTS.md).
+
 ---
 
 ## 3. Besoins Fonctionnels & Pipeline de Données
@@ -110,6 +119,8 @@ Ce plan est conçu pour être exécuté de manière itérative. Chaque phase doi
 * Scripts : `scripts/bootstrap.sh`, `scripts/0_preflight.py`, orchestration via `scripts/pipeline.py preflight`.
 * Créer un environnement virtuel isolé (`conda` ou `venv` avec Python 3.10+).
 * Installer les dépendances clés : `torch`, `transformers`, `speechbrain`, `sacrebleu`, `sentencepiece`, `tensorboard`.
+* Installer les outils dev : `pip install -r requirements-dev.txt` puis `pre-commit install`.
+* Valider la chaîne qualité : `ruff check .`, `ruff format --check .`, `pytest`.
 * Configurer les accès au GPU (Vérification de `cuda.is_available()`).
 * Télécharger les poids pré-entraînés du modèle Pantagruel sur Hugging Face (`PantagrueLLM/`).
 * Fixer les seeds globales et préparer un template de configuration de run versionné.
