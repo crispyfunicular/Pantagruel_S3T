@@ -54,7 +54,7 @@ Convention : **un fichier Python par stage**, plus un orchestrateur CLI.
 |-------|--------|------------------------|--------|
 | Bootstrap | [`scripts/bootstrap.sh`](scripts/bootstrap.sh) | — | implémenté |
 | 0 — Preflight | [`scripts/0_preflight.py`](scripts/0_preflight.py) | `preflight` | implémenté |
-| 1 — Download | `scripts/1_download.py` | `download` | à implémenter |
+| 1 — Download | [`scripts/1_download.py`](scripts/1_download.py) | `download` | implémenté |
 | 2 — Prepare | `scripts/2_prepare.py` | `prepare` | à implémenter |
 | 3 — SPM | `scripts/3_spm.py` | `spm` | à implémenter |
 | 4 — Train | `scripts/4_train.py` | `train` | à implémenter |
@@ -146,13 +146,26 @@ Lecture rapide du rapport :
 python -c "import json; r=json.load(open('artifacts/preflight_report.json')); print(r['summary'])"
 ```
 
-### 2) Download (`scripts/1_download.py` / `pipeline.py download`)
-- **Module cible**: `scripts/1_download.py` (à implémenter).
-- **But**: récupérer les corpus m-TEDx nécessaires (`fr-en`, `fr-pt`, `fr-es`).
-- **Entrées**: `--langpairs`, `--output-root`, option `--resume`.
-- **Actions prévues**: téléchargement idempotent et extraction dans `datasets/raw`.
-- **Sorties attendues**: archives et dossiers datasets disponibles localement.
-- **Validation**: fichiers présents pour chaque paire demandée, tailles cohérentes, pas d’erreur réseau.
+### 2) Download (`scripts/1_download.py`)
+- **But**: récupérer les corpus m-TEDx depuis OpenSLR-100.
+- **Module**: [`scripts/1_download.py`](scripts/1_download.py) (direct ou `pipeline.py download`).
+- **Défaut**: `--langpairs fr-en` (une seule paire si non précisé).
+- **Paires supportées**: `fr-en`, `fr-pt`, `fr-es`.
+- **Entrées**: `--langpairs`, `--output-root`, `--resume` / `--no-resume`, `--extract` / `--no-extract`.
+- **Actions**: téléchargement HTTP (reprise simple si possible) + extraction `.tgz` optionnelle.
+- **Sorties**: `datasets/raw/mtedx_<pair>.tgz`, dossiers extraits, `artifacts/download_manifest.json`.
+- **Validation**: manifest sans erreur (`exit_code == 0`), archives présentes pour chaque paire demandée.
+
+Exemple :
+
+```bash
+python scripts/1_download.py
+# équivalent :
+python scripts/pipeline.py download
+
+# plusieurs paires
+python scripts/1_download.py --langpairs fr-en,fr-pt,fr-es
+```
 
 ### 3) Prepare (`scripts/2_prepare.py` / `pipeline.py prepare`)
 - **Module cible**: `scripts/2_prepare.py` (à implémenter).
@@ -205,7 +218,7 @@ python -c "import json; r=json.load(open('artifacts/preflight_report.json')); pr
 - **Sorties attendues**: `inference/predictions.jsonl` (ou chemin `--output`).
 - **Validation**: prédictions générées pour chaque entrée audio, format de sortie exploitable.
 
-> Statut actuel: **`preflight` est implémenté** (`scripts/0_preflight.py`). Les étapes `download` à `infer` restent des squelettes `NotYetImplemented` (code 7). `bootstrap.sh` installe l’environnement Phase 1.
+> Statut actuel: **`preflight` et `download` sont implémentés** (`0_preflight.py`, `1_download.py`). Les étapes `prepare` à `infer` restent des squelettes `NotYetImplemented` (code 7).
 
 ---
 
@@ -216,7 +229,8 @@ python scripts/0_preflight.py --min-disk-gb 200 --check-gpu
 # équivalent :
 python scripts/pipeline.py preflight --min-disk-gb 200 --check-gpu
 
-python scripts/pipeline.py download --langpairs fr-es
+python scripts/1_download.py
+python scripts/pipeline.py download --langpairs fr-en,fr-pt
 
 python scripts/pipeline.py prepare --langpair fr-es \
   --sample-rate 16000 --min-duration 1.0 --max-duration 30.0
@@ -248,7 +262,7 @@ S3T/
     bootstrap.sh        # Bootstrap environnement
     pipeline.py           # Orchestrateur CLI (routeur)
     0_preflight.py        # Stage 0 — preflight
-    1_download.py         # Stage 1 — download (à créer)
+    1_download.py         # Stage 1 — download
     2_prepare.py          # Stage 2 — prepare (à créer)
     3_spm.py              # Stage 3 — tokenization (à créer)
     4_train.py            # Stage 4 — train (à créer)

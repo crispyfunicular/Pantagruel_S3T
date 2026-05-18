@@ -84,8 +84,20 @@ def cmd_preflight(args: argparse.Namespace) -> int:
     return preflight.run_from_namespace(args)
 
 
+def _load_download_module():
+    path = PROJECT_ROOT / "scripts" / "1_download.py"
+    spec = importlib.util.spec_from_file_location("s3t_download", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load download module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def cmd_download(args: argparse.Namespace) -> int:
-    not_yet("download")
+    download = _load_download_module()
+    return download.run_from_namespace(args)
 
 
 def cmd_prepare(args: argparse.Namespace) -> int:
@@ -209,15 +221,29 @@ def main(argv: Sequence[str] | None = None) -> int:
     add_common_args(p_download)
     p_download.add_argument(
         "--langpairs",
-        default="fr-es",
-        help="Comma-separated language pairs (default: fr-es)",
+        default="fr-en",
+        help="Comma-separated language pairs (default: fr-en)",
     )
     p_download.add_argument(
         "--output-root",
         type=Path,
         default=PROJECT_ROOT / "datasets" / "raw",
     )
-    p_download.add_argument("--resume", action="store_true", default=True)
+    p_download.add_argument(
+        "--resume",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    p_download.add_argument(
+        "--extract",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    p_download.add_argument(
+        "--manifest",
+        type=Path,
+        default=PROJECT_ROOT / "artifacts" / "download_manifest.json",
+    )
     p_download.set_defaults(func=cmd_download)
 
     # --- prepare ---
