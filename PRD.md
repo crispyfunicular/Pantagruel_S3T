@@ -70,11 +70,81 @@ Le code d'exécution est organisé en **un module Python par étape**, orchestr�
 * **Documentation :** toute évolution fonctionnelle du pipeline doit mettre à jour **PRD.md** et **README.md** dans le même commit.
 * **Référence agents :** conventions détaillées dans [AGENTS.md](AGENTS.md).
 
+### 2.5 Source de vérité historique et transposition SpeechBrain
+
+**Contexte :** l'expérience ST du papier Pantagruel a été réalisée initialement avec un pipeline de recherche basé sur **fairseq** (dépôt historique `../fairseq/`, branche de référence `origin/pantagruel_uni`). Ce projet S3T vise la **même expérience scientifique** (m-TEDx, encodeur Pantagruel, décodeur Transformer, BLEU SacreBLEU) mais avec **SpeechBrain** comme stack d'entraînement — **sans utiliser fairseq**.
+
+**Plan en deux temps :**
+* **Temps A — Réplication fidèle :** reproduire le protocole expérimental observable (données, fine-tuning ST, évaluation BLEU) avec artefacts complets et comparables.
+* **Temps B — Améliorations :** optimisations et ablations après baseline stabilisée, sans casser la traçabilité des runs A.
+
+#### Tableau : alignement des étapes
+
+| Étape S3T | Équivalent historique (fairseq, lecture seule) | Équivalent SpeechBrain typique | Statut S3T |
+| :--- | :--- | :--- | :--- |
+| `bootstrap.sh` | setup env + deps | install SB + deps | implémenté |
+| `0_preflight` | checks machine implicites | rarement un stage dédié | implémenté |
+| `1_download` | téléchargement OpenSLR m-TEDx | données supposées prêtes | implémenté |
+| `2_prepare` | `prep_mtedx_data.py` (+ aug. speed pert. sur branche historique) | `DynamicItemDataset` / CSV recipe | à implémenter |
+| `3_spm` | vocab BPE fairseq | tokenizer intégré ou SPM externe | à implémenter |
+| `4_train` | `fairseq-hydra-train` / scripts Pantagruel | `Brain` + `hparams/train.yaml` | à implémenter |
+| `5_evaluate` | `fairseq-generate` + scorers | `decode` puis métriques (souvent séparés) | à implémenter |
+| `6_infer` | génération hors split | inférence recipe dédiée | à implémenter |
+
+#### Divergences explicites par rapport à un pipeline SpeechBrain « recette standard »
+
+Les points suivants **ne suivent pas** le schéma minimal `recipes/<task>/train.py` + `hparams/*.yaml` tel quel. Ils sont **volontaires** pour ce dépôt (traçabilité, reproductibilité distante, alignement papier).
+
+| Sujet | Pipeline SpeechBrain typique | Choix S3T (divergence) | Impact |
+| :--- | :--- | :--- | :--- |
+| **Point d'entrée** | Une recette SB par tâche (`python train.py hparams/...`) | CLI modulaire `scripts/N_*.py` + routeur `pipeline.py` | Plus verbeux, mais meilleur contrôle ops/CI |
+| **Preflight** | Pas de stage standard | `0_preflight.py` obligatoire avant jobs distants | Étape supplémentaire hors SB |
+| **Download** | Données fournies en amont | `1_download.py` intégré (défaut `fr-en` seul) | Diverge des tutos SB ; défaut ≠ les 3 paires |
+| **Préparation données** | CSV/DynamicItem via API SB | Manifests TSV maison + règles PRD (NFKC, durées, anti-fuite) | Format et filtres à mapper vers loaders SB |
+| **Tokenisation** | Souvent dans la recette data | Stage dédié `3_spm.py` (train only) | Séparation explicite, pas le flux SB par défaut |
+| **Modèle** | `speechbrain.lobes` + interfaces HF | Encodeur Pantagruel (HF) + décodeur PyTorch custom 6 couches | Pas un modèle SB pré-packagé S2T |
+| **Entraînement** | `Brain.fit()` + checkpoints SB | `4_train.py` + config YAML versionnée par run | API d'entraînement à encapsuler (SB ou hybride) |
+| **Évaluation** | `Evaluator` / scripts decode SB | `5_evaluate.py` = decode **puis** SacreBLEU externe figé | Decode et scoring explicitement séparés dans les artifacts |
+| **Inférence** | Même recette avec mode test | `6_infer.py` dédié (fichiers WAV arbitraires) | Chemin production distinct du eval dev/test |
+| **Tracking** | Checkpoints SB + logs internes | `runs/<pair>/<run_id>/` + `experiments_tracking.csv` + manifest JSON | Contrat d'artifacts plus strict que la doc SB minimale |
+| **Métriques** | BLEU via utils SB possibles | SacreBLEU en CLI canonique + signature obligatoire | Alignement papier LeBenchmark, pas défaut SB |
+
+> **Divergence SpeechBrain — pré-entraînement multimodal :** le fil historique fairseq inclut des étapes de **prétrain Pantagruel / data2vec multimodal** et des pertes combinées (`pantagruel_multi_loss`, MLM speech-text) absentes du pipeline SB minimal. **Temps A** part du **checkpoint Pantagruel déjà entraîné** (Hugging Face) ; le prétrain multimodal complet n'est **pas** recodé dans S3T sauf décision explicite ultérieure.
+
+> **Divergence SpeechBrain — augmentation m-TEDx :** la branche historique mentionne une **speed perturbation** sur le prétraitement m-TEDx. Le PRD S3T fixe pour l'instant un prétraitement plus simple (SpecAugment à l'entraînement). Toute réintroduction de speed pert. sera une **extension Temps B**, documentée à part.
+
+> **Divergence SpeechBrain — hyperparamètres encodeur :** fairseq historique utilise parfois `encoder_grad_multi` et des schedulers spécifiques Hydra. S3T retient la matrice LeBenchmark (§5) et le gel d'encodeur (RF-11) ; les noms et mécanismes SB (`freeze`, param groups) peuvent différer tant que le comportement est documenté par run.
+
+> **Divergence SpeechBrain — métriques annexes :** fairseq historique expose aussi **WER+BLEU** et **ASR-BLEU**. Ce ne sont **pas** des métriques natives SpeechBrain. Elles restent **hors scope Temps A** sauf ajout explicite au PRD ; le critère principal reste **SacreBLEU** (RF-14 à RF-19).
+
+#### Contrat d'artifacts par run (commun Temps A et B)
+
+Chaque run doit contenir au minimum :
+
+```text
+runs/<langpair>/<run_id>/
+  config.yaml              # copie figée des hyperparamètres
+  train.log
+  checkpoints/
+    best.pt
+  eval/
+    dev_predictions.txt
+    test_predictions.txt
+    sacrebleu_dev.txt      # avec signature
+    sacrebleu_test.txt
+    metrics.json
+```
+
+> **Divergence SpeechBrain :** SpeechBrain stocke souvent les checkpoints dans un dossier d'expérience interne sans manifeste JSON/SacreBLEU externe obligatoire. S3T **impose** ce paquet pour la reproductibilité et la comparaison Table 8.
+
 ---
 
 ## 3. Besoins Fonctionnels & Pipeline de Données
 
 ### 3.1 Ingestion et Prétraitement des Données
+
+> **Divergence SpeechBrain :** les recettes SB supposent en général des CSV/`DynamicItemDataset` prêts ; S3T impose des **manifests TSV** (`2_prepare.py`), un stage **download** séparé et des filtres RF-03 à RF-05 documentés ici — voir aussi §2.5.
+
 * **RF-01 :** Téléchargement automatique ou scripté du corpus m-TEDx (OpenSLR-100).
 * **RF-02 :** Normalisation audio : Conversion systématique de tous les segments audio en format WAV, 16 kHz, mono, 16-bit PCM.
 * **RF-03 :** Filtrage des données : Élimination des segments vides ou dont la transcription textuelle est manquante.
@@ -87,12 +157,18 @@ Le code d'exécution est organisé en **un module Python par étape**, orchestr�
 * **RF-08 :** Normalisation texte explicite et figée avant tokenisation : `NFKC`, suppression d'espaces redondants, normalisation de casse (stratégie documentée), traitement stable de la ponctuation et des chiffres.
 
 ### 3.3 Entraînement et Optimisation
+
+> **Divergence SpeechBrain :** l'entraînement cible un modèle **Pantagruel (HF) + décodeur custom**, pas un lobes S2T SB préfabriqué ; le gel encodeur (RF-11) et les schedulers peuvent être implémentés via `Brain` ou couche PyTorch, avec noms de config différents de fairseq — voir §2.5.
+
 * **RF-09 :** Calcul de la perte via une entropie croisée (Cross-Entropy Loss) standard avec lissage d'étiquette (*Label Smoothing* = 0.1).
 * **RF-10 :** Implémentation d'un planificateur de taux d'apprentissage (Learning Rate Scheduler) avec une phase de montée linéaire (*Warmup*) et une décroissance inverse de la racine carrée (Inverse Square Root Decay).
 * **RF-11 :** Stratégie de gel des poids (*Freezing*) : Possibilité de geler l'encodeur Pantagruel pendant les N premières étapes (ex: 5 000 à 10 000 updates) pour stabiliser le décodeur initialisé aléatoirement.
 * **RF-12 :** Stabilité d'entraînement : clipping du gradient (ex: `max_norm=1.0`), `gradient_accumulation`, et entraînement mixte (`fp16`/`bf16`) pour atteindre un batch effectif reproductible sur GPU limité.
 
 ### 3.4 Inférence et Évaluation
+
+> **Divergence SpeechBrain :** `5_evaluate.py` sépare explicitement **décodage** et **SacreBLEU CLI** (artifacts texte + signature) ; `6_infer.py` est un chemin hors splits m-TEDx — ce n'est pas le flux unique « eval recipe » SB — voir §2.5.
+
 * **RF-13 :** Implémentation d'une recherche par faisceau (**Beam Search Decoding**) avec une largeur de faisceau (*Beam Width*) de 5.
 * **RF-14 :** Évaluation via la bibliothèque officielle **SacreBLEU** avec la signature standard pour garantir la reproductibilité et la comparaison équitable avec LeBenchmark 2.0.
 * **RF-15 :** Critère de sélection du meilleur checkpoint : `BLEU dev` prioritaire; `loss dev` utilisée comme signal secondaire en cas d'ambiguïté.

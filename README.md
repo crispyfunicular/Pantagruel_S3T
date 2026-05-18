@@ -65,6 +65,8 @@ Convention : **un fichier Python par stage**, plus un orchestrateur CLI.
 Chaque module stage est exécutable **directement** (`python scripts/N_*.py ...`) ou via `pipeline.py <subcommand>`.  
 `pipeline.py` ne contient pas la logique métier : il route vers le module correspondant.
 
+**Stack d'entraînement :** SpeechBrain (pas fairseq). Le dépôt ne suit pas le schéma minimal `recipes/<task>/train.py` + `hparams/*.yaml` : stages numérotés, contrat d'artifacts par run, SacreBLEU externe obligatoire. Voir [PRD.md §2.5](PRD.md#25-source-de-vérité-historique-et-transposition-speechbrain) pour le tableau des divergences et l'alignement avec l'historique fairseq (`pantagruel_uni`, lecture seule).
+
 ---
 
 ## Quickstart
