@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+"""
+Stage 6 — Inference on arbitrary audio files.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import torch
+from scripts.st_common import (
+    PROJECT_ROOT,
+    S3TModel,
+    decode_ids_to_text,
+    deep_get,
+    greedy_decode_batch,
+    load_sentencepiece,
+    load_waveform,
+    load_yaml_config,
+)
+
+
+def load_checkpoint(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise FileNotFoundError(f"Missing checkpoint: {path}")
+    payload = torch.load(path, map_location="cpu")
+    if not isinstance(payload, dict) or "model_state" not in payload:
+        raise ValueError(f"Invalid checkpoint payload: {path}")
+    return payload
+
+
+def run_infer(
+    *,
+    checkpoint: Path,
+    input_audio: Path,
+    config_path: Path | None,
+    beam_size: int,
+    output: Path,
+    dry_run: bool,
+    verbose: bool,
+    prefer_cpu: bool,
+) -> int:
+    del beam_size  # Greedy baseline for now.
+    payload = load_checkpoint(checkpoint)
+    config = payload.get("config")
+    if not isinstance(config, dict):
+        if config_path is None:
+            print(
+                "ERROR: checkpoint has no embedded config and --config was not provided",
+                file=sys.stderr,
+            )
+            return 2
+        config = load_yaml_config(config_path)
+
+    spm_model_path = PROJECT_ROOT / str(deep_get(config, "data.spm_model"))
+    if not spm_model_path.is_file():
+        print(f"ERROR: missing SentencePiece model: {spm_model_path}", file=sys.stderr)
+        return 2
+    if not input_audio.is_file():
+        print(f"ERROR: missing input audio: {input_audio}", file=sys.stderr)
+        return 2
+
+    sample_rate = int(deep_get(config, "data.sample_rate", 16000))
+    max_target_tokens = int(deep_get(config, "train.max_target_tokens", 256))
+    max_new_tokens = int(deep_get(config, "decode.max_len_b", 128))
+
+    encoder_name = str(
+        deep_get(config, "model.encoder_name", "PantagrueLLM/Pantagruel-Base")
+    )
+    hidden_dim = int(deep_get(config, "model.hidden_dim", 768))
+    decoder_layers = int(deep_get(config, "model.decoder_layers", 6))
+    decoder_heads = int(deep_get(config, "model.decoder_heads", 8))
+    dropout = float(deep_get(config, "model.dropout", 0.1))
+
+    if dry_run:
+        print("[dry-run] infer stage plan:")
+        print(f"  checkpoint: {checkpoint}")
+        print(f"  input:      {input_audio}")
+        print(f"  spm_model:  {spm_model_path}")
+        print(f"  output:     {output}")
+        return 0
+
+    sp_model = load_sentencepiece(spm_model_path)
+    pad_id = int(payload.get("pad_id", sp_model.pad_id()))
+    bos_id = int(payload.get("bos_id", sp_model.bos_id()))
+    eos_id = int(payload.get("eos_id", sp_model.eos_id()))
+    vocab_size = int(payload.get("vocab_size", sp_model.get_piece_size()))
+
+    device = torch.device(
+        "cpu" if prefer_cpu or not torch.cuda.is_available() else "cuda"
+    )
+    model = S3TModel(
+        encoder_name=encoder_name,
+        vocab_size=vocab_size,
+        hidden_dim=hidden_dim,
+        decoder_layers=decoder_layers,
+        decoder_heads=decoder_heads,
+        dropout=dropout,
+        pad_id=pad_id,
+        max_positions=max_target_tokens + 2,
+    ).to(device)
+    model.load_state_dict(payload["model_state"], strict=False)
+    model.eval()
+
+    wave = load_waveform(input_audio, sample_rate).unsqueeze(0).to(device)
+    attn = torch.ones((1, wave.size(1)), dtype=torch.long, device=device)
+    generated = greedy_decode_batch(
+        model=model,
+        input_values=wave,
+        attention_mask=attn,
+        bos_id=bos_id,
+        eos_id=eos_id,
+        pad_id=pad_id,
+        max_new_tokens=max_new_tokens,
+    )
+    prediction = decode_ids_to_text(
+        generated[0].tolist(),
+        sp_model=sp_model,
+        bos_id=bos_id,
+        eos_id=eos_id,
+        pad_id=pad_id,
+    )
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    record = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "input_audio": str(input_audio.resolve()),
+        "checkpoint": str(checkpoint.resolve()),
+        "prediction": prediction,
+    }
+    with output.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    if verbose:
+        print(f"Prediction: {prediction}")
+    print(f"Inference complete. Output appended to {output}")
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="S3T Stage 6 — Inference on new audio",
+    )
+    parser.add_argument("--config", type=Path, default=None)
+    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--input-audio", type=Path, required=True)
+    parser.add_argument("--beam-size", type=int, default=5)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=PROJECT_ROOT / "inference" / "predictions.jsonl",
+    )
+    parser.add_argument("--prefer-cpu", action="store_true", default=False)
+    parser.add_argument("--verbose", "-v", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+    return parser
+
+
+def run_from_namespace(args: argparse.Namespace) -> int:
+    checkpoint = getattr(args, "checkpoint", None)
+    input_audio = getattr(args, "input_audio", None)
+    if checkpoint is None or input_audio is None:
+        print(
+            "ERROR: --checkpoint and --input-audio are required for infer stage",
+            file=sys.stderr,
+        )
+        return 2
+    return run_infer(
+        checkpoint=checkpoint,
+        input_audio=input_audio,
+        config_path=getattr(args, "config", None),
+        beam_size=getattr(args, "beam_size", 5),
+        output=getattr(
+            args, "output", PROJECT_ROOT / "inference" / "predictions.jsonl"
+        ),
+        dry_run=getattr(args, "dry_run", False),
+        verbose=getattr(args, "verbose", False),
+        prefer_cpu=getattr(args, "prefer_cpu", False),
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return run_from_namespace(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -100,24 +100,84 @@ def cmd_download(args: argparse.Namespace) -> int:
     return download.run_from_namespace(args)
 
 
+def _load_prepare_module():
+    path = PROJECT_ROOT / "scripts" / "2_prepare.py"
+    spec = importlib.util.spec_from_file_location("s3t_prepare", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load prepare module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def cmd_prepare(args: argparse.Namespace) -> int:
-    not_yet("prepare")
+    prepare = _load_prepare_module()
+    return prepare.run_from_namespace(args)
+
+
+def _load_spm_module():
+    path = PROJECT_ROOT / "scripts" / "3_spm.py"
+    spec = importlib.util.spec_from_file_location("s3t_spm", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load spm module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_train_module():
+    path = PROJECT_ROOT / "scripts" / "4_train.py"
+    spec = importlib.util.spec_from_file_location("s3t_train", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load train module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_evaluate_module():
+    path = PROJECT_ROOT / "scripts" / "5_evaluate.py"
+    spec = importlib.util.spec_from_file_location("s3t_evaluate", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load evaluate module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_infer_module():
+    path = PROJECT_ROOT / "scripts" / "6_infer.py"
+    spec = importlib.util.spec_from_file_location("s3t_infer", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load infer module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def cmd_spm(args: argparse.Namespace) -> int:
-    not_yet("spm")
+    spm_stage = _load_spm_module()
+    return spm_stage.run_from_namespace(args)
 
 
 def cmd_train(args: argparse.Namespace) -> int:
-    not_yet("train")
+    train_stage = _load_train_module()
+    return train_stage.run_from_namespace(args)
 
 
 def cmd_evaluate(args: argparse.Namespace) -> int:
-    not_yet("evaluate")
+    evaluate_stage = _load_evaluate_module()
+    return evaluate_stage.run_from_namespace(args)
 
 
 def cmd_infer(args: argparse.Namespace) -> int:
-    not_yet("infer")
+    infer_stage = _load_infer_module()
+    return infer_stage.run_from_namespace(args)
 
 
 def _run_stage(
@@ -264,7 +324,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_prepare.add_argument("--max-duration", type=float, default=30.0)
     p_prepare.add_argument("--text-norm", default="nfkc", choices=("nfkc", "none"))
     p_prepare.add_argument("--lowercase", action="store_true", default=False)
-    p_prepare.add_argument("--fail-on-leak", action="store_true", default=True)
+    p_prepare.add_argument(
+        "--fail-on-leak",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    p_prepare.add_argument(
+        "--resume",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Skip segments with a valid output WAV already on disk",
+    )
+    p_prepare.add_argument(
+        "--report",
+        type=Path,
+        default=None,
+        help="JSON report path (default: artifacts/prepare_<langpair>.json)",
+    )
+    p_prepare.add_argument(
+        "--verify-only",
+        action="store_true",
+        help="Only verify existing WAV files and manifests",
+    )
     p_prepare.set_defaults(func=cmd_prepare)
 
     # --- spm ---
@@ -273,6 +354,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_spm.add_argument("--langpair", required=True)
     p_spm.add_argument("--vocab-size", type=int, default=1000)
     p_spm.add_argument("--model-type", default="unigram", choices=("unigram", "bpe"))
+    p_spm.add_argument(
+        "--manifests-root",
+        type=Path,
+        default=PROJECT_ROOT / "datasets" / "manifests",
+    )
+    p_spm.add_argument(
+        "--output-dir",
+        type=Path,
+        default=PROJECT_ROOT / "datasets" / "processed" / "spm",
+    )
+    p_spm.add_argument("--train-text", type=Path, default=None)
+    p_spm.add_argument("--character-coverage", type=float, default=1.0)
+    p_spm.add_argument(
+        "--overwrite",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+    )
+    p_spm.add_argument("--report", type=Path, default=None)
     p_spm.set_defaults(func=cmd_spm)
 
     # --- train ---
@@ -281,6 +380,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_train.add_argument("--config", type=Path, required=True)
     p_train.add_argument("--run-id", required=True)
     p_train.add_argument("--output-dir", type=Path, default=None)
+    p_train.add_argument("--prefer-cpu", action="store_true", default=False)
     p_train.set_defaults(func=cmd_train)
 
     # --- evaluate ---
@@ -291,6 +391,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_evaluate.add_argument("--checkpoint", type=Path, default=None)
     p_evaluate.add_argument("--beam-size", type=int, default=5)
     p_evaluate.add_argument("--output-dir", type=Path, default=None)
+    p_evaluate.add_argument("--prefer-cpu", action="store_true", default=False)
     p_evaluate.set_defaults(func=cmd_evaluate)
 
     # --- infer ---
@@ -300,6 +401,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_infer.add_argument("--checkpoint", type=Path, required=True)
     p_infer.add_argument("--input-audio", type=Path, required=True)
     p_infer.add_argument("--beam-size", type=int, default=5)
+    p_infer.add_argument("--prefer-cpu", action="store_true", default=False)
     p_infer.add_argument(
         "--output",
         type=Path,

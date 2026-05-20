@@ -5,6 +5,9 @@
 #   pip install torch --index-url https://download.pytorch.org/whl/cu124
 
 torch>=2.0
+soundfile>=0.12
+pyyaml>=6.0
+timm>=0.9.0
 transformers>=4.36
 speechbrain>=1.0
 sacrebleu>=2.3

@@ -77,8 +77,17 @@ def _archive_path(output_root: Path, langpair: str) -> Path:
 
 
 def _extracted_marker(output_root: Path, langpair: str) -> Path:
-    # OpenSLR archives typically extract to a top-level folder named mtedx_<pair>
+    # Preferred stable name; OpenSLR archives often extract to <langpair>/ instead.
     return output_root / f"mtedx_{langpair}"
+
+
+def resolve_extracted_corpus(output_root: Path, langpair: str) -> Path | None:
+    """Return the extracted m-TEDx directory if train split is present."""
+    for name in (f"mtedx_{langpair}", langpair):
+        path = output_root / name
+        if (path / "data" / "train").is_dir():
+            return path
+    return None
 
 
 def download_file(
@@ -145,18 +154,26 @@ def extract_archive(
     archive: Path, output_root: Path, langpair: str, verbose: bool
 ) -> Path:
     """Extract .tgz archive into output_root."""
-    extract_dir = _extracted_marker(output_root, langpair)
-    if extract_dir.exists():
+    existing = resolve_extracted_corpus(output_root, langpair)
+    if existing is not None:
         if verbose:
-            print(f"  Extract dir already exists: {extract_dir}")
-        return extract_dir
+            print(f"  Corpus already extracted: {existing}")
+        return existing
 
     if verbose:
         print(f"  Extracting {archive} -> {output_root}")
     with tarfile.open(archive, "r:gz") as tar:
         # Python 3.12+ requires an explicit filter for safer extraction.
         tar.extractall(path=output_root, filter="data")
-    return extract_dir
+
+    resolved = resolve_extracted_corpus(output_root, langpair)
+    if resolved is None:
+        raise tarfile.TarError(
+            f"Could not find data/train after extracting {archive} into {output_root}"
+        )
+    if verbose:
+        print(f"  Extracted corpus root: {resolved}")
+    return resolved
 
 
 def run_download(
@@ -185,15 +202,18 @@ def run_download(
         if dry_run:
             print(f"[dry-run] would download {langpair}: {url} -> {archive}")
             if extract:
-                print(
-                    f"[dry-run] would extract -> {_extracted_marker(output_root, langpair)}"
-                )
+                marker = resolve_extracted_corpus(output_root, langpair)
+                target = marker or _extracted_marker(output_root, langpair)
+                print(f"[dry-run] would extract -> {target}")
             results.append(
                 DownloadResult(
                     langpair=langpair,
                     url=url,
                     archive_path=str(archive),
-                    extracted_dir=str(_extracted_marker(output_root, langpair))
+                    extracted_dir=str(
+                        resolve_extracted_corpus(output_root, langpair)
+                        or _extracted_marker(output_root, langpair)
+                    )
                     if extract
                     else None,
                     status="dry_run",
