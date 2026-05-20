@@ -55,11 +55,11 @@ Convention : **un fichier Python par stage**, plus un orchestrateur CLI.
 | Bootstrap | [`scripts/bootstrap.sh`](scripts/bootstrap.sh) | — | implémenté |
 | 0 — Preflight | [`scripts/0_preflight.py`](scripts/0_preflight.py) | `preflight` | implémenté |
 | 1 — Download | [`scripts/1_download.py`](scripts/1_download.py) | `download` | implémenté |
-| 2 — Prepare | `scripts/2_prepare.py` | `prepare` | à implémenter |
-| 3 — SPM | `scripts/3_spm.py` | `spm` | à implémenter |
-| 4 — Train | `scripts/4_train.py` | `train` | à implémenter |
-| 5 — Evaluate | `scripts/5_evaluate.py` | `evaluate` | à implémenter |
-| 6 — Infer | `scripts/6_infer.py` | `infer` | à implémenter |
+| 2 — Prepare | [`scripts/2_prepare.py`](scripts/2_prepare.py) | `prepare` | implémenté |
+| 3 — SPM | `scripts/3_spm.py` | `spm` | implémenté |
+| 4 — Train | `scripts/4_train.py` | `train` | implémenté |
+| 5 — Evaluate | `scripts/5_evaluate.py` | `evaluate` | implémenté |
+| 6 — Infer | `scripts/6_infer.py` | `infer` | implémenté |
 | Orchestrateur | [`scripts/pipeline.py`](scripts/pipeline.py) | `run` (+ toutes les étapes) | routeur actif |
 
 Chaque module stage est exécutable **directement** (`python scripts/N_*.py ...`) ou via `pipeline.py <subcommand>`.  
@@ -83,8 +83,9 @@ source .venv/bin/activate
 # 1) Vérifier l'environnement
 python scripts/pipeline.py preflight
 
-# 2) Pipeline complet (squelette — étapes en NotYetImplemented)
+# 2) Pipeline complet (fr-en exemple)
 python scripts/pipeline.py run --langpair fr-es --run-id run_001 \
+  --config configs/fr-es/base.yaml \
   --from-stage preflight --to-stage evaluate
 ```
 
@@ -170,57 +171,74 @@ python scripts/1_download.py --langpairs fr-en,fr-pt,fr-es
 ```
 
 ### 3) Prepare (`scripts/2_prepare.py` / `pipeline.py prepare`)
-- **Module cible**: `scripts/2_prepare.py` (à implémenter).
+- **Module**: [`scripts/2_prepare.py`](scripts/2_prepare.py) (direct ou `pipeline.py prepare`).
 - **But**: transformer les données brutes en données entraînables conformes PRD.
-- **Entrées**: `datasets/raw`, paramètres audio (`--sample-rate`, durées min/max), règles de normalisation texte.
-- **Actions prévues**:
-  - conversion audio en WAV mono 16 kHz PCM16,
-  - filtrage segments invalides (audio/texte vides, durées hors borne),
-  - génération des manifests `train/valid/test`,
-  - vérification anti-fuite entre splits.
-- **Sorties attendues**:
-  - `datasets/processed/`,
-  - `datasets/manifests/<langpair>/*.tsv`.
-- **Validation**: manifests propres, `--fail-on-leak` non déclenché, stats de prétraitement cohérentes.
+- **Entrées**: `datasets/raw/mtedx_<pair>/` (après download), `--sample-rate`, durées min/max, `--text-norm`, `--lowercase`.
+- **Actions**:
+  - découpage des FLAC m-TEDx en WAV mono 16 kHz PCM16,
+  - filtrage segments invalides (texte vide, durées hors borne, audio manquant),
+  - manifests TSV (`id`, `audio`, `n_frames`, `tgt_text`, …) + `*.target.txt` par split,
+  - contrôle anti-fuite train vs valid/test (`--fail-on-leak`, défaut activé).
+- **Sorties**: `datasets/processed/<pair>/`, `datasets/manifests/<pair>/*.tsv`, `artifacts/prepare_<pair>.json`.
+- **Validation**: `exit_code == 0`, rapport sans fuite, au moins un segment par split attendu.
+
+```bash
+python scripts/2_prepare.py --langpair fr-en
+python scripts/pipeline.py prepare --langpair fr-en --min-duration 1.0 --max-duration 30.0
+```
+
+**Reprise (run long, safe to relaunch):** `--resume` est activé par défaut — les WAV déjà valides sont ignorés.
+
+```bash
+source .venv/bin/activate
+./scripts/prepare_status.sh fr-en          # état actuel
+./scripts/resume_prepare.sh fr-en          # reprise + vérif finale (log: logs/prepare_fr-en.log)
+# ou manuellement :
+python scripts/2_prepare.py --langpair fr-en --resume --verbose
+python scripts/2_prepare.py --langpair fr-en --verify-only
+```
+
+Prérequis : download terminé (`datasets/raw/fr-en/` ou `artifacts/download_manifest.json` avec `exit_code: 0`).
+Format WAV produit : **16 kHz, mono, PCM_16** ; progression dans `artifacts/prepare_<pair>.progress.json`.
 
 ### 4) SPM (`scripts/3_spm.py` / `pipeline.py spm`)
-- **Module cible**: `scripts/3_spm.py` (à implémenter).
+- **Module**: `scripts/3_spm.py` (implémenté).
 - **But**: entraîner le tokenizer SentencePiece sur la cible textuelle.
-- **Entrées**: `--langpair`, `--vocab-size`, `--model-type`.
-- **Actions prévues**: entraînement SPM (idéalement sur `train` uniquement, selon PRD).
-- **Sorties attendues**: `datasets/processed/spm/*.model` et `*.vocab`.
+- **Entrées**: `--langpair`, `--vocab-size`, `--model-type`, optionnel `--train-text`.
+- **Actions**: entraînement SPM sur `datasets/manifests/<pair>/train.target.txt` (par défaut).
+- **Sorties**: `datasets/processed/spm/<pair>_<vocab>.model` et `.vocab`, rapport `artifacts/spm_<pair>_<vocab>.json`.
 - **Validation**: modèles SPM générés et chargeables sans erreur.
 
 ### 5) Train (`scripts/4_train.py` / `pipeline.py train`)
-- **Module cible**: `scripts/4_train.py` (à implémenter).
+- **Module**: `scripts/4_train.py` (implémenté).
 - **But**: entraîner le modèle ST (encodeur SSL + décodeur Transformer).
 - **Entrées**: `--config` (hyperparamètres/run), `--run-id`, optionnel `--output-dir`.
-- **Actions prévues**:
+- **Actions**:
   - lecture config run,
-  - boucle d’entraînement avec logs/checkpoints,
+  - boucle d’entraînement (HF encoder + décodeur Transformer) avec logs/checkpoints,
   - sélection du meilleur checkpoint (PRD: priorité `BLEU dev`).
-- **Sorties attendues**: `runs/<langpair>/<run_id>/checkpoints/` + logs d’entraînement.
+- **Sorties**: `runs/<langpair>/<run_id>/checkpoints/{best,last}.pt`, `train.log`, `metrics.json`, copie `config.yaml`.
 - **Validation**: courbe loss descendante, checkpoints présents, run traçable (config + logs).
 
 ### 6) Evaluate (`scripts/5_evaluate.py` / `pipeline.py evaluate`)
-- **Module cible**: `scripts/5_evaluate.py` (à implémenter).
+- **Module**: `scripts/5_evaluate.py` (implémenté).
 - **But**: mesurer objectivement la qualité de traduction.
 - **Entrées**: `--config`, `--run-id`, `--checkpoint`, `--beam-size`.
-- **Actions prévues**:
+- **Actions**:
   - décodage `valid`/`test`,
   - calcul SacreBLEU (et métriques associées) avec protocole fixe.
-- **Sorties attendues**: fichiers d’éval (`BLEU dev/test`, `metrics.json`, signatures SacreBLEU).
+- **Sorties**: `runs/<pair>/<run_id>/eval/{dev,test}_predictions.txt`, `sacrebleu_{dev,test}.txt`, `metrics.json`.
 - **Validation**: métriques produites et comparables entre runs (même commande/protocole).
 
 ### 7) Infer (`scripts/6_infer.py` / `pipeline.py infer`)
-- **Module cible**: `scripts/6_infer.py` (à implémenter).
+- **Module**: `scripts/6_infer.py` (implémenté).
 - **But**: traduire de nouveaux audios hors dataset d’entraînement.
 - **Entrées**: `--checkpoint`, `--input-audio`, optionnel `--config`, `--beam-size`.
-- **Actions prévues**: chargement du checkpoint, décodage des audios fournis.
-- **Sorties attendues**: `inference/predictions.jsonl` (ou chemin `--output`).
+- **Actions**: chargement du checkpoint, décodage greedy des audios fournis.
+- **Sorties**: `inference/predictions.jsonl` (ou chemin `--output`), une ligne JSON par audio.
 - **Validation**: prédictions générées pour chaque entrée audio, format de sortie exploitable.
 
-> Statut actuel: **`preflight` et `download` sont implémentés** (`0_preflight.py`, `1_download.py`). Les étapes `prepare` à `infer` restent des squelettes `NotYetImplemented` (code 7).
+> Statut actuel: les étapes **`preflight` à `infer` sont implémentées**. Le pipeline est exécutable de bout en bout avec config de run.
 
 ---
 
@@ -265,11 +283,12 @@ S3T/
     pipeline.py           # Orchestrateur CLI (routeur)
     0_preflight.py        # Stage 0 — preflight
     1_download.py         # Stage 1 — download
-    2_prepare.py          # Stage 2 — prepare (à créer)
-    3_spm.py              # Stage 3 — tokenization (à créer)
-    4_train.py            # Stage 4 — train (à créer)
-    5_evaluate.py         # Stage 5 — evaluate (à créer)
-    6_infer.py            # Stage 6 — infer (à créer)
+    2_prepare.py          # Stage 2 — prepare
+    3_spm.py              # Stage 3 — tokenization
+    4_train.py            # Stage 4 — train
+    5_evaluate.py         # Stage 5 — evaluate
+    6_infer.py            # Stage 6 — infer
+    st_common.py          # Utilitaires partagés train/evaluate/infer
   configs/              # YAML par langpair (à créer)
   datasets/
     raw/
@@ -302,14 +321,14 @@ Détails : [PRD.md](PRD.md) §4 et [README_experiments.md](README_experiments.md
 |------|----------------|
 | 0 | Succès |
 | 2 | Erreur d’arguments |
-| 7 | `NotYetImplemented` (étape non codée) |
+| 4 | Erreur d'exécution stage (ex: download/train) |
 
 ---
 
 ## Prochaines étapes de développement
 
-1. Implémenter `scripts/1_download.py` → `scripts/3_spm.py` (data m-TEDx)
-2. Implémenter `scripts/4_train.py` et `scripts/5_evaluate.py` (modèle Seq2Seq + SacreBLEU)
-3. Implémenter `scripts/6_infer.py` (inférence production)
-4. Ajouter `configs/fr-es/base.yaml` (template dans README_experiments.md)
-5. Téléchargement Pantagruel HF dans `bootstrap.sh` ou `0_preflight.py`
+1. Ajouter des `configs/fr-en/base.yaml`, `configs/fr-pt/base.yaml`, `configs/fr-es/base.yaml`
+2. Brancher une stratégie de décodage beam search complète (actuellement greedy baseline)
+3. Ajouter le tracking systématique dans `runs/experiments_tracking.csv`
+4. Renforcer l'évaluation (ablations freeze/vocab/beam) et comparaison Table 8
+5. Industrialiser l'intégration des checkpoints Pantagruel HF (cache + vérifs preflight)

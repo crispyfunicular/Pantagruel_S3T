@@ -296,7 +296,41 @@ Mettre a jour apres chaque run pour comparer facilement avec la Table 8 Pantagru
 
 ---
 
-## 11) Checklist de cloture d'un run
+## 11) Protocole FR->FR (smoke test Pantagruel / ASR)
+
+Le checkpoint Hugging Face `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` est un **encodeur de pre-entrainement** (pas de tete decodeur ASR/ST). Pour valider l'environnement et mesurer WER/CER sur un petit corpus local :
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Encodeur Pantagruel : forward audio uniquement (pas de transcription)
+python scripts/quick_eval_hf_asr.py corpus_audio/ \
+  --transcription pantagruel-encoder
+
+# ASR proxy Whisper (protocole d'evaluation reproductible en attendant le finetune fairseq)
+python scripts/quick_eval_hf_asr.py corpus_audio/ \
+  --transcription whisper
+
+# Fichier unique + reference manuelle
+python scripts/quick_eval_hf_asr.py corpus_audio/au_nord_du_pays.wav \
+  --transcription whisper \
+  --reference "Au Nord du pays, vit une espèce de chat, dont la queue est très courte"
+```
+
+Sortie : rapport JSON sous `artifacts/quick_eval_*.json` (paires `.wav`/`.lab`, fichiers ignores, agregats WER/CER).
+
+| Mode | Metrique | Role dans le pipeline S3T |
+|------|----------|-----------------------------|
+| `--transcription whisper` | WER / CER | Prototype du protocole d'evaluation locale FR->FR |
+| `--transcription pantagruel-encoder` | forme des embeddings | Verifie le chargement HF avant finetune ST |
+| `5_evaluate.py` / `6_infer.py` | SacreBLEU | Evaluation ST cible (FR->EN, etc.) |
+
+Convention : les transcriptions sans audio associe dans `corpus_audio/` (ex. `11-*` a `20-*`) sont **ignorees** et listees dans le champ `skipped` du rapport.
+
+---
+
+## 12) Checklist de cloture d'un run
 
 - [ ] config sauvegardee dans le dossier run
 - [ ] commit Git enregistre
