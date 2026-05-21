@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Quick status for an in-progress or completed prepare run.
+# Utilitaire — afficher la progression d'un job prepare étape 2 long (hors pipeline).
+#
+# Usage : ./scripts/prepare_status.sh [langpair]
+# Lit artifacts/prepare_<langpair>.progress.json et compte les WAV sur disque.
 
 set -euo pipefail
 

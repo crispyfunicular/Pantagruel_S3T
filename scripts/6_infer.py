@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 """
-Stage 6 — Inference on arbitrary audio files.
+Étape 6 — Inférence sur des fichiers WAV français arbitraires (chemin production).
+
+Contrairement à l'étape 5, ne requiert pas les splits m-TEDx : charge un checkpoint
+fine-tuné, encode un WAV 16 kHz fourni par l'utilisateur, décode en glouton du texte
+anglais et ajoute un enregistrement JSONL pour audit.
+
+Entrées :
+    - ``--checkpoint`` (``best.pt`` de l'étape 4).
+    - Chemin WAV ``--input-audio``.
+    - ``--config`` optionnel si le checkpoint n'a pas de dict config embarqué.
+    - Chemin modèle SPM depuis ``data.spm_model`` de la config.
+
+Sorties :
+    - Lignes JSONL ajoutées à ``--output`` (défaut ``inference/predictions.jsonl``).
+
+Codes de sortie : 0 succès, 2 checkpoint/audio/config/SPM manquant.
 """
 
 from __future__ import annotations
@@ -26,6 +41,7 @@ from scripts.st_common import (
 
 
 def load_checkpoint(path: Path) -> dict[str, Any]:
+    """Charger le checkpoint étape 4 ; même contrat que ``5_evaluate.load_checkpoint``."""
     if not path.is_file():
         raise FileNotFoundError(f"Missing checkpoint: {path}")
     payload = torch.load(path, map_location="cpu")
@@ -45,7 +61,21 @@ def run_infer(
     verbose: bool,
     prefer_cpu: bool,
 ) -> int:
-    del beam_size  # Greedy baseline for now.
+    """
+    Traduire un fichier audio et ajouter le résultat à un journal JSONL.
+
+    Paramètres :
+        checkpoint : ``best.pt`` fine-tuné.
+        input_audio : WAV parole française (16 kHz mono attendu).
+        config_path : YAML de repli si le checkpoint n'a pas de clé ``config``.
+        beam_size : Accepté pour parité CLI ; décodage glouton utilisé aujourd'hui.
+        output : Chemin JSONL à compléter.
+        dry_run, verbose, prefer_cpu : Drapeaux CLI.
+
+    Retour :
+        0 on success, 2 on missing inputs.
+    """
+    del beam_size  # Baseline gloutonne pour l'instant ; beam search pas encore branché.
     payload = load_checkpoint(checkpoint)
     config = payload.get("config")
     if not isinstance(config, dict):
@@ -143,8 +173,9 @@ def run_infer(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """CLI pour l'étape 6."""
     parser = argparse.ArgumentParser(
-        description="S3T Stage 6 — Inference on new audio",
+        description="S3T Étape 6 — Inférence sur nouvel audio",
     )
     parser.add_argument("--config", type=Path, default=None)
     parser.add_argument("--checkpoint", type=Path, required=True)
@@ -162,6 +193,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_from_namespace(args: argparse.Namespace) -> int:
+    """Point d'entrée utilisé par ``pipeline.py infer``."""
     checkpoint = getattr(args, "checkpoint", None)
     input_audio = getattr(args, "input_audio", None)
     if checkpoint is None or input_audio is None:
@@ -185,6 +217,7 @@ def run_from_namespace(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Point d'entrée CLI principal."""
     parser = build_parser()
     args = parser.parse_args(argv)
     return run_from_namespace(args)

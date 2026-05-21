@@ -1,13 +1,45 @@
 #!/usr/bin/env python3
 """
-Stage 2 — Prepare m-TEDx: segment audio, normalize text, write manifests.
+Étape pipeline S3T 2 — Préparer le corpus m-TEDx pour l'entraînement ST aval.
 
-Reads extracted OpenSLR layout under ``<input_root>/mtedx_<langpair>/data/``.
-Writes 16 kHz mono PCM16 WAV segments and TSV manifests for train/valid/test.
+Rôle dans le pipeline
+-------------
+Découper les FLAC TEDx longs en clips au niveau utterance, normaliser le texte
+parallèle et émettre des manifests pour les étapes 3–6 (tokenizer, SPM, train, evaluate).
 
-Usage:
+Entrées
+------
+- Arborescence m-TEDx brute sous ``--input-root`` (défaut ``datasets/raw``), soit
+  ``<langpair>/data/<split>/`` soit l'ancien ``mtedx_<langpair>/data/<split>/``.
+- Par split : ``txt/<split>.yaml`` (offsets/durées), ``txt/<split>.{src,tgt}``,
+  et ``wav/*.flac`` référencés par les clés ``wav`` du YAML.
+
+Sorties
+-------
+- Audio : ``<output-root>/<langpair>/<split>/<utt_id>.wav`` — 16 kHz mono PCM16.
+- Manifests : ``<manifests-root>/<langpair>/{train,valid,test}.tsv``.
+- Lignes cible : ``<manifests-root>/<langpair>/<split>.target.txt`` (tgt uniquement).
+- Rapport JSON : ``artifacts/prepare_<langpair>.json`` ; ``*.progress.json`` optionnel.
+
+Politique anti-fuite
+----------------
+Après traitement de tous les splits, ``detect_leaks`` signale les chevauchements
+d'ids utterance ou de texte cible normalisé entre train et valid/test. Avec ``--fail-on-leak``
+par défaut, tout chevauchement fixe le code de sortie 5 ; utiliser ``--no-fail-on-leak`` pour
+ne garder que des avertissements.
+
+Codes de sortie
+----------
+0 — succès (y compris dry-run si la disposition du corpus est valide).
+2 — ``--langpair`` invalide ou corpus d'entrée manquant (``run_from_namespace``).
+4 — erreurs de traitement par segment (YAML, audio manquant, échecs d'extraction).
+5 — fuite train vs valid/test avec ``--fail-on-leak`` (activé par défaut).
+6 — vérification WAV a posteriori échouée (``--verify-only`` ou fin de ``run_prepare``).
+
+Usage :
     python scripts/2_prepare.py --langpair fr-en
     python scripts/2_prepare.py --langpair fr-es --dry-run
+    python scripts/pipeline.py prepare --langpair fr-en
 """
 
 from __future__ import annotations
@@ -49,6 +81,8 @@ MANIFEST_COLUMNS = (
 
 @dataclass
 class SegmentRecord:
+    """Un utterance m-TEDx avant filtrage et extraction WAV."""
+
     utt_id: str
     wav_path: Path
     offset_s: float
@@ -62,6 +96,8 @@ class SegmentRecord:
 
 @dataclass
 class SplitStats:
+    """Compteurs par split écrits dans le rapport JSON prepare."""
+
     split: str
     segments_in: int = 0
     segments_kept: int = 0
@@ -74,6 +110,8 @@ PROGRESS_INTERVAL = 200
 
 @dataclass
 class PrepareReport:
+    """Résumé sérialisable d'un run prepare (également persisté en JSON)."""
+
     timestamp_utc: str
     langpair: str
     input_root: str
@@ -90,7 +128,17 @@ class PrepareReport:
 
 
 def parse_langpair(value: str) -> str:
-    """Validate a single language pair."""
+    """Valider et normaliser une valeur CLI de paire de langues.
+
+    Paramètres :
+        value: Raw ``--langpair`` string (e.g. ``fr-en``).
+
+    Retour :
+        Paire nettoyée si elle est dans ``SUPPORTED_LANGPAIRS``.
+
+    Lève :
+        ValueError : Si la paire n'est pas supportée.
+    """
     pair = value.strip()
     if pair not in SUPPORTED_LANGPAIRS:
         supported = ", ".join(sorted(SUPPORTED_LANGPAIRS))
@@ -99,7 +147,21 @@ def parse_langpair(value: str) -> str:
 
 
 def resolve_corpus_root(input_root: Path, langpair: str) -> Path:
-    """Locate extracted m-TEDx tree (OpenSLR uses ``<langpair>/``, not always ``mtedx_*``)."""
+    """Localiser l'arborescence m-TEDx extraite sous la racine des données brutes.
+
+    Les archives OpenSLR se décompressent en ``mtedx_<langpair>`` or plain ``<langpair>``;
+    le premier candidat dont le répertoire ``data/train`` existe est retenu.
+
+    Paramètres :
+        input_root: Root containing downloaded corpora (``datasets/raw``).
+        langpair: Language pair slug (e.g. ``fr-en``).
+
+    Retour :
+        Path to the corpus root (parent of ``data/``).
+
+    Lève :
+        FileNotFoundError : Si aucune disposition ne contient ``data/train``.
+    """
     candidates = (
         input_root / f"mtedx_{langpair}",
         input_root / langpair,
@@ -122,7 +184,21 @@ def manifest_audio_path(
     *,
     repo_root: Path | None = None,
 ) -> str:
-    """POSIX path for manifests: project-relative when under repo, else absolute."""
+    """Construire le chemin colonne ``audio`` stocké dans les manifests TSV.
+
+    Préfère un chemin POSIX relatif à la racine du dépôt S3T pour des manifests portables ;
+    repli sur un chemin absolu si les sorties sont hors de l'arbre projet.
+
+    Paramètres :
+        output_root: Processed audio root (``datasets/processed``).
+        langpair: Language pair slug.
+        split: One of ``train``, ``valid``, ``test``.
+        utt_id: Utterance identifier (stem + segment index).
+        repo_root: Base for relative paths (defaults to ``PROJECT_ROOT``).
+
+    Retour :
+        Forward-slash path string for the manifest ``audio`` field.
+    """
     abs_audio = (output_root / langpair / split / f"{utt_id}.wav").resolve()
     base = (repo_root or PROJECT_ROOT).resolve()
     try:
@@ -132,7 +208,16 @@ def manifest_audio_path(
 
 
 def normalize_text(text: str, *, mode: str, lowercase: bool) -> str:
-    """Apply configured text normalization."""
+    """Appliquer la normalisation texte alignée PRD pour les lignes parallèles src/tgt.
+
+    Paramètres :
+        text: Raw transcript line from m-TEDx.
+        mode: ``nfkc`` (Unicode NFKC + collapse whitespace) or ``none``.
+        lowercase: When True, fold case after normalization.
+
+    Retour :
+        Normalized string (may be empty if input was whitespace-only).
+    """
     value = text.strip()
     if mode == "nfkc":
         value = unicodedata.normalize("NFKC", value)
@@ -145,7 +230,23 @@ def normalize_text(text: str, *, mode: str, lowercase: bool) -> str:
 def iter_mtedx_segments(
     root: Path, langpair: str, split: str
 ) -> Iterator[SegmentRecord]:
-    """Yield segment metadata from m-TEDx YAML + parallel text files."""
+    """Produire les métadonnées de segment depuis YAML m-TEDx et fichiers texte parallèles.
+
+    Aligne les indices de liste de segments YAML avec ``.{src_lang}`` / ``.{tgt_lang}`` line
+    numbers, puis regroupe les segments par FLAC parent et trie par offset dans chaque fichier.
+
+    Paramètres :
+        root: Resolved corpus root (contains ``data/<split>/``).
+        langpair: Pair slug used to derive ``src_lang`` and ``tgt_lang``.
+        split: ``train``, ``valid``, or ``test``.
+
+    Produit :
+        ``SegmentRecord`` instances ready for duration/text filtering.
+
+    Lève :
+        FileNotFoundError : ``<split>.yaml`` manquant.
+        ValueError : YAML pas une liste, ou décomptes de lignes incohérents entre fichiers.
+    """
     src_lang, tgt_lang = langpair.split("-", maxsplit=1)
     data_dir = root / "data" / split
     wav_root = data_dir / "wav"
@@ -171,17 +272,21 @@ def iter_mtedx_segments(
             f"{src_lang}={len(src_lines)}, {tgt_lang}={len(tgt_lines)}"
         )
 
+    # Regrouper par FLAC parent : le YAML liste plusieurs segments par long enregistrement.
     grouped: dict[str, list[tuple[int, dict[str, Any]]]] = defaultdict(list)
     for index, segment in enumerate(segments):
         wav_key = segment["wav"]
         grouped[wav_key].append((index, segment))
 
     for wav_key in sorted(grouped):
+        # Ordre stable des segments dans un talk (requis pour suffixe utt_id _0, _1, …).
         entries = sorted(grouped[wav_key], key=lambda item: float(item[1]["offset"]))
+        # OpenSLR fournit du FLAC ; les clés YAML utilisent encore un suffixe .wav.
         flac_name = wav_key.replace(".wav", ".flac")
         wav_path = wav_root / flac_name
         stem = Path(wav_key).stem
         for seg_index, (line_index, segment) in enumerate(entries):
+            # line_index lie ce segment à la ligne texte parallèle src/tgt.
             yield SegmentRecord(
                 utt_id=f"{stem}_{seg_index}",
                 wav_path=wav_path,
@@ -196,6 +301,14 @@ def iter_mtedx_segments(
 
 
 def _load_soundfile():
+    """Importer soundfile à la demande pour que les dry-run évitent la dépendance.
+
+    Retour :
+        Le module ``soundfile``.
+
+    Lève :
+        ImportError : Si soundfile n'est pas installé.
+    """
     try:
         import soundfile as sf
     except ImportError as exc:
@@ -207,6 +320,21 @@ def _load_soundfile():
 
 
 def _resample_audio(data, src_rate: int, dst_rate: int):
+    """Rééchantillonner un clip numpy flottant 1-D au taux cible.
+
+    Utilise torchaudio si les taux diffèrent ; passe tel quel si identiques.
+
+    Paramètres :
+        data: Mono waveform samples (numpy array).
+        src_rate: Sample rate read from the source FLAC.
+        dst_rate: Target rate (typically 16000 Hz).
+
+    Retour :
+        Resampled numpy array at ``dst_rate``.
+
+    Lève :
+        ImportError : Si torch/torchaudio manquent et que le rééchantillonnage est requis.
+    """
     if src_rate == dst_rate:
         return data
     try:
@@ -216,6 +344,7 @@ def _resample_audio(data, src_rate: int, dst_rate: int):
         raise ImportError(
             "torchaudio is required for resampling when source rate != target rate."
         ) from exc
+    # torchaudio.resample attend [canaux, temps].
     tensor = torch.from_numpy(data).float()
     if tensor.ndim == 1:
         tensor = tensor.unsqueeze(0)
@@ -229,13 +358,30 @@ def extract_and_save_wav(
     *,
     sample_rate: int = TARGET_SAMPLE_RATE,
 ) -> int:
-    """Extract a segment to mono PCM16 WAV; return frame count at target rate."""
+    """Extraire un segment YAML du FLAC vers WAV mono PCM16.
+
+    Lit le FLAC parent, découpe par offset/durée en secondes, éventuellement
+    rééchantillonne, écrit en PCM_16 à ``sample_rate``, et valide avant de retourner.
+
+    Paramètres :
+        segment: Source path, timing, and text metadata.
+        destination: Output ``.wav`` path (parent dirs created as needed).
+        sample_rate: Target sample rate (default 16000).
+
+    Retour :
+        Frame count at ``sample_rate`` after successful validation.
+
+    Lève :
+        ImportError: Missing soundfile or torchaudio (when resampling).
+        RuntimeError : Validation post-écriture échouée (fichier partiel supprimé).
+    """
     import numpy as np
 
     sf = _load_soundfile()
     data, sr = sf.read(segment.wav_path.as_posix(), always_2d=True)
     if data.size == 0:
         return 0
+    # Mixer le FLAC multi-canal en mono avant découpage.
     mono = data.mean(axis=1)
     start_frame = int(segment.offset_s * sr)
     end_frame = start_frame + int(segment.duration_s * sr)
@@ -244,6 +390,7 @@ def extract_and_save_wav(
         return 0
     if sr != sample_rate:
         clip = _resample_audio(clip, sr, sample_rate)
+    # Borner à [-1, 1] avant quantification PCM_16.
     clip = np.clip(clip.astype("float32"), -1.0, 1.0)
     destination.parent.mkdir(parents=True, exist_ok=True)
     sf.write(destination.as_posix(), clip, sample_rate, subtype=TARGET_SUBTYPE)
@@ -263,10 +410,18 @@ def validate_wav_file(
     expected_sr: int = TARGET_SAMPLE_RATE,
     expected_frames: int | None = None,
 ) -> dict[str, Any]:
-    """
-    Check WAV is consumable by later stages (Pantagruel / SpeechBrain expect 16 kHz mono).
+    """Vérifier qu'un WAV correspond aux attentes train/inférence aval.
 
-    Validates via soundfile metadata and a torchaudio load smoke-test.
+    Pantagruel et SpeechBrain attendent du PCM16 mono 16 kHz ; vérifie métadonnées,
+    sample integrity, peak range, optional frame count, and a torchaudio load.
+
+    Paramètres :
+        path: Path to the written segment WAV.
+        expected_sr: Expected sample rate (default 16000).
+        expected_frames: If set, ``n_frames`` must match (from manifest).
+
+    Retour :
+        Dict with keys ``ok``, ``n_frames``, ``peak``, and ``issues`` (str list).
     """
     import numpy as np
 
@@ -311,7 +466,7 @@ def validate_wav_file(
                 f"torchaudio_frames={waveform.shape[1]} soundfile_frames={n_frames}"
             )
     except ImportError:
-        pass  # torchaudio smoke-test is optional (e.g. minimal CI env)
+        pass  # test fumée torchaudio optionnel (ex. env CI minimal)
     except OSError as exc:
         issues.append(f"torchaudio_load_failed:{exc}")
 
@@ -326,7 +481,21 @@ def verify_prepared_outputs(
     sample_rate: int = TARGET_SAMPLE_RATE,
     max_errors: int = 20,
 ) -> tuple[list[str], dict[str, Any]]:
-    """Verify every manifest row points to a valid WAV for train/spm/eval stages."""
+    """Vérifier que chaque ligne de manifest pointe vers un WAV valide sur disque.
+
+    Résout les chemins ``audio`` relatifs à ``PROJECT_ROOT`` et réutilise
+    ``validate_wav_file`` so stage 3+ never sees broken references.
+
+    Paramètres :
+        langpair: Language pair subdirectory under manifests.
+        output_root: Processed audio root (for context; paths come from manifests).
+        manifests_root: Directory containing ``<langpair>/*.tsv``.
+        sample_rate: Expected WAV sample rate.
+        max_errors: Stop collecting after this many issues (limits stderr noise).
+
+    Retour :
+        Tuple of (error messages, summary dict with per-split ok/invalid counts).
+    """
     errors: list[str] = []
     summary: dict[str, Any] = {"splits": {}, "total_segments": 0, "invalid_segments": 0}
 
@@ -349,6 +518,7 @@ def verify_prepared_outputs(
                 except ValueError:
                     expected_frames = None
 
+                # Le manifest stocke des chemins POSIX relatifs au dépôt via manifest_audio_path().
                 audio_path = PROJECT_ROOT / audio_rel
                 if not audio_path.is_file():
                     split_bad += 1
@@ -377,6 +547,12 @@ def verify_prepared_outputs(
 
 
 def write_manifest_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
+    """Écrire un manifest TSV de split avec colonnes fixes et délimiteur tabulation.
+
+    Paramètres :
+        path: Destination ``<split>.tsv`` path.
+        rows: Dict rows keyed by ``MANIFEST_COLUMNS``.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
@@ -392,6 +568,12 @@ def write_manifest_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def write_target_lines(path: Path, lines: list[str]) -> None:
+    """Écrire une ligne cible normalisée par segment conservé (entrée SPM / BPE).
+
+    Paramètres :
+        path: Destination ``<split>.target.txt`` path.
+        lines: Normalized target strings in manifest row order.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
 
@@ -401,16 +583,29 @@ def detect_leaks(
     ids_by_split: dict[str, set[str]],
     targets_by_split: dict[str, set[str]],
 ) -> list[str]:
-    """Detect cross-split id or target-text overlap (train leakage)."""
+    """Détecter le chevauchement d'ids utterance ou de texte cible entre splits (fuite train).
+
+    Le PRD exige des splits train et dev/test disjoints ; des cibles normalisées dupliquées peuvent
+    gonfler les métriques de validation même si les ids utterance diffèrent.
+
+    Paramètres :
+        ids_by_split: Utterance ids kept per split.
+        targets_by_split: Normalized target strings kept per split.
+
+    Retour :
+        Chaînes d'issues lisibles (vide sans fuite).
+    """
     issues: list[str] = []
     train_ids = ids_by_split.get("train", set())
     train_targets = targets_by_split.get("train", set())
     for split in ("valid", "test"):
+        # Tout utterance train réutilisé en valid/test casse l'intégrité des splits.
         id_overlap = train_ids & ids_by_split.get(split, set())
         if id_overlap:
             issues.append(
                 f"ID overlap train/{split}: {len(id_overlap)} utterance id(s)"
             )
+        # Des lignes cible normalisées identiques entre splits peuvent fuiter le signal étiquette.
         tgt_overlap = train_targets & targets_by_split.get(split, set())
         if tgt_overlap:
             issues.append(
@@ -420,6 +615,12 @@ def detect_leaks(
 
 
 def _write_progress(path: Path, payload: dict[str, Any]) -> None:
+    """Écraser atomiquement l'instantané JSON reprise/progression pour les longs runs.
+
+    Paramètres :
+        path: Progress file (default ``artifacts/prepare_<langpair>.progress.json``).
+        payload: Serializable counters for the current split.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
@@ -428,6 +629,14 @@ def _write_progress(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _count_existing_wavs(pair_out: Path) -> int:
+    """Compter les fichiers ``*.wav`` sous l'arborescence de sortie d'une paire (diag reprise).
+
+    Paramètres :
+        pair_out: ``<output-root>/<langpair>`` directory.
+
+    Retour :
+        Number of WAV files found recursively (0 if missing).
+    """
     if not pair_out.is_dir():
         return 0
     return sum(1 for _ in pair_out.rglob("*.wav"))
@@ -451,7 +660,31 @@ def run_prepare(
     report_path: Path | None = None,
     progress_path: Path | None = None,
 ) -> tuple[PrepareReport, int]:
-    """Prepare one language pair."""
+    """Préparer une paire de langues : segmenter audio, manifests, fuite et vérif WAV.
+
+    Parcourt train/valid/test, filtre par durée et texte, extrait ou réutilise
+    les WAV, écrit TSV + target.txt par split, puis exécute détection de fuite et vérification.
+
+    Paramètres :
+        langpair: Supported pair slug.
+        input_root: Raw m-TEDx download root.
+        output_root: Processed WAV output root.
+        manifests_root: TSV and ``.target.txt`` destination.
+        sample_rate: Target Hz (default 16000).
+        min_duration: Drop segments shorter than this (seconds).
+        max_duration: Drop segments longer than this (seconds).
+        text_norm: ``nfkc`` or ``none``.
+        lowercase: Lowercase normalized text when True.
+        fail_on_leak: Map leakage to exit code 5 when True.
+        resume: Reuse valid on-disk WAVs instead of re-extracting.
+        dry_run: Count/filter only; skip I/O except corpus resolution.
+        verbose: Print per-split and progress messages.
+        report_path: JSON report destination.
+        progress_path: Periodic progress JSON path.
+
+    Retour :
+        Tuple (``PrepareReport``, code de sortie pour ``run_from_namespace``).
+    """
     report_path = report_path or (
         PROJECT_ROOT / "artifacts" / f"prepare_{langpair}.json"
     )
@@ -557,9 +790,11 @@ def run_prepare(
             )
 
             if dry_run:
+                # Estimer le nombre de frames sans toucher FLAC/WAV (planification uniquement).
                 n_frames = int(duration * sample_rate)
             else:
                 reused = False
+                # Reprise : ignorer la ré-extraction si un WAV segment existant est valide.
                 if resume and abs_audio.is_file():
                     check = validate_wav_file(abs_audio, expected_sr=sample_rate)
                     if check["ok"]:
@@ -569,6 +804,7 @@ def run_prepare(
                             stats.drop_reasons.get("resumed", 0) + 1
                         )
                     else:
+                        # Cache corrompu ou mauvais format — supprimer et ré-extraire.
                         abs_audio.unlink(missing_ok=True)
                 if not reused:
                     try:
@@ -609,6 +845,7 @@ def run_prepare(
             )
             target_lines.append(tgt_text)
 
+            # Point de contrôle périodique pour prepares longs interrompus (tous les N segments).
             if not dry_run and stats.segments_in % PROGRESS_INTERVAL == 0:
                 _write_progress(
                     progress_path,
@@ -642,6 +879,7 @@ def run_prepare(
             )
         split_stats.append(stats)
 
+    # Anti-fuite : train ne doit pas partager ids ou cibles normalisées avec valid/test.
     leak_issues = detect_leaks(
         ids_by_split=ids_by_split, targets_by_split=targets_by_split
     )
@@ -657,6 +895,7 @@ def run_prepare(
         if verbose and wav_summary:
             print(f"  WAV verification: {wav_summary}")
 
+    # Priorité : traitement (4) conservé ; fuite (5) et vérif WAV (6) si encore 0.
     exit_code = 0
     if processing_errors:
         exit_code = 4
@@ -731,6 +970,15 @@ def _write_report(
     wav_errors: list[str] | None = None,
     wav_summary: dict[str, Any] | None = None,
 ) -> None:
+    """Persister le rapport prepare plus erreurs optionnelles et détails de validation WAV.
+
+    Paramètres :
+        path: JSON report path.
+        report: Core ``PrepareReport`` dataclass.
+        processing_errors: Per-segment or split-level failures.
+        wav_errors: Manifest/WAV verification messages.
+        wav_summary: Aggregate counts from ``verify_prepared_outputs``.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = asdict(report)
     payload["processing_errors"] = processing_errors
@@ -743,8 +991,13 @@ def _write_report(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Construire le parseur d'arguments CLI de l'étape 2.
+
+    Retour :
+        Configured ``ArgumentParser`` for ``2_prepare.py`` / pipeline prepare.
+    """
     parser = argparse.ArgumentParser(
-        description="S3T Stage 2 — Prepare m-TEDx audio and manifests",
+        description="S3T Étape 2 — Préparer audio et manifests m-TEDx",
     )
     parser.add_argument("--langpair", required=True, help="e.g. fr-en")
     parser.add_argument(
@@ -801,6 +1054,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_from_namespace(args: argparse.Namespace) -> int:
+    """Point d'entrée utilisé par ``main()`` et la sous-commande prepare de ``scripts/pipeline.py``.
+
+    Paramètres :
+        args: Parsed namespace from ``build_parser()``.
+
+    Retour :
+        Code de sortie processus (0 succès ; 2, 4, 5, 6 comme dans la doc du module).
+    """
     try:
         langpair = parse_langpair(args.langpair)
     except ValueError as exc:
@@ -878,6 +1139,14 @@ def run_from_namespace(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Entrée CLI : analyser les arguments et déléguer à ``run_from_namespace``.
+
+    Paramètres :
+        argv: Optional argument list (defaults to ``sys.argv[1:]``).
+
+    Retour :
+        Code de sortie de ``run_from_namespace``.
+    """
     parser = build_parser()
     args = parser.parse_args(argv)
     return run_from_namespace(args)

@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 """
-Stage 4 — Train ST model (HF speech encoder + Transformer decoder).
+Étape 4 — Fine-tuning de la traduction vocale (encodeur Pantagruel + décodeur Transformer).
+
+Entraîne la prédiction du token suivant sur m-TEDx avec teacher forcing, gel d'encodeur
+optionnel, précision mixte et SacreBLEU périodique sur le split dev pour sélectionner ``best.pt``.
+
+Entrées :
+    - Config YAML (manifests, chemin SPM, hyperparamètres modèle et train).
+    - Manifests TSV et WAV 16 kHz préparés à l'étape 2.
+    - Checkpoint Hugging Face Pantagruel (téléchargé à la première utilisation).
+
+Sorties (sous ``runs/<lang_pair>/<run_id>/``) :
+    - ``checkpoints/best.pt``, ``checkpoints/last.pt``
+    - ``train.log`` (lignes JSON par mise à jour)
+    - ``metrics.json``, copie de ``config.yaml``
+
+Codes de sortie : 0 succès, 2 entrées manquantes / erreur CLI.
 """
 
 from __future__ import annotations
@@ -36,6 +51,8 @@ from torch.utils.data import DataLoader
 
 @dataclass
 class TrainLogEvent:
+    """Une ligne JSON dans ``train.log`` pour une étape optimiseur."""
+
     timestamp_utc: str
     update: int
     train_loss: float
@@ -46,6 +63,7 @@ class TrainLogEvent:
 
 
 def get_device(prefer_cpu: bool) -> torch.device:
+    """Choisir CUDA si disponible sauf si ``--prefer-cpu`` est activé."""
     if not prefer_cpu and torch.cuda.is_available():
         return torch.device("cuda")
     return torch.device("cpu")
@@ -63,6 +81,23 @@ def evaluate_bleu(
     max_new_tokens: int,
     max_eval_batches: int | None,
 ) -> float:
+    """
+    Décoder en glouton le jeu de validation et retourner le SacreBLEU corpus.
+
+    Utilisé pendant l'entraînement pour choisir ``best.pt`` (PRD : BLEU dev plutôt que la perte).
+
+    Paramètres :
+        model : ``S3TModel`` actuel.
+        valid_loader : DataLoader de validation.
+        sp_model : SentencePiece pour la détokenisation.
+        device : Périphérique Torch.
+        bos_id, eos_id, pad_id: SPM special tokens.
+        max_new_tokens : Plafond de longueur générée.
+        max_eval_batches : Plafond optionnel pour éval mid-training plus rapide.
+
+    Retour :
+        Score SacreBLEU (0 si aucune référence).
+    """
     predictions: list[str] = []
     references: list[str] = []
     model.eval()
@@ -113,6 +148,20 @@ def run_train(
     verbose: bool,
     prefer_cpu: bool,
 ) -> int:
+    """
+    Exécuter la boucle d'entraînement ST complète depuis une config YAML.
+
+    Paramètres :
+        config_path : Config d'expérience (ex. ``configs/fr-en/base.yaml``).
+        run_id : Nom de sous-répertoire sous ``runs/<lang_pair>/``.
+        output_dir : Surcharge du répertoire de run (optionnel).
+        dry_run : Afficher le plan sans entraîner.
+        verbose : Journaliser perte et BLEU périodiques.
+        prefer_cpu : Forcer le CPU même si CUDA est disponible.
+
+    Retour :
+        0 on success, 2 if manifests/SPM are missing.
+    """
     config = load_yaml_config(config_path)
     run_dir = resolve_run_dir(config, run_id=run_id, output_dir_override=output_dir)
     checkpoints_dir = run_dir / "checkpoints"
@@ -263,6 +312,7 @@ def run_train(
                 break
 
             model.train()
+            # RF-11 : geler Pantagruel tôt pour qu'un décodeur aléatoire n'endommage pas les poids SSL.
             should_freeze = global_update < freeze_encoder_updates
             model.freeze_encoder(should_freeze)
 
@@ -287,12 +337,14 @@ def run_train(
                     ignore_index=pad_id,
                     label_smoothing=label_smoothing,
                 )
+                # Mettre à l'échelle la perte lors de l'accumulation de gradients sur micro-lots.
                 loss = loss / grad_accum
 
             scaler.scale(loss).backward()
             accumulated += 1
 
             if accumulated >= grad_accum:
+                # Une étape optimiseur par ``grad_accum`` passes avant.
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
                 scaler.step(optimizer)
@@ -401,8 +453,9 @@ def run_train(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """CLI pour l'étape 4."""
     parser = argparse.ArgumentParser(
-        description="S3T Stage 4 — ST training",
+        description="S3T Étape 4 — Entraînement ST",
     )
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
@@ -414,6 +467,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_from_namespace(args: argparse.Namespace) -> int:
+    """Point d'entrée utilisé par ``pipeline.py train``."""
     config_path = getattr(args, "config", None)
     if config_path is None:
         print("ERROR: --config is required for train stage", file=sys.stderr)
@@ -433,6 +487,7 @@ def run_from_namespace(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Point d'entrée CLI principal. Code 0 si succès, 2 si erreur usage/données."""
     parser = build_parser()
     args = parser.parse_args(argv)
     return run_from_namespace(args)

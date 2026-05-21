@@ -1,11 +1,22 @@
 #!/usr/bin/env python3
 """
-Stage 0 — Preflight checks for S3T pipeline (Linux + CUDA target).
+Étape 0 — Vérifications préalables avant les jobs GPU distants (cible Linux + CUDA).
 
-Policy: strict_critical — exit non-zero only if a critical check fails.
-Warnings do not block the pipeline.
+Valide la version Python, PyTorch/CUDA, l'espace disque, la VRAM et la connectivité réseau
+en option (OpenSLR, Hugging Face), ainsi que les répertoires projet attendus. Vise à échouer
+rapidement sur les clusters où un long téléchargement m-TEDx ou un entraînement s'arrêterait
+en cours d'exécution.
 
-Usage:
+Politique : ``strict_critical`` — code de sortie 1 uniquement si une vérification **critique**
+échoue ; les avertissements (ex. estimation VRAM faible) ne bloquent pas.
+
+Sorties :
+    - Résumé des vérifications sur la console.
+    - Rapport JSON (par défaut ``artifacts/preflight_report.json``).
+
+Codes de sortie : 0 succès, 1 échec critique, 0 en ``--dry-run``.
+
+Usage :
     python scripts/0_preflight.py
     python scripts/0_preflight.py --check-gpu --min-disk-gb 200 --min-vram-gb 8
     python scripts/0_preflight.py --output artifacts/preflight_report.json
@@ -39,6 +50,8 @@ CheckStatus = Literal["pass", "fail", "warn", "skip"]
 
 @dataclass
 class CheckResult:
+    """Résultat d'une sonde d'environnement individuelle."""
+
     name: str
     status: CheckStatus
     critical: bool
@@ -49,6 +62,8 @@ class CheckResult:
 
 @dataclass
 class PreflightReport:
+    """Rapport préalable agrégé écrit en JSON."""
+
     timestamp_utc: str
     host: str
     platform: str
@@ -61,6 +76,7 @@ class PreflightReport:
 
 
 def _check_python_version(min_major: int = 3, min_minor: int = 10) -> CheckResult:
+    """Exiger Python >= 3.10 (PRD)."""
     version = sys.version_info
     ok = (version.major, version.minor) >= (min_major, min_minor)
     observed = f"{version.major}.{version.minor}.{version.micro}"
@@ -76,6 +92,7 @@ def _check_python_version(min_major: int = 3, min_minor: int = 10) -> CheckResul
 
 
 def _check_torch_import() -> CheckResult:
+    """Vérifier que PyTorch est installé (critique pour toutes les étapes neuronales)."""
     try:
         import torch  # noqa: F401
 
@@ -100,6 +117,7 @@ def _check_torch_import() -> CheckResult:
 
 
 def _check_cuda_available(check_gpu: bool) -> CheckResult:
+    """Exiger CUDA lorsque les vérifications GPU sont activées (défaut pour entraînement distant)."""
     if not check_gpu:
         return CheckResult(
             name="cuda_available",
@@ -134,6 +152,7 @@ def _check_cuda_available(check_gpu: bool) -> CheckResult:
 
 
 def _check_disk_space(path: Path, min_gb: int) -> CheckResult:
+    """Garantir assez d'espace disque libre pour corpus + runs (PRD suggère ~200 Go)."""
     try:
         usage = shutil.disk_usage(path)
         free_gb = usage.free / (1024**3)
@@ -158,6 +177,7 @@ def _check_disk_space(path: Path, min_gb: int) -> CheckResult:
 
 
 def _query_vram_gb() -> float | None:
+    """Lire la VRAM totale via nvidia-smi (MiB → GiB), ou None si indisponible."""
     if shutil.which("nvidia-smi") is None:
         return None
     try:
@@ -173,13 +193,14 @@ def _query_vram_gb() -> float | None:
             timeout=10,
         )
         line = out.stdout.strip().splitlines()[0]
-        # nvidia-smi reports MiB
+        # nvidia-smi indique des MiB
         return float(line.strip()) / 1024.0
     except (subprocess.SubprocessError, ValueError, IndexError):
         return None
 
 
 def _check_vram(min_gb: int) -> CheckResult:
+    """Avertir si la VRAM GPU est sous la recommandation (non critique)."""
     vram_gb = _query_vram_gb()
     if vram_gb is None:
         return CheckResult(
@@ -202,6 +223,7 @@ def _check_vram(min_gb: int) -> CheckResult:
 
 
 def _check_nvidia_smi() -> CheckResult:
+    """Vérifier que nvidia-smi est dans le PATH (avertissement seulement)."""
     path = shutil.which("nvidia-smi")
     ok = path is not None
     return CheckResult(
@@ -215,6 +237,7 @@ def _check_nvidia_smi() -> CheckResult:
 
 
 def _check_url(url: str, timeout_s: float) -> bool:
+    """Tester l'URL en HEAD, puis GET si HEAD échoue."""
     try:
         req = Request(url, method="HEAD")
         with urlopen(req, timeout=timeout_s) as resp:
@@ -230,6 +253,7 @@ def _check_url(url: str, timeout_s: float) -> bool:
 
 
 def _check_network(check_network: bool, timeout_s: float) -> list[CheckResult]:
+    """Tests de joignabilité OpenSLR et Hugging Face (avertissements si indisponibles)."""
     if not check_network:
         return [
             CheckResult(
@@ -257,6 +281,7 @@ def _check_network(check_network: bool, timeout_s: float) -> list[CheckResult]:
 
 
 def _check_path_exists(path: Path, name: str) -> CheckResult:
+    """Avertir si des répertoires projet attendus sont absents (non critique)."""
     exists = path.exists()
     return CheckResult(
         name=name,
@@ -280,6 +305,12 @@ def run_preflight(
     dry_run: bool = False,
     verbose: bool = False,
 ) -> tuple[PreflightReport, int]:
+    """
+    Exécuter toutes les vérifications préalables et éventuellement écrire le rapport JSON.
+
+    Retour :
+        (report, exit_code) où exit_code vaut 0 s'il n'y a pas d'échec critique.
+    """
     disk_path = disk_path or PROJECT_ROOT
     output = output or (PROJECT_ROOT / "artifacts" / "preflight_report.json")
 
@@ -345,6 +376,7 @@ def run_preflight(
 
 
 def _print_report(checks: list[CheckResult], verbose: bool = False) -> None:
+    """Afficher les lignes de vérification lisibles sur stdout."""
     icons = {"pass": "OK", "fail": "FAIL", "warn": "WARN", "skip": "SKIP"}
     print("\nPreflight checks:")
     for c in checks:
@@ -356,6 +388,7 @@ def _print_report(checks: list[CheckResult], verbose: bool = False) -> None:
 
 
 def _write_json_report(path: Path, report: PreflightReport) -> None:
+    """Sérialiser ``PreflightReport`` en JSON sur disque."""
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "timestamp_utc": report.timestamp_utc,
@@ -374,8 +407,9 @@ def _write_json_report(path: Path, report: PreflightReport) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """CLI pour l'étape 0."""
     parser = argparse.ArgumentParser(
-        description="S3T Stage 0 — Preflight (Linux + CUDA, strict_critical)",
+        description="S3T Étape 0 — Prévol (Linux + CUDA, strict_critical)",
     )
     parser.add_argument("--min-disk-gb", type=int, default=200)
     parser.add_argument("--min-vram-gb", type=int, default=8)
@@ -383,13 +417,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--check-gpu",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Require CUDA availability (default: enabled).",
+        help="Exiger la disponibilité CUDA (défaut : activé).",
     )
     parser.add_argument(
         "--check-network",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Probe OpenSLR and Hugging Face (default: enabled).",
+        help="Tester OpenSLR et Hugging Face (défaut : activé).",
     )
     parser.add_argument(
         "--output",
@@ -400,7 +434,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--disk-path",
         type=Path,
         default=PROJECT_ROOT,
-        help="Path used for free-disk check (default: project root).",
+        help="Chemin utilisé pour la vérification d'espace disque (défaut : racine projet).",
     )
     parser.add_argument("--network-timeout", type=float, default=10.0)
     parser.add_argument("--verbose", "-v", action="store_true")
@@ -409,6 +443,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_from_namespace(args: argparse.Namespace) -> int:
+    """Point d'entrée utilisé par ``pipeline.py preflight``."""
     _, exit_code = run_preflight(
         min_disk_gb=args.min_disk_gb,
         min_vram_gb=args.min_vram_gb,
@@ -424,6 +459,7 @@ def run_from_namespace(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Point d'entrée CLI principal."""
     parser = build_parser()
     args = parser.parse_args(argv)
     return run_from_namespace(args)

@@ -1,6 +1,24 @@
 #!/usr/bin/env python3
 """
-Stage 5 — Decode valid/test and compute SacreBLEU.
+Étape 5 — Décoder les splits valid/test et scorer avec SacreBLEU (et CHRF, TER).
+
+Charge ``best.pt`` (ou un checkpoint donné), exécute un décodage glouton sur les manifests
+dev/test, écrit des fichiers de prédictions alignés ligne à ligne et stocke les artefacts
+métriques canoniques pour comparaison avec le tableau 8 Pantagruel (RF-14–19).
+
+Entrées :
+    - Config YAML + checkpoint de l'étape 4.
+    - Manifests TSV valid/test et modèle SPM.
+
+Sorties (``runs/<lang_pair>/<run_id>/eval/``) :
+    - ``dev_predictions.txt``, ``test_predictions.txt``
+    - ``sacrebleu_dev.txt``, ``sacrebleu_test.txt`` (inclut la signature SacreBLEU)
+    - ``metrics.json``
+
+Note : ``--beam-size`` est journalisé mais le décodage utilise actuellement la recherche
+gloutonne dans ``greedy_decode_batch`` (beam search prévu pour alignement article).
+
+Codes de sortie : 0 succès, 2 entrées manquantes.
 """
 
 from __future__ import annotations
@@ -30,6 +48,18 @@ from torch.utils.data import DataLoader
 
 
 def load_checkpoint(path: Path) -> dict[str, Any]:
+    """
+    Charger un checkpoint d'entraînement écrit par l'étape 4.
+
+    Paramètres :
+        path : ``best.pt`` ou ``last.pt``.
+
+    Retour :
+        Dict avec ``model_state``, ids de tokens, config embarquée optionnelle.
+
+    Lève :
+        FileNotFoundError, ValueError : Fichier invalide ou manquant.
+    """
     if not path.is_file():
         raise FileNotFoundError(f"Missing checkpoint: {path}")
     payload = torch.load(path, map_location="cpu")
@@ -49,6 +79,12 @@ def decode_manifest(
     pad_id: int,
     max_new_tokens: int,
 ) -> tuple[list[str], list[str]]:
+    """
+    Décoder en glouton tous les échantillons d'un DataLoader et détokeniser en chaînes.
+
+    Retour :
+        (predictions, references) comme listes parallèles d'une ligne par utterance.
+    """
     predictions: list[str] = []
     references: list[str] = []
     model.eval()
@@ -87,6 +123,16 @@ def decode_manifest(
 
 
 def score_with_sacrebleu(preds: list[str], refs: list[str]) -> dict[str, Any]:
+    """
+    Calculer BLEU, CHRF, TER corpus et la signature de protocole SacreBLEU.
+
+    Paramètres :
+        preds : Hypothèses système (une chaîne par ligne).
+        refs : Traductions de référence (même longueur que preds).
+
+    Retour :
+        Dict avec scores numériques, chaînes métriques lisibles et ``signature``.
+    """
     bleu_metric = sacrebleu.metrics.BLEU()
     chrf_metric = sacrebleu.metrics.CHRF()
     ter_metric = sacrebleu.metrics.TER()
@@ -115,6 +161,20 @@ def run_evaluate(
     verbose: bool,
     prefer_cpu: bool,
 ) -> int:
+    """
+    Exécuter l'évaluation sur les splits valid et test pour un run d'entraînement.
+
+    Paramètres :
+        config_path: Experiment YAML.
+        run_id: Run identifier matching stage 4.
+        checkpoint : Chemin optionnel ; défaut ``checkpoints/best.pt``.
+        beam_size : Enregistré dans les métriques (décodage glouton aujourd'hui).
+        output_dir: Override run root.
+        dry_run, verbose, prefer_cpu : Drapeaux CLI.
+
+    Retour :
+        0 on success, 2 if manifests/SPM/checkpoint are missing.
+    """
     config = load_yaml_config(config_path)
     run_dir = resolve_run_dir(config, run_id=run_id, output_dir_override=output_dir)
     checkpoints_dir = run_dir / "checkpoints"
@@ -286,8 +346,9 @@ def run_evaluate(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """CLI pour l'étape 5."""
     parser = argparse.ArgumentParser(
-        description="S3T Stage 5 — Evaluate checkpoint with SacreBLEU",
+        description="S3T Étape 5 — Évaluer checkpoint avec SacreBLEU",
     )
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
@@ -301,6 +362,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_from_namespace(args: argparse.Namespace) -> int:
+    """Point d'entrée utilisé par ``pipeline.py evaluate``."""
     config_path = getattr(args, "config", None)
     if config_path is None:
         print("ERROR: --config is required for evaluate stage", file=sys.stderr)
@@ -322,6 +384,7 @@ def run_from_namespace(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Point d'entrée CLI principal."""
     parser = build_parser()
     args = parser.parse_args(argv)
     return run_from_namespace(args)

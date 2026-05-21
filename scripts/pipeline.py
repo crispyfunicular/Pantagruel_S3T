@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """
-Unified ST pipeline CLI for Pantagruel speech translation replication.
+CLI pipeline ST unifié pour la réplication de traduction vocale Pantagruel.
 
-Stages:
-    preflight   — Validate machine, GPU, disk, network
-    download    — Fetch m-TEDx corpora (OpenSLR-100)
-    prepare     — Audio 16 kHz WAV, manifests, text normalization
-    spm         — Train SentencePiece tokenizers (train split only)
-    train       — Train ST model (encoder + decoder)
-    evaluate    — Decode valid/test + SacreBLEU metrics
-    infer       — Inference on new audio files
-    run         — Chain stages end-to-end
+Ce fichier est un **routeur uniquement** : il analyse les sous-commandes et délègue aux modules
+numérotés sous ``scripts/`` via import dynamique. Aucune logique d'entraînement ou de données ici.
 
-Usage:
+Étapes :
+    preflight   — Valider machine, GPU, disque, réseau
+    download    — Récupérer corpus m-TEDx (OpenSLR-100)
+    prepare     — Audio WAV 16 kHz, manifests, normalisation texte
+    spm         — Entraîner tokenizers SentencePiece (split train uniquement)
+    train       — Entraîner modèle ST (encodeur + décodeur)
+    evaluate    — Décoder valid/test + métriques SacreBLEU
+    infer       — Inférence sur nouveaux fichiers audio
+    run         — Enchaîner les étapes bout en bout
+
+Usage :
     python scripts/pipeline.py preflight
     python scripts/pipeline.py download --langpairs fr-es
     python scripts/pipeline.py prepare --langpair fr-es
@@ -39,36 +42,39 @@ EXIT_NOT_IMPLEMENTED = 7
 
 
 class NotYetImplemented(NotImplementedError):
-    """Raised when a pipeline stage is not yet implemented."""
+    """Levée lorsqu'un gestionnaire d'étape pipeline est encore un placeholder."""
 
 
 def not_yet(stage: str) -> None:
+    """Ancien helper pour étapes non implémentées (préférer les vrais modules d'étape)."""
     raise NotYetImplemented(
         f"NotYetImplemented: stage '{stage}' is not implemented yet."
     )
 
 
 def add_common_args(parser: argparse.ArgumentParser) -> None:
+    """Attacher ``--verbose``, ``--dry-run`` et ``--log-file`` à un sous-parseur."""
     parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
-        help="Verbose logging.",
+        help="Journalisation verbeuse.",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print planned actions without executing.",
+        help="Afficher les actions prévues sans exécuter.",
     )
     parser.add_argument(
         "--log-file",
         type=Path,
         default=None,
-        help="Optional log file path.",
+        help="Chemin optionnel du fichier journal.",
     )
 
 
 def _load_preflight_module():
+    """Importer l'étape 0 sans installation package (les scripts ne sont pas toujours un package)."""
     path = PROJECT_ROOT / "scripts" / "0_preflight.py"
     spec = importlib.util.spec_from_file_location("s3t_preflight", path)
     if spec is None or spec.loader is None:
@@ -80,11 +86,13 @@ def _load_preflight_module():
 
 
 def cmd_preflight(args: argparse.Namespace) -> int:
+    """Exécuter les vérifications préalables étape 0."""
     preflight = _load_preflight_module()
     return preflight.run_from_namespace(args)
 
 
 def _load_download_module():
+    """Importer le module téléchargement étape 1."""
     path = PROJECT_ROOT / "scripts" / "1_download.py"
     spec = importlib.util.spec_from_file_location("s3t_download", path)
     if spec is None or spec.loader is None:
@@ -96,11 +104,13 @@ def _load_download_module():
 
 
 def cmd_download(args: argparse.Namespace) -> int:
+    """Exécuter le téléchargement m-TEDx étape 1."""
     download = _load_download_module()
     return download.run_from_namespace(args)
 
 
 def _load_prepare_module():
+    """Importer le module prepare étape 2."""
     path = PROJECT_ROOT / "scripts" / "2_prepare.py"
     spec = importlib.util.spec_from_file_location("s3t_prepare", path)
     if spec is None or spec.loader is None:
@@ -112,11 +122,13 @@ def _load_prepare_module():
 
 
 def cmd_prepare(args: argparse.Namespace) -> int:
+    """Exécuter la préparation audio/manifests étape 2."""
     prepare = _load_prepare_module()
     return prepare.run_from_namespace(args)
 
 
 def _load_spm_module():
+    """Importer le module SentencePiece étape 3."""
     path = PROJECT_ROOT / "scripts" / "3_spm.py"
     spec = importlib.util.spec_from_file_location("s3t_spm", path)
     if spec is None or spec.loader is None:
@@ -128,6 +140,7 @@ def _load_spm_module():
 
 
 def _load_train_module():
+    """Importer le module train étape 4."""
     path = PROJECT_ROOT / "scripts" / "4_train.py"
     spec = importlib.util.spec_from_file_location("s3t_train", path)
     if spec is None or spec.loader is None:
@@ -139,6 +152,7 @@ def _load_train_module():
 
 
 def _load_evaluate_module():
+    """Importer le module evaluate étape 5."""
     path = PROJECT_ROOT / "scripts" / "5_evaluate.py"
     spec = importlib.util.spec_from_file_location("s3t_evaluate", path)
     if spec is None or spec.loader is None:
@@ -150,6 +164,7 @@ def _load_evaluate_module():
 
 
 def _load_infer_module():
+    """Importer le module infer étape 6."""
     path = PROJECT_ROOT / "scripts" / "6_infer.py"
     spec = importlib.util.spec_from_file_location("s3t_infer", path)
     if spec is None or spec.loader is None:
@@ -161,21 +176,25 @@ def _load_infer_module():
 
 
 def cmd_spm(args: argparse.Namespace) -> int:
+    """Exécuter l'entraînement SPM étape 3."""
     spm_stage = _load_spm_module()
     return spm_stage.run_from_namespace(args)
 
 
 def cmd_train(args: argparse.Namespace) -> int:
+    """Exécuter l'entraînement ST étape 4."""
     train_stage = _load_train_module()
     return train_stage.run_from_namespace(args)
 
 
 def cmd_evaluate(args: argparse.Namespace) -> int:
+    """Exécuter l'évaluation SacreBLEU étape 5."""
     evaluate_stage = _load_evaluate_module()
     return evaluate_stage.run_from_namespace(args)
 
 
 def cmd_infer(args: argparse.Namespace) -> int:
+    """Exécuter l'inférence étape 6 sur nouvel audio."""
     infer_stage = _load_infer_module()
     return infer_stage.run_from_namespace(args)
 
@@ -183,6 +202,7 @@ def cmd_infer(args: argparse.Namespace) -> int:
 def _run_stage(
     name: str, handler: Callable[[argparse.Namespace], int], args: argparse.Namespace
 ) -> int:
+    """Afficher la bannière d'étape et invoquer le handler sauf en ``--dry-run``."""
     if args.dry_run:
         print(f"[dry-run] would run stage: {name}")
         return 0
@@ -193,7 +213,7 @@ def _run_stage(
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    """Orchestrate pipeline stages from --from-stage to --to-stage."""
+    """Orchestrer les étapes pipeline de --from-stage à --to-stage."""
     from_idx = STAGES.index(args.from_stage)
     to_idx = STAGES.index(args.to_stage)
     if from_idx > to_idx:
@@ -231,14 +251,20 @@ def cmd_run(args: argparse.Namespace) -> int:
             return EXIT_NOT_IMPLEMENTED
 
     print("\n" + "=" * 60)
-    print("PIPELINE RUN COMPLETE (skeleton — stages may still be placeholders)")
+    print("PIPELINE RUN COMPLETE")
     print("=" * 60)
     return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """
+    Construire les sous-parseurs et dispatcher vers le handler d'étape sélectionné.
+
+    Retour :
+        Code de sortie de l'étape, ou 7 si ``NotYetImplemented`` est levée.
+    """
     parser = argparse.ArgumentParser(
-        description="S3T Pipeline — Pantagruel speech translation",
+        description="Pipeline S3T — Traduction vocale Pantagruel",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -246,7 +272,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # --- preflight ---
     p_preflight = subparsers.add_parser(
-        "preflight", help="Validate environment and resources"
+        "preflight", help="Valider l'environnement et les ressources"
     )
     add_common_args(p_preflight)
     p_preflight.add_argument("--min-disk-gb", type=int, default=200)
@@ -276,13 +302,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # --- download ---
     p_download = subparsers.add_parser(
-        "download", help="Download m-TEDx datasets (OpenSLR-100)"
+        "download", help="Télécharger jeux m-TEDx (OpenSLR-100)"
     )
     add_common_args(p_download)
     p_download.add_argument(
         "--langpairs",
         default="fr-en",
-        help="Comma-separated language pairs (default: fr-en)",
+        help="Paires de langues séparées par virgules (défaut : fr-en)",
     )
     p_download.add_argument(
         "--output-root",
@@ -307,7 +333,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_download.set_defaults(func=cmd_download)
 
     # --- prepare ---
-    p_prepare = subparsers.add_parser("prepare", help="Prepare audio and manifests")
+    p_prepare = subparsers.add_parser("prepare", help="Préparer audio et manifests")
     add_common_args(p_prepare)
     p_prepare.add_argument("--langpair", required=True, help="e.g. fr-es")
     p_prepare.add_argument(
@@ -333,23 +359,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--resume",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Skip segments with a valid output WAV already on disk",
+        help="Ignorer les segments dont le WAV de sortie valide existe déjà sur disque",
     )
     p_prepare.add_argument(
         "--report",
         type=Path,
         default=None,
-        help="JSON report path (default: artifacts/prepare_<langpair>.json)",
+        help="Chemin rapport JSON (défaut : artifacts/prepare_<langpair>.json)",
     )
     p_prepare.add_argument(
         "--verify-only",
         action="store_true",
-        help="Only verify existing WAV files and manifests",
+        help="Vérifier uniquement les WAV et manifests existants",
     )
     p_prepare.set_defaults(func=cmd_prepare)
 
     # --- spm ---
-    p_spm = subparsers.add_parser("spm", help="Train SentencePiece tokenizer")
+    p_spm = subparsers.add_parser("spm", help="Entraîner tokenizer SentencePiece")
     add_common_args(p_spm)
     p_spm.add_argument("--langpair", required=True)
     p_spm.add_argument("--vocab-size", type=int, default=1000)
@@ -375,7 +401,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_spm.set_defaults(func=cmd_spm)
 
     # --- train ---
-    p_train = subparsers.add_parser("train", help="Train ST model")
+    p_train = subparsers.add_parser("train", help="Entraîner modèle ST")
     add_common_args(p_train)
     p_train.add_argument("--config", type=Path, required=True)
     p_train.add_argument("--run-id", required=True)
@@ -384,7 +410,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_train.set_defaults(func=cmd_train)
 
     # --- evaluate ---
-    p_evaluate = subparsers.add_parser("evaluate", help="Evaluate with SacreBLEU")
+    p_evaluate = subparsers.add_parser("evaluate", help="Évaluer avec SacreBLEU")
     add_common_args(p_evaluate)
     p_evaluate.add_argument("--config", type=Path, required=True)
     p_evaluate.add_argument("--run-id", required=True)
@@ -395,7 +421,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_evaluate.set_defaults(func=cmd_evaluate)
 
     # --- infer ---
-    p_infer = subparsers.add_parser("infer", help="Run inference on audio")
+    p_infer = subparsers.add_parser("infer", help="Inférence sur audio")
     add_common_args(p_infer)
     p_infer.add_argument("--config", type=Path, default=None)
     p_infer.add_argument("--checkpoint", type=Path, required=True)
@@ -410,7 +436,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_infer.set_defaults(func=cmd_infer)
 
     # --- run ---
-    p_run = subparsers.add_parser("run", help="Run pipeline stages end-to-end")
+    p_run = subparsers.add_parser(
+        "run", help="Exécuter les étapes pipeline bout en bout"
+    )
     add_common_args(p_run)
     p_run.add_argument("--langpair", default="fr-es")
     p_run.add_argument("--run-id", required=True)

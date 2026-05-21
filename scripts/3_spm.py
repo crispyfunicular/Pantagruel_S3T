@@ -1,6 +1,20 @@
 #!/usr/bin/env python3
 """
-Stage 3 — Train SentencePiece model from train target text.
+Étape 3 — Entraîner un modèle de sous-mots SentencePiece sur les cibles anglaises uniquement.
+
+Construit le vocabulaire côté cible pour la ST (traductions anglaises m-TEDx). Doit être
+ajusté uniquement sur le texte du split d'entraînement pour éviter de fuir les statistiques
+des splits dev/test (PRD).
+
+Entrées :
+    - ``datasets/manifests/<langpair>/train.target.txt`` (depuis l'étape 2).
+
+Sorties :
+    - ``datasets/processed/spm/<langpair>_<vocab>.model`` et ``.vocab``
+    - Rapport JSON sous ``artifacts/spm_<langpair>_<vocab>.json``
+
+Codes de sortie : 0 succès, 2 entrée manquante / mauvaise paire de langues,
+3 sortie existante sans ``--overwrite``.
 """
 
 from __future__ import annotations
@@ -18,6 +32,18 @@ SUPPORTED_LANGPAIRS = frozenset({"fr-en", "fr-pt", "fr-es"})
 
 
 def parse_langpair(value: str) -> str:
+    """
+    Valider la paire de langues par rapport aux directions m-TEDx supportées.
+
+    Paramètres :
+        value : ex. ``fr-en``.
+
+    Retour :
+        Chaîne de paire normalisée.
+
+    Lève :
+        ValueError : Paire inconnue.
+    """
     pair = value.strip()
     if pair not in SUPPORTED_LANGPAIRS:
         supported = ", ".join(sorted(SUPPORTED_LANGPAIRS))
@@ -39,6 +65,24 @@ def run_spm(
     verbose: bool,
     report_path: Path | None,
 ) -> int:
+    """
+    Entraîner ou simuler (dry-run) SentencePiece sur le corpus cible d'entraînement.
+
+    Paramètres :
+        langpair : Nom du répertoire de la paire de langues.
+        vocab_size : Taille du vocabulaire cible (ablations : 1k vs 5k).
+        model_type : ``unigram`` ou ``bpe``.
+        manifests_root : Racine contenant ``<langpair>/train.target.txt``.
+        output_dir : Répertoire des sorties ``.model`` / ``.vocab``.
+        train_text : Chemin optionnel vers le fichier texte d'entraînement.
+        character_coverage : Hyperparamètre SPM de couverture des caractères.
+        overwrite : Remplacer les fichiers modèle existants si True.
+        dry_run, verbose : Drapeaux CLI.
+        report_path : Chemin de sortie des métadonnées JSON.
+
+    Retour :
+        0 en cas de succès, 2 si entrée manquante, 3 si sorties existantes sans overwrite.
+    """
     text_path = train_text or (manifests_root / langpair / "train.target.txt")
     if not text_path.is_file():
         print(f"ERROR: missing train text file: {text_path}", file=sys.stderr)
@@ -108,10 +152,11 @@ def run_spm(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """CLI pour l'étape 3."""
     parser = argparse.ArgumentParser(
-        description="S3T Stage 3 — SentencePiece tokenizer training",
+        description="S3T Étape 3 — Entraînement du tokenizer SentencePiece",
     )
-    parser.add_argument("--langpair", required=True, help="e.g. fr-en")
+    parser.add_argument("--langpair", required=True, help="ex. fr-en")
     parser.add_argument("--vocab-size", type=int, default=1000)
     parser.add_argument("--model-type", choices=("unigram", "bpe"), default="unigram")
     parser.add_argument(
@@ -138,6 +183,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_from_namespace(args: argparse.Namespace) -> int:
+    """Point d'entrée utilisé par ``pipeline.py spm``."""
     try:
         langpair = parse_langpair(args.langpair)
     except ValueError as exc:
@@ -163,6 +209,7 @@ def run_from_namespace(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Point d'entrée CLI principal."""
     parser = build_parser()
     args = parser.parse_args(argv)
     return run_from_namespace(args)

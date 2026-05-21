@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
-# Bootstrap environment for S3T (Phase 1 — PRD.md)
-# Creates venv, installs requirements.txt, verifies torch/CUDA.
+# Bootstrap S3T — créer .venv et installer les dépendances Phase 1 (PRD / étape 0).
+#
+# Entrées : requirements.txt, requirements-dev.txt optionnel via --lock.
+# Sorties : .venv avec torch, transformers, sacrebleu, etc. ; requirements.lock.txt optionnel.
+# Hors pipeline.py ; à exécuter une fois par machine avant preflight/download.
+#
+# Crée le venv, installe requirements.txt, vérifie torch/CUDA si disponible.
 
 set -euo pipefail
 
@@ -71,7 +76,7 @@ if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
   exit 3
 fi
 
-# Create virtual environment
+# Créer l'environnement virtuel
 if [[ ! -d "${VENV_DIR}" ]]; then
   echo "==> Creating virtual environment..."
   "${PYTHON_BIN}" -m venv "${VENV_DIR}"
@@ -107,13 +112,13 @@ if torch.cuda.is_available():
 sys.exit(0)
 "
 
-# Placeholder: Hugging Face Pantagruel weights download (not implemented yet)
+# Placeholder : téléchargement des poids Pantagruel Hugging Face (pas encore implémenté)
 download_pantagruel_weights() {
   echo "NotYetImplemented: download Pantagruel weights from Hugging Face (PantagrueLLM/)" >&2
   return ${EXIT_NOT_IMPLEMENTED}
 }
 
-# Uncomment when implemented:
+# Décommenter une fois implémenté :
 # download_pantagruel_weights
 
 echo ""

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Resume m-TEDx prepare (WAV 16 kHz mono PCM16 + manifests).
-# Safe to run multiple times: skips valid WAV files already on disk.
+# Reprendre le prepare m-TEDx (WAV 16 kHz mono PCM16 + manifests).
+# Réexécutable sans risque : ignore les WAV valides déjà présents sur disque.
 #
-# Usage:
-#   ./scripts/resume_prepare.sh              # default fr-en
+# Usage :
+#   ./scripts/resume_prepare.sh              # fr-en par défaut
 #   ./scripts/resume_prepare.sh fr-es
 #   ./scripts/resume_prepare.sh fr-en --verify-only
 
