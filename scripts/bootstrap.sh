@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Bootstrap S3T — créer .venv et installer les dépendances Phase 1 (PRD / étape 0).
 #
-# Entrées : requirements.txt, requirements-dev.txt optionnel via --lock.
+# Entrées : requirements.txt (runtime + dev) ; optionnel --lock.
 # Sorties : .venv avec torch, transformers, sacrebleu, etc. ; requirements.lock.txt optionnel.
 # Hors pipeline.py ; à exécuter une fois par machine avant preflight/download.
 #

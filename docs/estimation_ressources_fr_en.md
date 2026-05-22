@@ -2,7 +2,7 @@
 
 Document de planification pour dimensionner **disque**, **GPU (VRAM + temps)**, **RAM CPU** et **réseau** avant de lancer les runs S3T / Pantagruel.
 
-**Hypothèses de référence** (alignées PRD + `README_experiments.md`) :
+**Hypothèses de référence** (alignées [PRD.md](PRD.md) §5 et §9) :
 
 | Paramètre | Valeur |
 |-----------|--------|
@@ -113,7 +113,7 @@ Le collateur padde les waveforms à la **longueur max du batch**. Avec `--max-du
 | GPU | Config typique | Verdict |
 |-----|----------------|---------|
 | **8 GB** (T4, RTX 3060) | batch 2–4, accum 16–32, max_dur 20 s, bf16 | **Pilote OK**, run long possible mais lent |
-| **16 GB** (V100 16G, RTX 4080, A10) | batch 8, accum 8, max_dur 30 s, bf16 | **Recommandé** (config README_experiments) |
+| **16 GB** (V100 16G, RTX 4080, A10) | batch 8, accum 8, max_dur 30 s, bf16 | **Recommandé** (template PRD §9) |
 | **24 GB+** (A100 40G, RTX 4090) | batch 8–16, beam eval confortable | **Confort** + marge ablations parallèles |
 
 **Preflight** : VRAM ≥ 8 GB en *warning* ; viser **16 GB** pour l’expérience de référence.
@@ -302,7 +302,7 @@ gpu_hours = max_updates * sec_per_update / 3600 \
 
 - [PRD.md](../PRD.md) §1.3 (volumes m-TEDx), §5 (hyperparamètres), §7 (risques)
 - [README.md](../README.md) prérequis 200 GB
-- [README_experiments.md](../README_experiments.md) template config
+- [PRD.md](PRD.md) §9 template config ; [README.md](../README.md) quickstart
 - [presentation_fr_en_pantagruel.md](presentation_fr_en_pantagruel.md)
 
 *Mettre à jour ce document après le premier run pilote avec les valeurs réelles `sec/update`, VRAM max et `bleu_dev`.*

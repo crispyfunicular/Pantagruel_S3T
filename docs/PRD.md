@@ -194,8 +194,7 @@ Ce plan est conçu pour être exécuté de manière itérative. Chaque phase doi
 ### Phase 1 : Configuration de l'Environnement & Outillage (Jours 1-2)
 * Scripts : `scripts/bootstrap.sh`, `scripts/0_preflight.py`, orchestration via `scripts/pipeline.py preflight`.
 * Créer un environnement virtuel isolé (`conda` ou `venv` avec Python 3.10+).
-* Installer les dépendances clés : `torch`, `transformers`, `speechbrain`, `sacrebleu`, `sentencepiece`, `tensorboard`.
-* Installer les outils dev : `pip install -r requirements-dev.txt` puis `pre-commit install`.
+* Installer les dépendances : `pip install -r requirements.txt` puis `pre-commit install` (voir `scripts/bootstrap.sh` ; optionnel `pip freeze > requirements.lock.txt`).
 * Valider la chaîne qualité : `ruff check .`, `ruff format --check .`, `pytest`.
 * Configurer les accès au GPU (Vérification de `cuda.is_available()`).
 * Télécharger les poids pré-entraînés du modèle Pantagruel sur Hugging Face (`PantagrueLLM/`).
@@ -292,3 +291,125 @@ Pour assurer une comparaison équitable, utilisez les valeurs cibles suivantes l
 4. **Écart de protocole BLEU avec le papier**
    * *Risque :* Une différence de normalisation/dé-tokenisation ou d'options SacreBLEU rend la comparaison avec Pantagruel invalide.
    * *Atténuation :* Figer la commande canonique d'évaluation, stocker la signature SacreBLEU et appliquer un protocole texte identique sur toutes les expériences.
+
+---
+
+## 8. Protocole opérationnel des runs
+
+Complète [README.md](../README.md) (usage CLI des stages). Points obligatoires pour chaque expérience :
+
+### 8.1 Convention de nommage
+
+`run_<id>_<langpair>_seed<seed>_freeze<updates>_vocab<size>_beam<n>`
+
+Exemple : `run_001_fr-en_seed42_freeze5k_vocab1k_beam5`
+
+Le répertoire de sortie suit `runs/<langpair>/<run_id>/` (voir contrat d'artifacts §2.5).
+
+### 8.2 Reproductibilité (RF-20 à RF-23)
+
+Chaque run doit conserver :
+
+- commit Git (`git rev-parse HEAD`) ;
+- `requirements.lock.txt` (optionnel mais recommandé après bootstrap) ;
+- copie figée `runs/.../config.yaml` ;
+- seeds et flags CuDNN loggés dans `train.log` ;
+- commandes exactes exécutées (train / evaluate / infer).
+
+Les scripts d'entraînement appellent `set_seed()` dans [`scripts/st_common.py`](../scripts/st_common.py) selon `experiment.seed` et `experiment.deterministic` du YAML.
+
+### 8.3 Suivi des expériences
+
+Fichier agrégé recommandé : `runs/experiments_tracking.csv`
+
+```csv
+run_id,lang_pair,seed,freeze_updates,vocab_size,beam,bleu_dev,bleu_test,chrf_test,ter_test,train_hours,max_gpu_mem_gb,git_commit,status,notes
+```
+
+Mettre à jour après chaque run pour comparer à la Table 8 Pantagruel.
+
+### 8.4 Checklist de clôture d'un run
+
+- [ ] `config.yaml` dans le dossier run
+- [ ] commit Git enregistré (dans tracking ou notes)
+- [ ] `train.log` et checkpoints `best.pt` / `last.pt`
+- [ ] `eval/dev_predictions.txt`, `eval/test_predictions.txt`
+- [ ] `eval/sacrebleu_dev.txt`, `eval/sacrebleu_test.txt` (signature SacreBLEU)
+- [ ] `eval/metrics.json`
+- [ ] ligne ajoutée à `experiments_tracking.csv`
+
+### 8.5 Évaluation SacreBLEU (référence)
+
+L'étape `5_evaluate.py` produit les métriques avec protocole figé. Pour une invocation manuelle (debug) :
+
+```bash
+sacrebleu datasets/manifests/fr-en/valid.target.txt \
+  -i runs/fr-en/<run_id>/eval/dev_predictions.txt \
+  -m bleu chrf ter -w 2 \
+  > runs/fr-en/<run_id>/eval/sacrebleu_dev_manual.txt
+```
+
+**Règle :** même commande et mêmes options entre tous les runs comparés ; conserver la signature dans les artifacts.
+
+### 8.6 Smoke test local (FR→FR, hors ST)
+
+Le checkpoint `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` sert à valider l'environnement HF (encodeur seul) ou un proxy ASR Whisper — voir [README.md § Smoke test](../README.md#smoke-test-frfr-asr--encodeur-pantagruel).
+
+---
+
+## 9. Template de configuration run (YAML)
+
+À placer sous `configs/<langpair>/base.yaml` (chemins à adapter). Les champs non encore lus par `4_train.py` restent documentés pour alignement papier.
+
+```yaml
+experiment:
+  name: "fr-en_base"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_001_fr-en_seed42_freeze5k_vocab1k_beam5"
+  seed: 42
+  deterministic: true
+
+data:
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  spm_model: "datasets/processed/spm/fr-en_1000.model"
+  sample_rate: 16000
+  min_duration_s: 1.0
+  max_duration_s: 30.0
+
+model:
+  encoder_name: "PantagrueLLM/Pantagruel-Base"
+  decoder_layers: 6
+  decoder_heads: 8
+  hidden_dim: 768
+  dropout: 0.1
+
+train:
+  max_updates: 120000
+  warmup_updates: 10000
+  freeze_encoder_updates: 5000
+  learning_rate_peak: 0.0002
+  weight_decay: 0.01
+  label_smoothing: 0.1
+  batch_size: 8
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "bf16"
+  eval_every_updates: 1000
+  early_stopping_patience: 8
+  best_checkpoint_metric: "bleu_dev"
+
+decode:
+  beam_size: 5
+  max_len_a: 1.2
+  max_len_b: 10
+```
+
+**Commandes associées (pipeline actuel) :**
+
+```bash
+python scripts/pipeline.py spm --langpair fr-en --vocab-size 1000
+python scripts/pipeline.py train --config configs/fr-en/base.yaml --run-id run_001_fr-en
+python scripts/pipeline.py evaluate --config configs/fr-en/base.yaml --run-id run_001_fr-en
+```

@@ -1,6 +1,0 @@
-# Outils de développement (lint, tests, hooks)
--r requirements.txt
-
-ruff>=0.8.0
-pytest>=8.0.0
-pre-commit>=4.0.0

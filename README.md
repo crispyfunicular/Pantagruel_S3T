@@ -4,11 +4,10 @@ Réplication du système de **traduction de la parole end-to-end** décrit dans 
 
 | Document | Rôle |
 |----------|------|
-| [PRD.md](PRD.md) | Vision, exigences, hyperparamètres, risques |
+| [docs/PRD.md](docs/PRD.md) | Vision, exigences, hyperparamètres, ablations, template YAML, protocole runs |
 | [AGENTS.md](AGENTS.md) | Conventions agents, qualité, workflow avant commit |
-| [README_experiments.md](README_experiments.md) | Runbook détaillé, ablations, tracking |
-| [requirements.txt](requirements.txt) | Dépendances Phase 1 |
-| [requirements-dev.txt](requirements-dev.txt) | Ruff, pytest, pre-commit |
+| [requirements.txt](requirements.txt) | Dépendances runtime + dev (Ruff, pytest, pre-commit) |
+| [docs/estimation_ressources_fr_en.md](docs/estimation_ressources_fr_en.md) | Budget disque / GPU (fr→en) |
 
 ---
 
@@ -29,7 +28,7 @@ Installation des outils dev :
 
 ```bash
 source .venv/bin/activate
-pip install -r requirements-dev.txt
+pip install -r requirements.txt
 pre-commit install
 ```
 
@@ -42,7 +41,7 @@ pytest
 # ou : pre-commit run --all-files
 ```
 
-Mettre à jour [PRD.md](PRD.md) et [README.md](README.md) dans le même commit si le comportement CLI, l'architecture ou les prérequis changent.
+Mettre à jour [docs/PRD.md](docs/PRD.md) et [README.md](README.md) dans le même commit si le comportement CLI, l'architecture ou les prérequis changent.
 
 ---
 
@@ -65,7 +64,7 @@ Convention : **un fichier Python par stage**, plus un orchestrateur CLI.
 Chaque module stage est exécutable **directement** (`python scripts/N_*.py ...`) ou via `pipeline.py <subcommand>`.  
 `pipeline.py` ne contient pas la logique métier : il route vers le module correspondant.
 
-**Stack d'entraînement :** SpeechBrain (pas fairseq). Le dépôt ne suit pas le schéma minimal `recipes/<task>/train.py` + `hparams/*.yaml` : stages numérotés, contrat d'artifacts par run, SacreBLEU externe obligatoire. Voir [PRD.md §2.5](PRD.md#25-source-de-vérité-historique-et-transposition-speechbrain) pour le tableau des divergences et l'alignement avec l'historique fairseq (`pantagruel_uni`, lecture seule).
+**Stack d'entraînement :** PyTorch + **transformers** (encodeur Pantagruel HF) + décodeur custom — **pas fairseq**. Le PRD décrit la transposition par rapport à SpeechBrain/fairseq historiques ; l'implémentation actuelle n'importe pas SpeechBrain. Voir [PRD.md §2.5](docs/PRD.md#25-source-de-vérité-historique-et-transposition-speechbrain).
 
 ---
 
@@ -84,8 +83,8 @@ source .venv/bin/activate
 python scripts/pipeline.py preflight
 
 # 2) Pipeline complet (fr-en exemple)
-python scripts/pipeline.py run --langpair fr-es --run-id run_001 \
-  --config configs/fr-es/base.yaml \
+python scripts/pipeline.py run --langpair fr-en --run-id run_001_fr-en \
+  --config configs/fr-en/base.yaml \
   --from-stage preflight --to-stage evaluate
 ```
 
@@ -311,7 +310,63 @@ S3T/
 | Train | loss ↓, `BLEU dev` > baseline |
 | Evaluate | signature SacreBLEU loggée, artifacts reproductibles |
 
-Détails : [PRD.md](PRD.md) §4 et [README_experiments.md](README_experiments.md).
+Détails : [PRD.md §4](docs/PRD.md#4-plan-de-projet--étapes-dexécution-gantt-conceptuel) et [§8](docs/PRD.md#8-protocole-opérationnel-des-runs).
+
+---
+
+## Expérimentation et reproductibilité
+
+### Convention de nommage des runs
+
+`run_<id>_<langpair>_seed<seed>_freeze<updates>_vocab<size>_beam<n>` — ex. `run_001_fr-en_seed42_freeze5k_vocab1k_beam5`.
+
+Répertoire : `runs/<langpair>/<run_id>/` avec le [contrat d'artifacts](docs/PRD.md#contrat-dartifacts-par-run-commun-temps-a-et-b) (config, checkpoints, eval, SacreBLEU).
+
+### Verrouillage d'environnement
+
+```bash
+./scripts/bootstrap.sh --lock   # écrit requirements.lock.txt
+```
+
+### Suivi et checklist
+
+- Agrégat recommandé : `runs/experiments_tracking.csv` (colonnes : voir [PRD §8.3](docs/PRD.md#83-suivi-des-expériences)).
+- Checklist de clôture : [PRD §8.4](docs/PRD.md#84-checklist-de-clôture-dun-run).
+
+### Baselines et ablations
+
+Ordre recommandé (détail et règles de décision : [PRD §6](docs/PRD.md#6-baselines--mini-ablations-obligatoire)) :
+
+1. BL : encodeur figé longtemps, `beam=1`, vocab 1k  
+2. A/B : `freeze` 5k vs 10k  
+3. C : `beam=5` (une fois implémenté dans `5_evaluate.py`)  
+4. D : vocab 5k  
+
+Promouvoir une variante seulement si **BLEU dev** progresse de façon stable sur au moins **2 seeds**.
+
+### Template de config
+
+Exemple YAML complet : [PRD §9](docs/PRD.md#9-template-de-configuration-run-yaml). Fichiers cibles : `configs/fr-en/base.yaml`, etc.
+
+---
+
+## Smoke test FR→FR (ASR / encodeur Pantagruel)
+
+Hors pipeline ST m-TEDx : valider l'environnement sur un petit corpus local (`corpus_audio/`).
+
+```bash
+source .venv/bin/activate
+
+# Encodeur HF : forward audio (pas de transcription)
+python scripts/quick_eval_hf_asr.py corpus_audio/ \
+  --transcription pantagruel-encoder
+
+# Proxy ASR Whisper (WER/CER reproductible)
+python scripts/quick_eval_hf_asr.py corpus_audio/ \
+  --transcription whisper
+```
+
+Rapport : `artifacts/quick_eval_*.json`. L'évaluation ST cible reste **SacreBLEU** via `5_evaluate.py`.
 
 ---
 
