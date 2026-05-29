@@ -37,9 +37,9 @@ Codes de sortie
 6 — vérification WAV a posteriori échouée (``--verify-only`` ou fin de ``run_prepare``).
 
 Usage :
-    python scripts/2_prepare.py --langpair fr-en
-    python scripts/2_prepare.py --langpair fr-es --dry-run
-    python scripts/pipeline.py prepare --langpair fr-en
+    python scripts_communs/2_prepare.py --langpair fr-en
+    python scripts_communs/2_prepare.py --langpair fr-es --dry-run
+    python scripts_communs/pipeline.py prepare --langpair fr-en
 """
 
 from __future__ import annotations
@@ -67,6 +67,8 @@ TARGET_SAMPLE_RATE = 16000
 TARGET_CHANNELS = 1
 TARGET_SUBTYPE = "PCM_16"
 
+SEGMENT_MODES = ("utterance", "sentence_like")
+
 MANIFEST_COLUMNS = (
     "id",
     "audio",
@@ -84,6 +86,8 @@ class SegmentRecord:
     """Un utterance m-TEDx avant filtrage et extraction WAV."""
 
     utt_id: str
+    talk_id: str
+    order_idx: int
     wav_path: Path
     offset_s: float
     duration_s: float
@@ -122,6 +126,8 @@ class PrepareReport:
     max_duration: float
     text_norm: str
     lowercase: bool
+    segment_mode: str = "utterance"
+    sentence_like: dict[str, Any] = field(default_factory=dict)
     splits: list[SplitStats] = field(default_factory=list)
     leak_issues: list[str] = field(default_factory=list)
     exit_code: int = 0
@@ -289,6 +295,8 @@ def iter_mtedx_segments(
             # line_index lie ce segment à la ligne texte parallèle src/tgt.
             yield SegmentRecord(
                 utt_id=f"{stem}_{seg_index}",
+                talk_id=stem,
+                order_idx=int(seg_index),
                 wav_path=wav_path,
                 offset_s=float(segment["offset"]),
                 duration_s=float(segment["duration"]),
@@ -298,6 +306,149 @@ def iter_mtedx_segments(
                 src_lang=src_lang,
                 tgt_lang=tgt_lang,
             )
+
+
+def _ends_with_sentence_punctuation(text: str) -> bool:
+    """Heuristique simple : détecter une fin de phrase (ponctuation forte)."""
+
+    value = text.strip()
+    return bool(value) and value[-1] in ".?!"
+
+
+def merge_segments_sentence_like(
+    segments: list[SegmentRecord],
+    *,
+    target_duration_s: float,
+    max_duration_s: float,
+    require_punctuation: bool,
+) -> tuple[list[SegmentRecord], dict[str, Any]]:
+    """
+    Fusionner des segments contigus en unités \"phrase-like\".
+
+    Idée : regrouper des segments du même talk (et, autant que possible, même speaker)
+    jusqu'à atteindre une ponctuation forte, tout en bornant la durée.
+
+    Paramètres :
+        segments : Liste de segments d'un split (typiquement déjà triée par talk/offset).
+        target_duration_s : Durée cible de fusion (couper dès qu'on a une phrase complète
+            et qu'on atteint environ cette durée).
+        max_duration_s : Durée maximale d'un segment fusionné.
+        require_punctuation : Si True, on préfère couper uniquement quand la fusion
+            finit sur une ponctuation forte (src ou tgt), sauf si on dépasse max_duration_s.
+
+    Retour :
+        (merged_segments, stats) où stats contient des compteurs utiles au rapport.
+    """
+
+    if not segments:
+        return [], {"segments_in": 0, "segments_out": 0, "merged_groups": 0}
+
+    # Sécurités.
+    target_duration_s = float(target_duration_s)
+    max_duration_s = float(max_duration_s)
+    if target_duration_s <= 0:
+        target_duration_s = 10.0
+    if max_duration_s <= 0:
+        max_duration_s = 15.0
+    if target_duration_s > max_duration_s:
+        target_duration_s = max_duration_s
+
+    # Grouper par talk_id pour éviter toute fusion inter-talk.
+    by_talk: dict[str, list[SegmentRecord]] = defaultdict(list)
+    for seg in segments:
+        by_talk[seg.talk_id].append(seg)
+
+    merged: list[SegmentRecord] = []
+    merged_groups = 0
+
+    for talk_id in sorted(by_talk):
+        current_talk_id = talk_id
+        talk_segments = sorted(
+            by_talk[current_talk_id], key=lambda s: (s.order_idx, s.offset_s)
+        )
+        group: list[SegmentRecord] = []
+        group_duration = 0.0
+        group_index = 0
+        group_speaker: str | None = None
+
+        def flush_group(*, talk_id: str = current_talk_id) -> None:
+            nonlocal group, group_duration, group_index, merged_groups, group_speaker
+            if not group:
+                return
+            first = group[0]
+            last = group[-1]
+            utt_id = f"{talk_id}_m{group_index}"
+            group_index += 1
+            merged_groups += 1
+            merged.append(
+                SegmentRecord(
+                    utt_id=utt_id,
+                    talk_id=talk_id,
+                    order_idx=first.order_idx,
+                    wav_path=first.wav_path,
+                    offset_s=first.offset_s,
+                    duration_s=group_duration,
+                    src_text=" ".join(s.src_text.strip() for s in group).strip(),
+                    tgt_text=" ".join(s.tgt_text.strip() for s in group).strip(),
+                    speaker=group_speaker or last.speaker,
+                    src_lang=first.src_lang,
+                    tgt_lang=first.tgt_lang,
+                )
+            )
+            group = []
+            group_duration = 0.0
+            group_speaker = None
+
+        for seg in talk_segments:
+            if not group:
+                group = [seg]
+                group_duration = float(seg.duration_s)
+                group_speaker = seg.speaker
+                continue
+
+            # Ne fusionner que des segments de même speaker si possible (évite des enchaînements
+            # incongrus). Si speaker est vide, on ignore la contrainte.
+            if group_speaker and seg.speaker and seg.speaker != group_speaker:
+                flush_group()
+                group = [seg]
+                group_duration = float(seg.duration_s)
+                group_speaker = seg.speaker
+                continue
+
+            next_duration = group_duration + float(seg.duration_s)
+            if next_duration > max_duration_s:
+                # On flush avant d'ajouter le segment si on dépasserait la borne.
+                flush_group()
+                group = [seg]
+                group_duration = float(seg.duration_s)
+                group_speaker = seg.speaker
+                continue
+
+            # Ajouter le segment.
+            group.append(seg)
+            group_duration = next_duration
+
+            # Critère de coupe : fin de phrase et durée suffisante.
+            ends_sentence = _ends_with_sentence_punctuation(seg.src_text) or (
+                _ends_with_sentence_punctuation(seg.tgt_text)
+            )
+            if ends_sentence and group_duration >= target_duration_s:
+                flush_group()
+                continue
+
+            # Si on ne requiert pas la ponctuation, on peut flush proche de la cible.
+            if not require_punctuation and group_duration >= target_duration_s:
+                flush_group()
+
+        flush_group()
+
+    stats = {
+        "segments_in": len(segments),
+        "segments_out": len(merged),
+        "merged_groups": merged_groups,
+        "avg_merge_factor": (len(segments) / len(merged)) if merged else 0.0,
+    }
+    return merged, stats
 
 
 def _load_soundfile():
@@ -653,7 +804,12 @@ def run_prepare(
     max_duration: float = 30.0,
     text_norm: str = "nfkc",
     lowercase: bool = False,
+    segment_mode: str = "utterance",
+    sentence_target_duration: float = 10.0,
+    sentence_max_duration: float = 15.0,
+    sentence_require_punctuation: bool = True,
     fail_on_leak: bool = True,
+    dedupe_target_overlap: bool = False,
     resume: bool = True,
     dry_run: bool = False,
     verbose: bool = False,
@@ -725,6 +881,9 @@ def run_prepare(
     ids_by_split: dict[str, set[str]] = {}
     targets_by_split: dict[str, set[str]] = {}
     processing_errors: list[str] = []
+    rows_by_split: dict[str, list[dict[str, Any]]] = {}
+    target_lines_by_split: dict[str, list[str]] = {}
+    sentence_like_stats: dict[str, Any] = {}
 
     for split in SPLITS:
         stats = SplitStats(split=split)
@@ -747,7 +906,17 @@ def run_prepare(
             split_stats.append(stats)
             continue
 
-        for segment in segment_iter:
+        segments = list(segment_iter)
+        if segment_mode == "sentence_like":
+            segments, split_sentence_stats = merge_segments_sentence_like(
+                segments,
+                target_duration_s=sentence_target_duration,
+                max_duration_s=sentence_max_duration,
+                require_punctuation=sentence_require_punctuation,
+            )
+            sentence_like_stats[split] = split_sentence_stats
+
+        for segment in segments:
             stats.segments_in += 1
             src_text = normalize_text(
                 segment.src_text, mode=text_norm, lowercase=lowercase
@@ -868,9 +1037,8 @@ def run_prepare(
                         f"resumed={stats.drop_reasons.get('resumed', 0)}"
                     )
 
-        if not dry_run:
-            write_manifest_tsv(pair_manifests / f"{split}.tsv", rows)
-            write_target_lines(pair_manifests / f"{split}.target.txt", target_lines)
+        rows_by_split[split] = rows
+        target_lines_by_split[split] = target_lines
 
         if verbose:
             print(
@@ -883,6 +1051,60 @@ def run_prepare(
     leak_issues = detect_leaks(
         ids_by_split=ids_by_split, targets_by_split=targets_by_split
     )
+
+    if (
+        dedupe_target_overlap
+        and not dry_run
+        and not processing_errors
+        and leak_issues
+        and "train" in targets_by_split
+    ):
+        train_targets = targets_by_split["train"]
+        overlaps_valid = train_targets & targets_by_split.get("valid", set())
+        overlaps_test = train_targets & targets_by_split.get("test", set())
+
+        if verbose:
+            total = len(overlaps_valid) + len(overlaps_test)
+            print(
+                f"  Dedupe target overlaps: {total} unique target(s) "
+                "removed from valid/test."
+            )
+
+        for split, overlaps in (("valid", overlaps_valid), ("test", overlaps_test)):
+            if not overlaps:
+                continue
+            original_rows = rows_by_split.get(split, [])
+            kept_rows = [
+                row for row in original_rows if row.get("tgt_text") not in overlaps
+            ]
+            removed = len(original_rows) - len(kept_rows)
+            rows_by_split[split] = kept_rows
+            target_lines_by_split[split] = [row["tgt_text"] for row in kept_rows]
+            ids_by_split[split] = {row["id"] for row in kept_rows}
+            targets_by_split[split] = {row["tgt_text"] for row in kept_rows}
+
+            for stats in split_stats:
+                if stats.split != split:
+                    continue
+                stats.segments_kept -= removed
+                stats.segments_dropped += removed
+                stats.drop_reasons["target_overlap_train"] = (
+                    stats.drop_reasons.get("target_overlap_train", 0) + removed
+                )
+
+        leak_issues = detect_leaks(
+            ids_by_split=ids_by_split, targets_by_split=targets_by_split
+        )
+
+    if not dry_run:
+        for split in SPLITS:
+            write_manifest_tsv(
+                pair_manifests / f"{split}.tsv", rows_by_split.get(split, [])
+            )
+            write_target_lines(
+                pair_manifests / f"{split}.target.txt",
+                target_lines_by_split.get(split, []),
+            )
     wav_errors: list[str] = []
     wav_summary: dict[str, Any] = {}
     if not dry_run and not processing_errors:
@@ -915,6 +1137,15 @@ def run_prepare(
         max_duration=max_duration,
         text_norm=text_norm,
         lowercase=lowercase,
+        segment_mode=segment_mode,
+        sentence_like={
+            "target_duration_s": sentence_target_duration,
+            "max_duration_s": sentence_max_duration,
+            "require_punctuation": sentence_require_punctuation,
+            "stats": sentence_like_stats,
+        }
+        if segment_mode == "sentence_like"
+        else {},
         splits=split_stats,
         leak_issues=leak_issues,
         exit_code=exit_code,
@@ -1021,9 +1252,49 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--text-norm", choices=("nfkc", "none"), default="nfkc")
     parser.add_argument("--lowercase", action="store_true", default=False)
     parser.add_argument(
+        "--segment-mode",
+        choices=SEGMENT_MODES,
+        default="utterance",
+        help=(
+            "Mode de segmentation intra-fichier. "
+            "'utterance' = segments m-TEDx natifs ; "
+            "'sentence_like' = fusion contiguë pour approcher des phrases complètes."
+        ),
+    )
+    parser.add_argument(
+        "--sentence-target-duration",
+        type=float,
+        default=10.0,
+        help="Durée cible (s) des segments fusionnés en mode sentence_like.",
+    )
+    parser.add_argument(
+        "--sentence-max-duration",
+        type=float,
+        default=15.0,
+        help="Durée max (s) des segments fusionnés en mode sentence_like.",
+    )
+    parser.add_argument(
+        "--sentence-require-punctuation",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "En mode sentence_like, couper préférentiellement sur ponctuation forte "
+            "(.?!). Désactiver pour couper dès la durée cible atteinte."
+        ),
+    )
+    parser.add_argument(
         "--fail-on-leak",
         action=argparse.BooleanOptionalAction,
         default=True,
+    )
+    parser.add_argument(
+        "--dedupe-target-overlap",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Nettoyer la fuite : retirer de valid/test les segments dont la cible normalisée "
+            "apparaît aussi dans train."
+        ),
     )
     parser.add_argument(
         "--resume",
@@ -1054,7 +1325,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_from_namespace(args: argparse.Namespace) -> int:
-    """Point d'entrée utilisé par ``main()`` et la sous-commande prepare de ``scripts/pipeline.py``.
+    """Point d'entrée utilisé par ``main()`` et la sous-commande prepare de ``scripts_communs/pipeline.py``.
 
     Paramètres :
         args: Parsed namespace from ``build_parser()``.
@@ -1124,7 +1395,16 @@ def run_from_namespace(args: argparse.Namespace) -> int:
             max_duration=args.max_duration,
             text_norm=args.text_norm,
             lowercase=args.lowercase,
+            segment_mode=str(getattr(args, "segment_mode", "utterance")),
+            sentence_target_duration=float(
+                getattr(args, "sentence_target_duration", 10.0)
+            ),
+            sentence_max_duration=float(getattr(args, "sentence_max_duration", 15.0)),
+            sentence_require_punctuation=bool(
+                getattr(args, "sentence_require_punctuation", True)
+            ),
             fail_on_leak=args.fail_on_leak,
+            dedupe_target_overlap=getattr(args, "dedupe_target_overlap", False),
             resume=args.resume,
             dry_run=args.dry_run,
             verbose=args.verbose,

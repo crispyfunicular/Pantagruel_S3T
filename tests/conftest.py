@@ -9,9 +9,23 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
-def load_stage_module(filename: str):
+def pytest_configure() -> None:
+    """Enregistrer les packages logiques des variantes à nom préfixé numérique."""
+    from scripts_communs.variant_bootstrap import (
+        bootstrap_cascade,
+        bootstrap_gemini,
+        bootstrap_speechllm,
+    )
+
+    bootstrap_speechllm()
+    bootstrap_gemini()
+    bootstrap_cascade()
+
+
+def load_stage_module(filename: str, *, root: Path | None = None):
     """Load a numbered stage script (e.g. 0_preflight.py) as a module."""
-    path = PROJECT_ROOT / "scripts" / filename
+    base = root or (PROJECT_ROOT / "scripts_communs")
+    path = base / filename
     spec = importlib.util.spec_from_file_location(
         filename.replace(".py", "").replace("-", "_"),
         path,

@@ -25,13 +25,14 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import sacrebleu
 import torch
-from scripts.st_common import (
+from scripts_communs.st_common import (
     PROJECT_ROOT,
     S3TModel,
     collate_for_training,
@@ -204,6 +205,9 @@ def run_evaluate(
         print(f"ERROR: missing SentencePiece model: {spm_model_path}", file=sys.stderr)
         return 2
 
+    start_wall_s = time.time()
+    start_utc = datetime.now(timezone.utc).isoformat()
+
     payload = load_checkpoint(checkpoint_path)
     ckpt_config = payload.get("config", config)
     encoder_name = str(
@@ -221,6 +225,7 @@ def run_evaluate(
     vocab_size = int(payload.get("vocab_size", sp_model.get_piece_size()))
 
     def collate_fn(batch):
+        """Collate DataLoader : audio paddé + tokens cibles (évaluation)."""
         return collate_for_training(
             batch,
             sp_model=sp_model,
@@ -330,9 +335,24 @@ def run_evaluate(
         eval_dir / "metrics.json",
         {
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "start_timestamp_utc": start_utc,
+            "end_timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "duration_s": float(time.time() - start_wall_s),
+            "gpu_hours": float(time.time() - start_wall_s) / 3600.0
+            if device.type == "cuda"
+            else 0.0,
+            "estimated_cost_usd": (
+                float(time.time() - start_wall_s)
+                / 3600.0
+                * float(deep_get(config, "cost.usd_per_gpu_hour", 0.0))
+                if device.type == "cuda"
+                else 0.0
+            ),
             "run_id": run_id,
             "checkpoint": str(checkpoint_path.resolve()),
             "beam_size": beam_size,
+            "device": str(device),
+            "config": config,
             "dev": dev_scores,
             "test": test_scores,
         },

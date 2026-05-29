@@ -238,7 +238,7 @@ Prix publics variables selon hébergeur/région — **fourchettes 2025–2026** 
 - [ ] **≥ 50 GB** disque libre (≥ 100 GB conseillé)  
 - [ ] GPU **≥ 8 GB** VRAM (16 GB recommandé)  
 - [ ] Accès Internet OpenSLR + Hugging Face  
-- [ ] `python scripts/pipeline.py preflight --check-gpu --min-disk-gb 100`
+- [ ] `python scripts_communs/pipeline.py preflight --check-gpu --min-disk-gb 100`
 
 ### Avant le long run
 

@@ -1,0 +1,24 @@
+# Baseline cascade ASR→MT — segments fusionnés (prepare --segment-mode sentence_like).
+# Prérequis : datasets/manifests_sentence/fr-en/{valid,test}.tsv
+
+experiment:
+  name: "fr-en_cascade_sentence_like"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_001_cascade_sentence_like"
+
+data:
+  segment_mode: "sentence_like"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+
+asr:
+  backend: "whisper"
+  model_id: "openai/whisper-large-v3"
+
+mt:
+  backend: "marian"
+  model_id: "Helsinki-NLP/opus-mt-fr-en"
+
+decode:
+  asr_language: "fr"
+  mt_max_length: 256

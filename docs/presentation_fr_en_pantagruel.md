@@ -147,7 +147,7 @@ La qualité des manifests conditionne tout le reste — jalon go/no-go avant SPM
 **Règle :** SPM entraîné **uniquement** sur `train.target.txt` (anglais).
 
 ```bash
-python scripts/pipeline.py spm --langpair fr-en --vocab-size 1000
+python 1_Transformer/pipeline.py spm --langpair fr-en --vocab-size 1000
 ```
 
 **Sorties :**
@@ -222,8 +222,8 @@ Préfixe en : BOS, the, cat ──► décodeur ──► logits ──► "is" 
 ### Commande et artifacts
 
 ```bash
-python scripts/pipeline.py train \
-  --config configs/fr-en/base.yaml \
+python 1_Transformer/pipeline.py train \
+  --config 1_Transformer/configs/fr-en/base.yaml \
   --run-id run_001_fr-en
 ```
 
@@ -514,8 +514,8 @@ model.freeze_encoder(should_freeze)
 4. Logger la **signature SacreBLEU** dans les artifacts.
 
 ```bash
-python scripts/pipeline.py evaluate \
-  --config configs/fr-en/base.yaml \
+python 1_Transformer/pipeline.py evaluate \
+  --config 1_Transformer/configs/fr-en/base.yaml \
   --run-id run_001_fr-en
 ```
 
@@ -651,7 +651,7 @@ runs/fr-en/<run_id>/
 
 **En cours / prochaine itération :**
 
-- Fichiers `configs/fr-en/base.yaml` (template dans [PRD.md §9](PRD.md#9-template-de-configuration-run-yaml))
+- Fichiers `1_Transformer/configs/fr-en/base.yaml` (template dans [PRD.md §9](PRD.md#9-template-de-configuration-run-yaml))
 - **Beam search** dans `5_evaluate.py` / `6_infer.py` (aujourd’hui : greedy seul ; `--beam-size` loggé mais non utilisé — slide 13–14)
 - Alignement fin sur hyperparamètres Table 8
 
@@ -666,21 +666,21 @@ runs/fr-en/<run_id>/
 source .venv/bin/activate
 
 # 1. Environnement
-python scripts/pipeline.py preflight --check-gpu
+python scripts_communs/pipeline.py preflight --check-gpu
 
 # 2. Données
-python scripts/pipeline.py download --langpairs fr-en
-python scripts/pipeline.py prepare --langpair fr-en
+python scripts_communs/pipeline.py download --langpairs fr-en
+python scripts_communs/pipeline.py prepare --langpair fr-en
 
 # 3. Tokenisation + entraînement + évaluation
-python scripts/pipeline.py spm --langpair fr-en --vocab-size 1000
-python scripts/pipeline.py train --config configs/fr-en/base.yaml --run-id run_001
-python scripts/pipeline.py evaluate --config configs/fr-en/base.yaml --run-id run_001
+python 1_Transformer/pipeline.py spm --langpair fr-en --vocab-size 1000
+python 1_Transformer/pipeline.py train --config 1_Transformer/configs/fr-en/base.yaml --run-id run_001
+python 1_Transformer/pipeline.py evaluate --config 1_Transformer/configs/fr-en/base.yaml --run-id run_001
 
 # 4. Inférence (audio hors corpus)
-python scripts/pipeline.py infer \
+python 1_Transformer/pipeline.py infer \
   --checkpoint runs/fr-en/run_001/checkpoints/best.pt \
-  --config configs/fr-en/base.yaml \
+  --config 1_Transformer/configs/fr-en/base.yaml \
   --input-audio path/to/audio.wav
 ```
 
@@ -735,7 +735,7 @@ python scripts/pipeline.py infer \
 
 ## Annexe B — Template config fr→en (extrait)
 
-À placer dans `configs/fr-en/base.yaml` (voir [PRD.md §9](PRD.md#9-template-de-configuration-run-yaml)) :
+À placer dans `1_Transformer/configs/fr-en/base.yaml` (voir [PRD.md §9](PRD.md#9-template-de-configuration-run-yaml)) :
 
 ```yaml
 experiment:

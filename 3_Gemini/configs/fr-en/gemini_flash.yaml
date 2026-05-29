@@ -1,0 +1,20 @@
+experiment:
+  name: "fr-en_gemini_flash"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_001_gemini_flash"
+
+data:
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+
+model:
+  gemini_id: "gemini-2.5-flash"
+
+prompt:
+  # Prompt réutilisable : formulation conçue pour être proche de `speechLLM` (instruction + audio).
+  template: "Translate the French speech to English."
+
+decode:
+  temperature: 0.0
+  max_output_tokens: 256
+

@@ -17,10 +17,10 @@ Sorties :
 Codes de sortie : 0 succès, 2 mauvaise paire CLI, 4 une ou plusieurs erreurs de téléchargement.
 
 Usage :
-    python scripts/1_download.py
-    python scripts/1_download.py --langpairs fr-en,fr-pt
-    python scripts/1_download.py --dry-run
-    python scripts/1_download.py --no-extract
+    python scripts_communs/1_download.py
+    python scripts_communs/1_download.py --langpairs fr-en,fr-pt
+    python scripts_communs/1_download.py --dry-run
+    python scripts_communs/1_download.py --no-extract
 """
 
 from __future__ import annotations

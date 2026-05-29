@@ -1,0 +1,24 @@
+# Évaluation Gemini sur segments fusionnés (prepare --segment-mode sentence_like).
+# Prérequis : datasets/manifests_sentence/fr-en/{valid,test}.tsv
+# et WAV sous datasets/processed_sentence/fr-en/.
+
+experiment:
+  name: "fr-en_gemini_flash_sentence_like"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_001_gemini_flash_sentence_like"
+
+data:
+  segment_mode: "sentence_like"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+
+model:
+  gemini_id: "gemini-2.5-flash"
+
+prompt:
+  # Même formulation que utterance / speechLLM pour comparaison équitable.
+  template: "Translate the French speech to English."
+
+decode:
+  temperature: 0.0
+  max_output_tokens: 256

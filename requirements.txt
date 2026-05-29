@@ -1,11 +1,14 @@
-# S3T — dépendances runtime + développement (PRD.md, AGENTS.md)
-# Python 3.10+
+# S3T — dépendances runtime + développement (PRD.md, AGENTS.md, README.md)
+# Python 3.10+ — fichier unique pour les deux pistes :
+#   - données : scripts/ 0…3 (preflight → prepare ; spm = baseline ST)
+#   - baseline ST : scripts/ 4…6 (+ sentencepiece)
+#   - speechLLM B1 : speechLLM/ train|evaluate|infer (pas de sentencepiece)
 #
 # PyTorch : pour le GPU, installer la build CUDA adaptée si besoin, par ex. :
 #   pip install torch --index-url https://download.pytorch.org/whl/cu124
 # (voir aussi scripts/bootstrap.sh --with-cuda-index-url)
 
-# --- Runtime (pipeline 0…6) ---
+# --- Runtime (données + baseline ST + speechLLM) ---
 torch>=2.0
 torchaudio>=2.0
 soundfile>=0.12
@@ -15,6 +18,7 @@ transformers>=4.36
 sacrebleu>=2.3
 sentencepiece>=0.1.99
 tensorboard>=2.14
+google-genai>=0.6.0
 
 # --- Développement (lint, tests, hooks ; inutiles sur une machine d'inférence seule) ---
 ruff>=0.8.0

@@ -25,13 +25,14 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 import sacrebleu
 import torch
-from scripts.st_common import (
+from scripts_communs.st_common import (
     PROJECT_ROOT,
     S3TModel,
     collate_for_training,
@@ -152,7 +153,7 @@ def run_train(
     Exécuter la boucle d'entraînement ST complète depuis une config YAML.
 
     Paramètres :
-        config_path : Config d'expérience (ex. ``configs/fr-en/base.yaml``).
+        config_path : Config d'expérience (ex. ``1_Transformer/configs/fr-en/base.yaml``).
         run_id : Nom de sous-répertoire sous ``runs/<lang_pair>/``.
         output_dir : Surcharge du répertoire de run (optionnel).
         dry_run : Afficher le plan sans entraîner.
@@ -217,6 +218,9 @@ def run_train(
         print(f"  max_updates: {max_updates}")
         return 0
 
+    start_wall_s = time.time()
+    start_utc = datetime.now(timezone.utc).isoformat()
+
     run_dir.mkdir(parents=True, exist_ok=True)
     checkpoints_dir.mkdir(parents=True, exist_ok=True)
     eval_dir.mkdir(parents=True, exist_ok=True)
@@ -253,6 +257,7 @@ def run_train(
         return 2
 
     def collate_fn(batch):
+        """Collate DataLoader : audio paddé + tokens cibles (teacher forcing)."""
         return collate_for_training(
             batch,
             sp_model=sp_model,
@@ -434,10 +439,24 @@ def run_train(
         metrics_path,
         {
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "start_timestamp_utc": start_utc,
+            "end_timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "duration_s": float(time.time() - start_wall_s),
+            "gpu_hours": float(time.time() - start_wall_s) / 3600.0
+            if device.type == "cuda"
+            else 0.0,
+            "estimated_cost_usd": (
+                float(time.time() - start_wall_s)
+                / 3600.0
+                * float(deep_get(config, "cost.usd_per_gpu_hour", 0.0))
+                if device.type == "cuda"
+                else 0.0
+            ),
             "run_id": run_id,
             "config_path": str(config_path.resolve()),
             "run_dir": str(run_dir.resolve()),
             "device": str(device),
+            "config": config,
             "git_commit": git_commit,
             "updates": global_update,
             "best_bleu_dev": float(best_bleu if best_bleu >= 0 else 0.0),

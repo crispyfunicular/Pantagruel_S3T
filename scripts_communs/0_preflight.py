@@ -17,9 +17,9 @@ Sorties :
 Codes de sortie : 0 succès, 1 échec critique, 0 en ``--dry-run``.
 
 Usage :
-    python scripts/0_preflight.py
-    python scripts/0_preflight.py --check-gpu --min-disk-gb 200 --min-vram-gb 8
-    python scripts/0_preflight.py --output artifacts/preflight_report.json
+    python scripts_communs/0_preflight.py
+    python scripts_communs/0_preflight.py --check-gpu --min-disk-gb 200 --min-vram-gb 8
+    python scripts_communs/0_preflight.py --output artifacts/preflight_report.json
 """
 
 from __future__ import annotations
@@ -323,7 +323,8 @@ def run_preflight(
         _check_nvidia_smi(),
         *_check_network(check_network, network_timeout_s),
         _check_path_exists(PROJECT_ROOT / "datasets", "datasets_dir"),
-        _check_path_exists(PROJECT_ROOT / "scripts", "scripts_dir"),
+        _check_path_exists(PROJECT_ROOT / "scripts_communs", "scripts_communs_dir"),
+        _check_path_exists(PROJECT_ROOT / "1_Transformer", "transformer_variant_dir"),
     ]
 
     failed_critical = sum(1 for c in checks if c.critical and c.status == "fail")

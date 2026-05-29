@@ -18,9 +18,16 @@ Ce fichier définit les conventions du dépôt **S3T**. Tout agent ou contribute
 
 ## Architecture pipeline
 
-- Un module par stage : `scripts/0_preflight.py` … `scripts/6_infer.py`
-- `scripts/pipeline.py` = **routeur CLI uniquement** (pas de logique métier inline)
-- `scripts/bootstrap.sh` = installation environnement Phase 1
+| Zone | Dossier | Rôle |
+|------|---------|------|
+| Commun | `scripts_communs/` | Étapes **0–2** : `0_preflight.py`, `1_download.py`, `2_prepare.py`, `st_common.py`, `pipeline.py`, `bootstrap.sh` |
+| Variante **1** | `1_Transformer/` | Étapes **3–6** baseline ST : SPM, train, evaluate, infer, `configs/` |
+| Variante **2** | `2_speechLLM/` | Projecteur B1 : train, evaluate, infer |
+| Variante **3** | `3_Gemini/` | Baseline API Gemini |
+| Variante **4** | `4_cascade/` | Baseline ASR→MT (squelette) |
+
+- Les routeurs `*/pipeline.py` sont des **délégations CLI uniquement** (pas de logique métier inline).
+- Les dossiers préfixés par un chiffre ne sont pas des packages Python importables ; les imports logiques (`speechLLM`, `Gemini`, `Cascade`) passent par `scripts_communs/variant_bootstrap.py`.
 
 Voir [docs/PRD.md](docs/PRD.md) §2.3 et [README.md](README.md) §Architecture.
 
@@ -116,8 +123,8 @@ tests/
 
 ## Ajout d'un nouveau stage
 
-1. Créer `scripts/N_<stage>.py` avec CLI autonome
-2. Brancher le subcommand dans `scripts/pipeline.py` (délégation, pas de logique dupliquée)
+1. Créer le module dans `scripts_communs/` (commun) ou `1_Transformer/` / `N_<variante>/`
+2. Brancher le subcommand dans le `pipeline.py` du dossier concerné
 3. Ajouter tests dans `tests/test_N_<stage>.py`
 4. Mettre à jour `docs/PRD.md` §2.3 et phases associées
 5. Mettre à jour `README.md` (table architecture + section pipeline)

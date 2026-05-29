@@ -29,8 +29,8 @@ Options:
   -h, --help              Show this help
 
 Example:
-  ./scripts/bootstrap.sh
-  ./scripts/bootstrap.sh --with-cuda-index-url https://download.pytorch.org/whl/cu124 --lock
+  ./scripts_communs/bootstrap.sh
+  ./scripts_communs/bootstrap.sh --with-cuda-index-url https://download.pytorch.org/whl/cu124 --lock
 EOF
 }
 
@@ -126,5 +126,5 @@ echo "Bootstrap complete. Activate with:"
 echo "  source ${VENV_DIR}/bin/activate"
 echo ""
 echo "Next steps:"
-echo "  python scripts/pipeline.py preflight"
-echo "  python scripts/pipeline.py run --langpair fr-es --run-id run_001"
+echo "  python scripts_communs/pipeline.py preflight"
+echo "  python scripts_communs/pipeline.py run --langpair fr-es --run-id run_001"

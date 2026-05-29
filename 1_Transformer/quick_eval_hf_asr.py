@@ -6,7 +6,7 @@ Rôle dans le pipeline
 -------------
 Utilitaire autonome pour benchmarquer le chargement encodeur Pantagruel ou la qualité ASR proxy
 sur un petit corpus local avant l'évaluation complète des étapes 5/6. Non invoqué par
-``scripts/pipeline.py``.
+``scripts_communs/pipeline.py``.
 
 Entrées
 ------
@@ -33,8 +33,8 @@ Codes de sortie
 Non-zéro — erreurs argparse via ``parser.error`` (stderr, sortie 2).
 
 Usage :
-    python scripts/quick_eval_hf_asr.py corpus_audio/ --transcription whisper --limit 5
-    python scripts/quick_eval_hf_asr.py sample.wav --reference "bonjour le monde"
+    python 1_Transformer/quick_eval_hf_asr.py corpus_audio/ --transcription whisper --limit 5
+    python 1_Transformer/quick_eval_hf_asr.py sample.wav --reference "bonjour le monde"
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.utils_text_eval import (  # noqa: E402
+from scripts_communs.utils_text_eval import (  # noqa: E402
     char_error_rate,
     normalize_text_for_eval,
     word_error_rate,

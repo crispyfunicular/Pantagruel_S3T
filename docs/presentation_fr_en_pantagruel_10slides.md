@@ -81,8 +81,8 @@ Stages **implémentés** ; checkpoint utile = `runs/.../checkpoints/best.pt` (me
 **SentencePiece** (`3_spm.py`) : entraîné **uniquement** sur l’anglais du train ; vocab cible **1k** (baseline) ou **5k** (ablation).
 
 ```bash
-python scripts/pipeline.py prepare --langpair fr-en
-python scripts/pipeline.py spm --langpair fr-en --vocab-size 1000
+python scripts_communs/pipeline.py prepare --langpair fr-en
+python 1_Transformer/pipeline.py spm --langpair fr-en --vocab-size 1000
 ```
 
 ---
@@ -131,15 +131,15 @@ COMPARAISON OFFICIELLE : beam 5 (à implémenter)
 ## Slide 8 — Évaluation et état du dépôt
 
 ```bash
-python scripts/pipeline.py evaluate \
-  --config configs/fr-en/base.yaml --run-id run_001_fr-en
+python 1_Transformer/pipeline.py evaluate \
+  --config 1_Transformer/configs/fr-en/base.yaml --run-id run_001_fr-en
 ```
 
 **Sorties :** `dev_predictions.txt`, `test_predictions.txt`, `sacrebleu_*.txt` (avec **signature**), `metrics.json`.
 
 | Fait | À venir / écart documenté |
 |------|---------------------------|
-| Pipeline 0→6, train HF + décodeur | `configs/fr-en/base.yaml` |
+| Pipeline 0→6, train HF + décodeur | `1_Transformer/configs/fr-en/base.yaml` |
 | CE + freeze + greedy + SacreBLEU | **Beam 5**, warmup scheduler, SpecAugment |
 | Manifests fr-en | Runs GPU + chiffres Table 8 |
 
@@ -151,12 +151,12 @@ python scripts/pipeline.py evaluate \
 
 ```bash
 source .venv/bin/activate
-python scripts/pipeline.py preflight --check-gpu
-python scripts/pipeline.py download --langpair fr-en
-python scripts/pipeline.py prepare --langpair fr-en
-python scripts/pipeline.py spm --langpair fr-en --vocab-size 1000
-python scripts/pipeline.py train --config configs/fr-en/base.yaml --run-id run_001_fr-en
-python scripts/pipeline.py evaluate --config configs/fr-en/base.yaml --run-id run_001_fr-en
+python scripts_communs/pipeline.py preflight --check-gpu
+python scripts_communs/pipeline.py download --langpair fr-en
+python scripts_communs/pipeline.py prepare --langpair fr-en
+python 1_Transformer/pipeline.py spm --langpair fr-en --vocab-size 1000
+python 1_Transformer/pipeline.py train --config 1_Transformer/configs/fr-en/base.yaml --run-id run_001_fr-en
+python 1_Transformer/pipeline.py evaluate --config 1_Transformer/configs/fr-en/base.yaml --run-id run_001_fr-en
 ```
 
 | Ressource | Ordre de grandeur |

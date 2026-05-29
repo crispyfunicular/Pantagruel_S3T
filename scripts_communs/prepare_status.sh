@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Utilitaire — afficher la progression d'un job prepare étape 2 long (hors pipeline).
 #
-# Usage : ./scripts/prepare_status.sh [langpair]
+# Usage : ./scripts_communs/prepare_status.sh [langpair]
 # Lit artifacts/prepare_<langpair>.progress.json et compte les WAV sur disque.
 
 set -euo pipefail
@@ -16,7 +16,7 @@ count_wavs() {
 }
 
 echo "=== Prepare status: ${LANGPAIR} ==="
-if pgrep -af "scripts/2_prepare.py --langpair ${LANGPAIR}" 2>/dev/null; then
+if pgrep -af "scripts_communs/2_prepare.py --langpair ${LANGPAIR}" 2>/dev/null; then
   echo "Process: RUNNING"
 else
   echo "Process: not running"

@@ -23,12 +23,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import torch
-from scripts.st_common import (
+from scripts_communs.st_common import (
     PROJECT_ROOT,
     S3TModel,
     decode_ids_to_text,
@@ -76,6 +77,8 @@ def run_infer(
         0 on success, 2 on missing inputs.
     """
     del beam_size  # Baseline gloutonne pour l'instant ; beam search pas encore branché.
+    start_wall_s = time.time()
+    start_utc = datetime.now(timezone.utc).isoformat()
     payload = load_checkpoint(checkpoint)
     config = payload.get("config")
     if not isinstance(config, dict):
@@ -159,6 +162,10 @@ def run_infer(
     output.parent.mkdir(parents=True, exist_ok=True)
     record = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "start_timestamp_utc": start_utc,
+        "end_timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "duration_s": float(time.time() - start_wall_s),
+        "device": str(device),
         "input_audio": str(input_audio.resolve()),
         "checkpoint": str(checkpoint.resolve()),
         "prediction": prediction,

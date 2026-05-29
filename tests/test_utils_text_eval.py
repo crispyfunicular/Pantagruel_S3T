@@ -1,6 +1,6 @@
 """Tests for ASR text metrics."""
 
-from scripts.utils_text_eval import (
+from scripts_communs.utils_text_eval import (
     char_error_rate,
     normalize_text_for_eval,
     word_error_rate,

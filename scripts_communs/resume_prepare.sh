@@ -3,9 +3,9 @@
 # Réexécutable sans risque : ignore les WAV valides déjà présents sur disque.
 #
 # Usage :
-#   ./scripts/resume_prepare.sh              # fr-en par défaut
-#   ./scripts/resume_prepare.sh fr-es
-#   ./scripts/resume_prepare.sh fr-en --verify-only
+#   ./scripts_communs/resume_prepare.sh              # fr-en par défaut
+#   ./scripts_communs/resume_prepare.sh fr-es
+#   ./scripts_communs/resume_prepare.sh fr-en --verify-only
 
 set -euo pipefail
 
@@ -16,7 +16,7 @@ LANGPAIR="${1:-fr-en}"
 shift || true
 
 if [[ ! -d ".venv" ]]; then
-  echo "ERROR: .venv missing. Run ./scripts/bootstrap.sh first." >&2
+  echo "ERROR: .venv missing. Run ./scripts_communs/bootstrap.sh first." >&2
   exit 2
 fi
 
@@ -25,10 +25,10 @@ source ".venv/bin/activate"
 
 mkdir -p logs
 
-if pgrep -f "scripts/2_prepare.py --langpair ${LANGPAIR}" >/dev/null 2>&1; then
+if pgrep -f "scripts_communs/2_prepare.py --langpair ${LANGPAIR}" >/dev/null 2>&1; then
   echo "ERROR: prepare already running for ${LANGPAIR}." >&2
   echo "  Check: pgrep -af '2_prepare.py'" >&2
-  echo "  Stop:  pkill -f 'scripts/2_prepare.py --langpair ${LANGPAIR}'" >&2
+  echo "  Stop:  pkill -f 'scripts_communs/2_prepare.py --langpair ${LANGPAIR}'" >&2
   exit 2
 fi
 
@@ -36,14 +36,14 @@ RAW_CORPUS="${ROOT}/datasets/raw/${LANGPAIR}"
 RAW_MTEDX="${ROOT}/datasets/raw/mtedx_${LANGPAIR}"
 if [[ ! -d "${RAW_CORPUS}/data/train" && ! -d "${RAW_MTEDX}/data/train" ]]; then
   echo "ERROR: raw corpus not found. Run download first:" >&2
-  echo "  python scripts/1_download.py --langpairs ${LANGPAIR}" >&2
+  echo "  python scripts_communs/1_download.py --langpairs ${LANGPAIR}" >&2
   exit 2
 fi
 
 LOG="logs/prepare_${LANGPAIR}.log"
 echo "==> Prepare ${LANGPAIR} (resume on, log: ${LOG})"
 
-python scripts/2_prepare.py \
+python scripts_communs/2_prepare.py \
   --langpair "${LANGPAIR}" \
   --resume \
   --verbose \
@@ -51,6 +51,6 @@ python scripts/2_prepare.py \
   2>&1 | tee -a "${LOG}"
 
 echo "==> Final verification"
-python scripts/2_prepare.py --langpair "${LANGPAIR}" --verify-only
+python scripts_communs/2_prepare.py --langpair "${LANGPAIR}" --verify-only
 
 echo "==> Done. Report: artifacts/prepare_${LANGPAIR}.json"

@@ -1,4 +1,4 @@
-"""Tests for scripts/1_download.py."""
+"""Tests for scripts_communs/1_download.py."""
 
 from __future__ import annotations
 

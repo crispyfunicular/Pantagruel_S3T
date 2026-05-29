@@ -1,4 +1,4 @@
-"""Tests for scripts/2_prepare.py."""
+"""Tests for scripts_communs/2_prepare.py."""
 
 from __future__ import annotations
 
@@ -132,6 +132,8 @@ def test_validate_wav_file_accepts_pcm16_mono(tmp_path: Path):
     _write_flac(wav, duration_s=1.5)
     segment = prepare.SegmentRecord(
         utt_id="seg0",
+        talk_id="source",
+        order_idx=0,
         wav_path=wav,
         offset_s=0.0,
         duration_s=1.0,
@@ -200,6 +202,29 @@ def test_detect_leak_fails(tmp_path: Path):
         report_path=tmp_path / "report.json",
     )
     assert exit_code == 5
+
+
+def test_dedupe_target_overlap_removes_leak(tmp_path: Path):
+    root = _mini_corpus(tmp_path)
+    # Force identical target in train and valid; enable dedupe to clean it.
+    tgt_file = root / "data" / "valid" / "txt" / "valid.en"
+    tgt_file.write_text("Hello world.\n", encoding="utf-8")
+
+    _, exit_code = prepare.run_prepare(
+        langpair="fr-en",
+        input_root=tmp_path / "raw",
+        output_root=tmp_path / "processed",
+        manifests_root=tmp_path / "manifests",
+        fail_on_leak=True,
+        dedupe_target_overlap=True,
+        report_path=tmp_path / "report.json",
+    )
+    assert exit_code == 0
+
+    valid_tgt = (tmp_path / "manifests" / "fr-en" / "valid.target.txt").read_text(
+        encoding="utf-8"
+    )
+    assert "Hello world." not in valid_tgt
 
 
 def test_build_parser_defaults():
