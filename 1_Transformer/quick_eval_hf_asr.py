@@ -45,7 +45,7 @@ import statistics
 import sys
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -366,7 +366,7 @@ def evaluate_corpus(
     )
 
     report = EvalReport(
-        created_at=datetime.now(UTC).isoformat(),
+        created_at=datetime.now(timezone.utc).isoformat(),
         model_id=model_id,
         whisper_model_id=whisper_model_id if transcription == "whisper" else None,
         transcription_backend=transcription,
@@ -475,7 +475,7 @@ def evaluate_single(
         device=device,
     )
     report = EvalReport(
-        created_at=datetime.now(UTC).isoformat(),
+        created_at=datetime.now(timezone.utc).isoformat(),
         model_id=model_id,
         whisper_model_id=whisper_model_id if transcription == "whisper" else None,
         transcription_backend=transcription,
@@ -516,6 +516,12 @@ def evaluate_single(
         sample.wer = word_error_rate(ref_norm, sample.hypothesis_norm).rate
         sample.cer = char_error_rate(ref_norm, sample.hypothesis_norm).rate
         report.aggregate = {"wer": sample.wer, "cer": sample.cer}
+    elif transcription == "pantagruel-encoder" and sample.encoder_frames is not None:
+        report.aggregate = {
+            "encoder_frames": sample.encoder_frames,
+            "encoder_dim": sample.encoder_dim,
+            "n_encoder_forward_ok": 1,
+        }
     report.samples = [sample]
     report.n_evaluated = 1
     return report
@@ -637,7 +643,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         parser.error(f"not a file or directory: {input_path}")
 
-    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     output = args.output or (
         PROJECT_ROOT / "artifacts" / f"quick_eval_{input_path.stem}_{ts}.json"
     )

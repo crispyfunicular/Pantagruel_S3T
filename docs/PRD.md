@@ -85,6 +85,7 @@ Principes :
 - **Entrées** : manifests `valid.tsv` / `test.tsv` produits par `2_prepare.py` (WAV 16 kHz mono + `tgt_text`).
 - **Prompt** : instruction textuelle (champ `prompt.template`) conçue pour être réutilisable par la partie LLM de `speechLLM`.
 - **Sorties** : même contrat d’artefacts d’évaluation (`runs/.../eval/` + signature SacreBLEU) avec `pipeline = gemini_st`.
+- **Tracking coût/temps** : `eval/metrics.json` inclut `runtime.elapsed_minutes` et `gemini_cost_estimate_usd` (estimé via `pricing.*` dans la config Gemini).
 - **Authentification** : variable d’environnement `GEMINI_API_KEY` (aucun secret versionné).
 
 CLI (routeur `3_Gemini/pipeline.py`) :
@@ -108,6 +109,24 @@ CLI (routeur `4_cascade/pipeline.py`) :
 
 Backends cibles (YAML `asr` / `mt`) : Whisper + Marian par défaut ; extensible (Pantagruel ASR, NLLB, etc.).
 Détail : [4_cascade/README.md](../4_cascade/README.md).
+
+### 2.3.4 Variante Pantagruel multimodale (`speech_text`) — expérimentale
+
+Piste dédiée aux essais avec un checkpoint Pantagruel **multimodal récent** (famille
+`Speech_Text_*`) en mode full model, séparée des runs prioritaires `2_speechLLM`.
+
+Principes :
+- **Entrées** : mêmes manifests `valid.tsv` / `test.tsv` issus de `2_prepare`.
+- **Objectif** : tester l'apport du modèle multimodal tel quel, sans réécrire la piste B1.
+- **Sorties cibles** : contrat `runs/.../eval/` identique aux autres variantes (SacreBLEU).
+- **Statut** : **implémenté** (délégation `1_Transformer` 3–6) — encodeur `Speech_Text_*` via `model.encoder_api: speech_text` + `trust_remote_code: true` ; décodeur Transformer + SPM ; données `sentence_like` par défaut.
+- **Limite** : pas de perte multimodale speech+text du pretrain ; fine-tuning ST sur encodeur audio uniquement.
+
+CLI (routeur `5_Pantagruel_multimodal/pipeline.py`) :
+- `spm` : SentencePiece sur `manifests_sentence` (section `spm` du YAML)
+- `train` : fine-tuning ST (`4_train.py`, encodeur Speech_Text)
+- `evaluate` : SacreBLEU dev/test + mise à jour `experiments_tracking.csv`
+- `infer` : WAV arbitraire (`6_infer.py`)
 
 ### 2.4 Qualité logicielle et workflow de contribution
 
@@ -386,10 +405,30 @@ Les scripts d'entraînement appellent `set_seed()` dans [`scripts/st_common.py`]
 Fichier agrégé recommandé : `runs/experiments_tracking.csv`
 
 ```csv
-run_id,lang_pair,seed,freeze_updates,vocab_size,beam,bleu_dev,bleu_test,chrf_test,ter_test,train_hours,max_gpu_mem_gb,git_commit,status,notes
+run_id,lang_pair,pipeline,segment_mode,seed,freeze_updates,vocab_size,beam,bleu_dev,bleu_test,chrf_dev,chrf_test,ter_dev,ter_test,train_hours,gpu_hours,estimated_gpu_cost_usd,max_gpu_mem_gb,gemini_duration_min,gemini_cost_usd,gemini_input_usd_per_1m,gemini_output_usd_per_1m,git_commit,status,notes
 ```
 
 Mettre à jour après chaque run pour comparer à la Table 8 Pantagruel.
+
+**Coût API Gemini (baseline `gemini_st`)** — grille **Gemini 2.5 Flash** (Developer API, juin 2026, [tarifs officiels](https://ai.google.dev/gemini-api/docs/pricing)) :
+
+| Poste | Tarif payant (USD / 1M tokens) |
+|-------|--------------------------------|
+| Entrée **audio** (ST) | **1,00** |
+| Sortie texte (incl. thinking) | **2,50** |
+
+Valeurs par défaut dans `3_Gemini/configs/fr-en/gemini_flash*.yaml` (`pricing.*`). L'étape `3_Gemini/evaluate_gemini.py` estime le coût dans `eval/metrics.json` (`gemini_cost_estimate_usd`) à partir des tokens API et met à jour le CSV via `scripts_communs/update_experiments_tracking.py`.
+
+```bash
+# Synchronisation manuelle (tous les runs avec eval/metrics.json)
+python scripts_communs/update_experiments_tracking.py --all
+
+# Un seul run
+python scripts_communs/update_experiments_tracking.py \
+  --run-dir runs/fr-en/run_001_gemini_flash_sentence_like_v2
+```
+
+**Note :** les runs évalués avant l'introduction des champs `runtime` / `gemini_cost_estimate_usd` n'ont pas de coût rétroactif dans `metrics.json` ; relancer `evaluate` avec une config `pricing` renseignée pour remplir `gemini_cost_usd`.
 
 ### 8.4 Checklist de clôture d'un run
 

@@ -194,6 +194,41 @@ def load_sentencepiece(path: Path) -> spm.SentencePieceProcessor:
     return model
 
 
+def build_s3t_model(
+    config: dict[str, Any],
+    *,
+    vocab_size: int,
+    pad_id: int,
+    max_positions: int,
+) -> S3TModel:
+    """
+    Instancier ``S3TModel`` à partir d'une config YAML (étapes 4–6 / variante 5).
+
+    Paramètres :
+        config : Config d'expérience (clés ``model.*``).
+        vocab_size : Taille du vocabulaire SentencePiece.
+        pad_id : Id token PAD SPM.
+        max_positions : Longueur max positions décodeur.
+
+    Retour :
+        Modèle prêt pour ``.to(device)``.
+    """
+    return S3TModel(
+        encoder_name=str(
+            deep_get(config, "model.encoder_name", "PantagrueLLM/Pantagruel-Base")
+        ),
+        vocab_size=vocab_size,
+        hidden_dim=int(deep_get(config, "model.hidden_dim", 768)),
+        decoder_layers=int(deep_get(config, "model.decoder_layers", 6)),
+        decoder_heads=int(deep_get(config, "model.decoder_heads", 8)),
+        dropout=float(deep_get(config, "model.dropout", 0.1)),
+        pad_id=pad_id,
+        max_positions=max_positions,
+        trust_remote_code=bool(deep_get(config, "model.trust_remote_code", False)),
+        encoder_api=str(deep_get(config, "model.encoder_api", "default")),
+    )
+
+
 class S3TModel(nn.Module):
     """
     Traduction vocale bout en bout : encodeur parole Hugging Face + décodeur Transformer.
@@ -214,6 +249,8 @@ class S3TModel(nn.Module):
         dropout: float,
         pad_id: int,
         max_positions: int = 512,
+        trust_remote_code: bool = False,
+        encoder_api: str = "default",
     ) -> None:
         """
         Construire les piles encodeur et décodeur.
@@ -227,10 +264,16 @@ class S3TModel(nn.Module):
             dropout : Probabilité de dropout dans les couches décodeur.
             pad_id : Id token de padding pour masques et embeddings.
             max_positions : Longueur max séquence cible pour embeddings positionnels.
+            trust_remote_code : Requis pour les checkpoints Pantagruel ``speech_text``.
+            encoder_api : ``default`` (``last_hidden_state``) ou ``speech_text`` (``mode=AUDIO``).
         """
         super().__init__()
         self.pad_id = pad_id
-        self.encoder = AutoModel.from_pretrained(encoder_name)
+        self.encoder_api = encoder_api
+        load_kwargs: dict[str, Any] = {}
+        if trust_remote_code:
+            load_kwargs["trust_remote_code"] = True
+        self.encoder = AutoModel.from_pretrained(encoder_name, **load_kwargs)
         encoder_dim = int(self.encoder.config.hidden_size)
         self.encoder_proj: nn.Module
         if encoder_dim == hidden_dim:
@@ -272,11 +315,19 @@ class S3TModel(nn.Module):
         Retour :
             Projected hidden states ``[batch, time, hidden_dim]``.
         """
-        encoded = self.encoder(
-            input_values=input_values,
-            attention_mask=attention_mask,
-        ).last_hidden_state
-        return self.encoder_proj(encoded)
+        if self.encoder_api == "speech_text":
+            outputs = self.encoder(
+                input_values=input_values,
+                attention_mask=attention_mask,
+                mode="AUDIO",
+            )
+            hidden = outputs.audio_output.last_hidden_state
+        else:
+            hidden = self.encoder(
+                input_values=input_values,
+                attention_mask=attention_mask,
+            ).last_hidden_state
+        return self.encoder_proj(hidden)
 
     def decode(self, memory: torch.Tensor, tokens: torch.Tensor) -> torch.Tensor:
         """

@@ -1,6 +1,6 @@
 # S3T — Speech Translation (Pantagruel replication)
 
-Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`, `fr-es`), évaluée avec **SacreBLEU**. Le dépôt expose **quatre variantes** partageant la même préparation des données (étapes 0–2), avec un choix de **découpage audio** au moment de `prepare` :
+Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`, `fr-es`), évaluée avec **SacreBLEU**. Le dépôt expose **cinq variantes** partageant la même préparation des données (étapes 0–2), avec un choix de **découpage audio** au moment de `prepare` :
 
 | # | Dossier | Variante | Statut | Orchestrateur |
 |---|---------|----------|--------|---------------|
@@ -9,6 +9,7 @@ Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`,
 | **2** | [`2_speechLLM/`](2_speechLLM/) | speechLLM B1 (projecteur seul + LLM gelé) | implémenté, priorité fr→en | [`2_speechLLM/pipeline.py`](2_speechLLM/pipeline.py) |
 | **3** | [`3_Gemini/`](3_Gemini/) | Gemini 2.5 Flash (API audio→EN) | implémenté | [`3_Gemini/pipeline.py`](3_Gemini/pipeline.py) |
 | **4** | [`4_cascade/`](4_cascade/) | Cascade ASR→MT (Whisper + Marian prévus) | squelette CLI | [`4_cascade/pipeline.py`](4_cascade/pipeline.py) |
+| **5** | [`5_Pantagruel_multimodal/`](5_Pantagruel_multimodal/) | Pantagruel `Speech_Text` + décodeur ST (expérimental) | implémenté (délég. `1_Transformer`) | [`5_Pantagruel_multimodal/pipeline.py`](5_Pantagruel_multimodal/pipeline.py) |
 
 | Document | Rôle |
 |----------|------|
@@ -42,7 +43,8 @@ scripts_communs/bootstrap.sh
          ├─► [1_Transformer]  3_spm → 4_train → 5_evaluate → 6_infer
          ├─► [2_speechLLM]    train → evaluate → infer
          ├─► [3_Gemini]       evaluate → infer
-         └─► [4_cascade]      evaluate → infer   (ASR→MT, squelette)
+         ├─► [4_cascade]      evaluate → infer   (ASR→MT, squelette)
+         └─► [5_Pantagruel_multimodal] spm → train → evaluate → infer
 ```
 
 | # | Script | Routeur | Variantes |
@@ -53,6 +55,7 @@ scripts_communs/bootstrap.sh
 | — | `2_speechLLM/{train,evaluate,infer}.py` | `2_speechLLM/pipeline.py` | **2** |
 | — | `3_Gemini/{evaluate_gemini,infer_gemini}.py` | `3_Gemini/pipeline.py` | **3** |
 | — | `4_cascade/{evaluate_cascade,infer_cascade}.py` | `4_cascade/pipeline.py` | **4** |
+| — | `5_Pantagruel_multimodal/{train,evaluate,infer}_multimodal.py` | `5_Pantagruel_multimodal/pipeline.py` | **5** |
 
 **Découpage audio (`2_prepare`) :**
 
@@ -137,6 +140,12 @@ Ces baselines servent de points de référence pour les tâches aval (texte + pa
 - **Implémentation** : [`4_cascade/`](4_cascade/) — routeur `evaluate` / `infer`, configs YAML, `--dry-run` ; backends Whisper/Marian **à brancher** dans `cascade_common.py`.
 - **Cible** : même contrat d’artefacts `runs/.../eval/` et même signature SacreBLEU que les autres pistes.
 - **Doc** : [4_cascade/README.md](4_cascade/README.md), [PRD §2.3.3](docs/PRD.md#233-baseline-cascade-asrmt).
+
+### 5) `5_Pantagruel_multimodal` — full `speech_text` (expérimental)
+- **But** : tester un checkpoint Pantagruel multimodal récent (`speech_text`) en variante dédiée, sans bloquer la piste prioritaire `2_speechLLM`.
+- **Implémentation** : [`5_Pantagruel_multimodal/`](5_Pantagruel_multimodal/) — encodeur `Speech_Text_*` + décodeur Transformer (délégation `1_Transformer` 3–6), données `sentence_like`.
+- **Cible** : alignement futur sur le même contrat d’artefacts `runs/.../eval/` et scoring SacreBLEU.
+- **Doc** : [5_Pantagruel_multimodal/README.md](5_Pantagruel_multimodal/README.md).
 
 **PyTorch CUDA** (recommandé sur machine GPU) :
 
@@ -632,7 +641,7 @@ Détails : [PRD.md §4](docs/PRD.md#4-plan-de-projet--étapes-dexécution-gantt-
 - **speechLLM** : `run_<id>_fr-en_speechllm_b1_*` (ex. `run_001_speechllm_b1`).
 - **Gemini** : `run_<id>_gemini_*` ; noter le découpage (`utterance` / `sentence_like`) dans les notes ou le nom du run.
 
-Répertoire : `runs/<langpair>/<run_id>/` avec le [contrat d'artifacts](docs/PRD.md#contrat-dartifacts-par-run-commun-temps-a-et-b) (config, checkpoints, eval, SacreBLEU). Colonnes recommandées dans `runs/experiments_tracking.csv` : `pipeline` (`baseline_st`, `speechllm_b1`, `gemini_st`, …) et `segment_mode` (`utterance` / `sentence_like`).
+Répertoire : `runs/<langpair>/<run_id>/` avec le [contrat d'artifacts](docs/PRD.md#contrat-dartifacts-par-run-commun-temps-a-et-b) (config, checkpoints, eval, SacreBLEU). Agrégat : [`runs/experiments_tracking.csv`](runs/experiments_tracking.csv) — mis à jour automatiquement après `3_Gemini` / `2_speechLLM` `evaluate`, ou via `python scripts_communs/update_experiments_tracking.py --all`. Colonnes clés : `pipeline`, `segment_mode`, `bleu_*`, `gemini_duration_min`, `gemini_cost_usd`, `gemini_input_usd_per_1m`, `gemini_output_usd_per_1m` (grille [Gemini 2.5 Flash](https://ai.google.dev/gemini-api/docs/pricing) dans les configs `3_Gemini/configs/fr-en/gemini_flash*.yaml`).
 
 ### Verrouillage d'environnement
 

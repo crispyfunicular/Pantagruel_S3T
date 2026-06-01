@@ -35,6 +35,7 @@ import torch
 from scripts_communs.st_common import (
     PROJECT_ROOT,
     S3TModel,
+    build_s3t_model,
     collate_for_training,
     decode_ids_to_text,
     deep_get,
@@ -210,14 +211,6 @@ def run_evaluate(
 
     payload = load_checkpoint(checkpoint_path)
     ckpt_config = payload.get("config", config)
-    encoder_name = str(
-        deep_get(ckpt_config, "model.encoder_name", "PantagrueLLM/Pantagruel-Base")
-    )
-    hidden_dim = int(deep_get(ckpt_config, "model.hidden_dim", 768))
-    decoder_layers = int(deep_get(ckpt_config, "model.decoder_layers", 6))
-    decoder_heads = int(deep_get(ckpt_config, "model.decoder_heads", 8))
-    dropout = float(deep_get(ckpt_config, "model.dropout", 0.1))
-
     sp_model = load_sentencepiece(spm_model_path)
     pad_id = int(payload.get("pad_id", sp_model.pad_id()))
     bos_id = int(payload.get("bos_id", sp_model.bos_id()))
@@ -254,13 +247,10 @@ def run_evaluate(
     device = torch.device(
         "cpu" if prefer_cpu or not torch.cuda.is_available() else "cuda"
     )
-    model = S3TModel(
-        encoder_name=encoder_name,
+    ckpt_config_dict = ckpt_config if isinstance(ckpt_config, dict) else config
+    model = build_s3t_model(
+        ckpt_config_dict,
         vocab_size=vocab_size,
-        hidden_dim=hidden_dim,
-        decoder_layers=decoder_layers,
-        decoder_heads=decoder_heads,
-        dropout=dropout,
         pad_id=pad_id,
         max_positions=max_target_tokens + 2,
     ).to(device)

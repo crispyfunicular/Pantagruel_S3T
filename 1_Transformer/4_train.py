@@ -35,6 +35,7 @@ import torch
 from scripts_communs.st_common import (
     PROJECT_ROOT,
     S3TModel,
+    build_s3t_model,
     collate_for_training,
     decode_ids_to_text,
     deep_get,
@@ -178,10 +179,6 @@ def run_train(
     encoder_name = str(
         deep_get(config, "model.encoder_name", "PantagrueLLM/Pantagruel-Base")
     )
-    hidden_dim = int(deep_get(config, "model.hidden_dim", 768))
-    decoder_layers = int(deep_get(config, "model.decoder_layers", 6))
-    decoder_heads = int(deep_get(config, "model.decoder_heads", 8))
-    dropout = float(deep_get(config, "model.dropout", 0.1))
 
     seed = int(deep_get(config, "experiment.seed", 42))
     deterministic = bool(deep_get(config, "experiment.deterministic", True))
@@ -283,13 +280,9 @@ def run_train(
         collate_fn=collate_fn,
     )
 
-    model = S3TModel(
-        encoder_name=encoder_name,
+    model = build_s3t_model(
+        config,
         vocab_size=vocab_size,
-        hidden_dim=hidden_dim,
-        decoder_layers=decoder_layers,
-        decoder_heads=decoder_heads,
-        dropout=dropout,
         pad_id=pad_id,
         max_positions=max_target_tokens + 2,
     ).to(device)
