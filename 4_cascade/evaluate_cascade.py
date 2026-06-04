@@ -20,9 +20,7 @@ import argparse
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
-import sacrebleu
 from Cascade.cascade_common import (
     EXIT_CONFIG,
     EXIT_NOT_IMPLEMENTED,
@@ -32,6 +30,11 @@ from Cascade.cascade_common import (
     load_cascade_settings,
     resolve_cascade_config_path,
 )
+from scripts_communs.eval_protocol import (
+    build_protocol_record,
+    score_corpus_metrics,
+    write_eval_protocol_artifact,
+)
 from speechLLM.speechllm_common import (
     PROJECT_ROOT,
     deep_get,
@@ -40,34 +43,6 @@ from speechLLM.speechllm_common import (
     resolve_run_dir,
     write_json,
 )
-
-
-def score_with_sacrebleu(preds: list[str], refs: list[str]) -> dict[str, Any]:
-    """
-    Calculer BLEU, CHRF, TER corpus et la signature SacreBLEU.
-
-    Paramètres :
-        preds : Hypothèses (une par ligne de segment).
-        refs : Références cible (anglais) alignées.
-
-    Retour :
-        Dict avec scores float, textes formatés et ``signature``.
-    """
-    bleu_metric = sacrebleu.metrics.BLEU()
-    chrf_metric = sacrebleu.metrics.CHRF()
-    ter_metric = sacrebleu.metrics.TER()
-    bleu = bleu_metric.corpus_score(preds, [refs])
-    chrf = chrf_metric.corpus_score(preds, [refs])
-    ter = ter_metric.corpus_score(preds, [refs])
-    return {
-        "bleu": float(bleu.score),
-        "chrf": float(chrf.score),
-        "ter": float(ter.score),
-        "signature": str(bleu_metric.get_signature()),
-        "bleu_text": str(bleu),
-        "chrf_text": str(chrf),
-        "ter_text": str(ter),
-    }
 
 
 def run_evaluate_cascade(
@@ -161,8 +136,8 @@ def run_evaluate_cascade(
         return EXIT_NOT_IMPLEMENTED
 
     eval_dir.mkdir(parents=True, exist_ok=True)
-    dev_scores = score_with_sacrebleu(dev_preds, dev_refs)
-    test_scores = score_with_sacrebleu(test_preds, test_refs)
+    dev_scores = score_corpus_metrics(dev_preds, dev_refs)
+    test_scores = score_corpus_metrics(test_preds, test_refs)
 
     (eval_dir / "dev_predictions.txt").write_text(
         "\n".join(dev_preds) + ("\n" if dev_preds else ""),
@@ -228,9 +203,44 @@ def run_evaluate_cascade(
         },
     )
 
+    lang_pair = str(deep_get(config, "experiment.lang_pair", "fr-en"))
+    write_eval_protocol_artifact(
+        eval_dir,
+        build_protocol_record(
+            pipeline="cascade_asr_mt",
+            lang_pair=lang_pair,
+            run_id=run_id,
+            segment_mode=segment_mode,
+            config_path=config_path,
+            decode={
+                "asr_backend": settings.asr_backend,
+                "asr_model_id": settings.asr_model_id,
+                "asr_language": settings.asr_language,
+                "mt_backend": settings.mt_backend,
+                "mt_model_id": settings.mt_model_id,
+                "mt_max_length": settings.mt_max_length,
+                "limit": limit,
+            },
+            sacrebleu_signatures={
+                "dev": dev_scores["signature"],
+                "test": test_scores["signature"],
+            },
+            n_segments={"dev": len(dev_preds), "test": len(test_preds)},
+            extra={
+                "failures_dev": len(dev_failures),
+                "failures_test": len(test_failures),
+            },
+        ),
+    )
+
     print("Cascade evaluation complete.")
     print(f"  BLEU dev:  {dev_scores['bleu']:.2f}")
     print(f"  BLEU test: {test_scores['bleu']:.2f}")
+    if dev_failures or test_failures:
+        print(
+            f"  WARNING: {len(dev_failures)} échecs dev, "
+            f"{len(test_failures)} échecs test (hypothèses vides → BLEU 0)"
+        )
     print(f"  Eval dir:  {eval_dir}")
     return EXIT_SUCCESS
 

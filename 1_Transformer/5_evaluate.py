@@ -30,8 +30,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import sacrebleu
 import torch
+from scripts_communs.eval_protocol import (
+    build_protocol_record,
+    score_corpus_metrics,
+    write_eval_protocol_artifact,
+)
 from scripts_communs.st_common import (
     PROJECT_ROOT,
     S3TModel,
@@ -122,34 +126,6 @@ def decode_manifest(
                     )
                 )
     return predictions, references
-
-
-def score_with_sacrebleu(preds: list[str], refs: list[str]) -> dict[str, Any]:
-    """
-    Calculer BLEU, CHRF, TER corpus et la signature de protocole SacreBLEU.
-
-    Paramètres :
-        preds : Hypothèses système (une chaîne par ligne).
-        refs : Traductions de référence (même longueur que preds).
-
-    Retour :
-        Dict avec scores numériques, chaînes métriques lisibles et ``signature``.
-    """
-    bleu_metric = sacrebleu.metrics.BLEU()
-    chrf_metric = sacrebleu.metrics.CHRF()
-    ter_metric = sacrebleu.metrics.TER()
-    bleu = bleu_metric.corpus_score(preds, [refs])
-    chrf = chrf_metric.corpus_score(preds, [refs])
-    ter = ter_metric.corpus_score(preds, [refs])
-    return {
-        "bleu": float(bleu.score),
-        "chrf": float(chrf.score),
-        "ter": float(ter.score),
-        "signature": str(bleu_metric.get_signature()),
-        "bleu_text": str(bleu),
-        "chrf_text": str(chrf),
-        "ter_text": str(ter),
-    }
 
 
 def run_evaluate(
@@ -281,8 +257,8 @@ def run_evaluate(
         max_new_tokens=max_new_tokens,
     )
 
-    dev_scores = score_with_sacrebleu(dev_preds, dev_refs)
-    test_scores = score_with_sacrebleu(test_preds, test_refs)
+    dev_scores = score_corpus_metrics(dev_preds, dev_refs)
+    test_scores = score_corpus_metrics(test_preds, test_refs)
 
     (eval_dir / "dev_predictions.txt").write_text(
         "\n".join(dev_preds) + ("\n" if dev_preds else ""), encoding="utf-8"
@@ -321,6 +297,10 @@ def run_evaluate(
         encoding="utf-8",
     )
 
+    segment_mode = str(deep_get(config, "data.segment_mode", "utterance"))
+    lang_pair = str(deep_get(config, "experiment.lang_pair", "fr-en"))
+    max_new_tokens = int(deep_get(config, "decode.max_len_b", 128))
+
     write_json(
         eval_dir / "metrics.json",
         {
@@ -346,6 +326,27 @@ def run_evaluate(
             "dev": dev_scores,
             "test": test_scores,
         },
+    )
+
+    write_eval_protocol_artifact(
+        eval_dir,
+        build_protocol_record(
+            pipeline="transformer_st",
+            lang_pair=lang_pair,
+            run_id=run_id,
+            segment_mode=segment_mode,
+            config_path=config_path,
+            decode={
+                "mode": "greedy",
+                "beam_size_config": beam_size,
+                "max_new_tokens": max_new_tokens,
+            },
+            sacrebleu_signatures={
+                "dev": dev_scores["signature"],
+                "test": test_scores["signature"],
+            },
+            n_segments={"dev": len(dev_preds), "test": len(test_preds)},
+        ),
     )
 
     print("Evaluation complete.")

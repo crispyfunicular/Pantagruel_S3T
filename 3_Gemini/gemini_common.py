@@ -18,7 +18,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-DEFAULT_GEMINI_MODEL_ID = "gemini-2.5-flash"
+DEFAULT_GEMINI_MODEL_ID = "gemini-2.5-flash"  # runs historiques S3T (reproductibilité)
+GEMINI_35_FLASH_MODEL_ID = (
+    "gemini-3.5-flash"  # GA Google I/O 2026 — configs gemini_flash_35_*.yaml
+)
 DEFAULT_PROMPT = "Translate the French speech to English."
 ENV_GEMINI_API_KEY = "GEMINI_API_KEY"
 
@@ -35,6 +38,23 @@ class GeminiRequest:
     prompt: str
     temperature: float = 0.0
     max_output_tokens: int = 256
+
+
+@dataclass(frozen=True)
+class GeminiUsage:
+    """Compteurs de tokens remontés par l'API Gemini (si disponibles)."""
+
+    prompt_tokens: int | None = None
+    candidate_tokens: int | None = None
+    total_tokens: int | None = None
+
+
+@dataclass(frozen=True)
+class GeminiTranslationResult:
+    """Résultat d'une traduction audio avec texte et métadonnées d'usage."""
+
+    text: str
+    usage: GeminiUsage
 
 
 def get_gemini_api_key() -> str:
@@ -94,12 +114,73 @@ def _guess_audio_mime_type(path: Path) -> str:
     return "application/octet-stream"
 
 
-def translate_audio(
+def _extract_text_from_response(response: Any) -> str:
+    """
+    Extraire le texte de traduction depuis un objet réponse Gemini.
+
+    Paramètres :
+        response : Objet brut renvoyé par ``client.models.generate_content``.
+
+    Retour :
+        Texte de traduction (chaîne vide si introuvable).
+    """
+    text = getattr(response, "text", None)
+    if isinstance(text, str):
+        return text.strip()
+
+    candidates = getattr(response, "candidates", None)
+    if isinstance(candidates, list) and candidates:
+        parts: list[str] = []
+        for cand in candidates:
+            content = getattr(cand, "content", None)
+            cand_parts = (
+                getattr(content, "parts", None) if content is not None else None
+            )
+            if isinstance(cand_parts, list):
+                for part in cand_parts:
+                    part_text = getattr(part, "text", None)
+                    if isinstance(part_text, str) and part_text.strip():
+                        parts.append(part_text.strip())
+        if parts:
+            return "\n".join(parts).strip()
+    return ""
+
+
+def _extract_usage_from_response(response: Any) -> GeminiUsage:
+    """
+    Extraire les métriques de tokens depuis la réponse Gemini si exposées.
+
+    Paramètres :
+        response : Objet brut renvoyé par le SDK.
+
+    Retour :
+        ``GeminiUsage`` (valeurs ``None`` si non disponibles).
+    """
+    usage = getattr(response, "usage_metadata", None)
+    if usage is None:
+        return GeminiUsage()
+
+    def _as_optional_int(value: Any) -> int | None:
+        try:
+            return int(value) if value is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    return GeminiUsage(
+        prompt_tokens=_as_optional_int(getattr(usage, "prompt_token_count", None)),
+        candidate_tokens=_as_optional_int(
+            getattr(usage, "candidates_token_count", None)
+        ),
+        total_tokens=_as_optional_int(getattr(usage, "total_token_count", None)),
+    )
+
+
+def translate_audio_with_metadata(
     *,
     client: Any,
     request: GeminiRequest,
     audio_path: Path,
-) -> str:
+) -> GeminiTranslationResult:
     """
     Traduire un audio FR en texte EN via Gemini.
 
@@ -109,7 +190,7 @@ def translate_audio(
         audio_path : Chemin vers le fichier audio.
 
     Retour :
-        Traduction anglaise (chaîne).
+        ``GeminiTranslationResult`` avec texte et usage tokens.
     """
 
     audio_path = Path(audio_path)
@@ -133,26 +214,32 @@ def translate_audio(
         config=config,
     )
 
-    # SDK: le texte est exposé via `response.text` dans la majorité des cas.
-    text = getattr(response, "text", None)
-    if isinstance(text, str):
-        return text.strip()
+    return GeminiTranslationResult(
+        text=_extract_text_from_response(response),
+        usage=_extract_usage_from_response(response),
+    )
 
-    # Fallback robuste si `text` est absent.
-    candidates = getattr(response, "candidates", None)
-    if isinstance(candidates, list) and candidates:
-        parts: list[str] = []
-        for cand in candidates:
-            content = getattr(cand, "content", None)
-            cand_parts = (
-                getattr(content, "parts", None) if content is not None else None
-            )
-            if isinstance(cand_parts, list):
-                for part in cand_parts:
-                    part_text = getattr(part, "text", None)
-                    if isinstance(part_text, str) and part_text.strip():
-                        parts.append(part_text.strip())
-        if parts:
-            return "\n".join(parts).strip()
 
-    return ""
+def translate_audio(
+    *,
+    client: Any,
+    request: GeminiRequest,
+    audio_path: Path,
+) -> str:
+    """
+    Traduire un audio FR en texte EN via Gemini (API historique).
+
+    Paramètres :
+        client : Client google-genai.
+        request : Paramètres modèle/prompt/génération.
+        audio_path : Chemin vers le fichier audio.
+
+    Retour :
+        Traduction anglaise (chaîne).
+    """
+    result = translate_audio_with_metadata(
+        client=client,
+        request=request,
+        audio_path=audio_path,
+    )
+    return result.text

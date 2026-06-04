@@ -19,18 +19,25 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import sacrebleu
 from Gemini.gemini_common import (
     DEFAULT_GEMINI_MODEL_ID,
     DEFAULT_PROMPT,
     GeminiRequest,
+    GeminiTranslationResult,
+    GeminiUsage,
     MissingGeminiApiKeyError,
     create_gemini_client,
-    translate_audio,
+    translate_audio_with_metadata,
+)
+from scripts_communs.eval_protocol import (
+    build_protocol_record,
+    score_corpus_metrics,
+    write_eval_protocol_artifact,
 )
 from speechLLM.speechllm_common import (
     PROJECT_ROOT,
@@ -41,25 +48,6 @@ from speechLLM.speechllm_common import (
     resolve_speechllm_config_path,
     write_json,
 )
-
-
-def score_with_sacrebleu(preds: list[str], refs: list[str]) -> dict[str, Any]:
-    """Calculer BLEU, CHRF, TER corpus et la signature SacreBLEU."""
-    bleu_metric = sacrebleu.metrics.BLEU()
-    chrf_metric = sacrebleu.metrics.CHRF()
-    ter_metric = sacrebleu.metrics.TER()
-    bleu = bleu_metric.corpus_score(preds, [refs])
-    chrf = chrf_metric.corpus_score(preds, [refs])
-    ter = ter_metric.corpus_score(preds, [refs])
-    return {
-        "bleu": float(bleu.score),
-        "chrf": float(chrf.score),
-        "ter": float(ter.score),
-        "signature": str(bleu_metric.get_signature()),
-        "bleu_text": str(bleu),
-        "chrf_text": str(chrf),
-        "ter_text": str(ter),
-    }
 
 
 def run_evaluate_gemini(
@@ -84,6 +72,15 @@ def run_evaluate_gemini(
     model_id = str(deep_get(config, "model.gemini_id", DEFAULT_GEMINI_MODEL_ID))
     temperature = float(deep_get(config, "decode.temperature", 0.0))
     max_output_tokens = int(deep_get(config, "decode.max_output_tokens", 256))
+    input_per_1m_tokens_usd = float(
+        deep_get(config, "pricing.input_per_1m_tokens_usd", 0.0)
+    )
+    output_per_1m_tokens_usd = float(
+        deep_get(config, "pricing.output_per_1m_tokens_usd", 0.0)
+    )
+    fixed_per_request_usd = float(
+        deep_get(config, "pricing.fixed_per_request_usd", 0.0)
+    )
 
     if dry_run:
         print("[dry-run] gemini evaluate:")
@@ -91,6 +88,7 @@ def run_evaluate_gemini(
         print(f"  model:     {model_id}")
         print(f"  prompt:    {prompt}")
         print(f"  limit:     {limit if limit > 0 else 'none'}")
+        print("  pricing:   input/output per 1M tokens + fixed/request")
         return 0
 
     if not valid_manifest.is_file() or not test_manifest.is_file():
@@ -110,11 +108,33 @@ def run_evaluate_gemini(
         max_output_tokens=max_output_tokens,
     )
 
-    def translate_split(manifest_path: Path) -> tuple[list[str], list[str], list[dict]]:
+    def _usage_to_dict(usage: GeminiUsage) -> dict[str, int]:
+        """Convertir ``GeminiUsage`` optionnel en dict d'entiers cumulables."""
+        return {
+            "prompt_tokens": int(usage.prompt_tokens or 0),
+            "candidate_tokens": int(usage.candidate_tokens or 0),
+            "total_tokens": int(usage.total_tokens or 0),
+        }
+
+    def _estimate_cost_usd(usage_stats: dict[str, int], requests: int) -> float:
+        """Estimer le coût USD à partir des tokens et du coût fixe par requête."""
+        return (
+            (usage_stats["prompt_tokens"] / 1_000_000.0) * input_per_1m_tokens_usd
+            + (usage_stats["candidate_tokens"] / 1_000_000.0) * output_per_1m_tokens_usd
+            + requests * fixed_per_request_usd
+        )
+
+    def translate_split(
+        manifest_path: Path,
+    ) -> tuple[list[str], list[str], list[dict], dict[str, Any]]:
         """Traduire un split TSV et renvoyer hypothèses, références, et erreurs."""
         preds: list[str] = []
         refs: list[str] = []
         failures: list[dict] = []
+        split_usage = {"prompt_tokens": 0, "candidate_tokens": 0, "total_tokens": 0}
+        split_requests = 0
+        split_retries = 0
+        split_call_seconds = 0.0
         samples = read_manifest(manifest_path)
         if limit > 0:
             samples = samples[:limit]
@@ -123,15 +143,25 @@ def run_evaluate_gemini(
             last_error: str | None = None
             hyp = ""
             for attempt in range(max(1, max_retries + 1)):
+                split_requests += 1
+                started = time.perf_counter()
                 try:
-                    hyp = translate_audio(
+                    result: GeminiTranslationResult = translate_audio_with_metadata(
                         client=client,
                         request=request,
                         audio_path=sample.audio_path,
                     )
+                    split_call_seconds += time.perf_counter() - started
+                    usage_dict = _usage_to_dict(result.usage)
+                    split_usage["prompt_tokens"] += usage_dict["prompt_tokens"]
+                    split_usage["candidate_tokens"] += usage_dict["candidate_tokens"]
+                    split_usage["total_tokens"] += usage_dict["total_tokens"]
+                    hyp = result.text
                     break
                 except Exception as exc:  # noqa: BLE001 — baseline robuste (API/network)
+                    split_call_seconds += time.perf_counter() - started
                     last_error = f"{type(exc).__name__}: {exc}"
+                    split_retries += 1
                     if verbose:
                         print(
                             f"[gemini] retry {attempt}/{max_retries} for {sample.sample_id}: {last_error}",
@@ -146,18 +176,56 @@ def run_evaluate_gemini(
                     }
                 )
             preds.append(hyp)
-        return preds, refs, failures
+        return (
+            preds,
+            refs,
+            failures,
+            {
+                "samples": len(samples),
+                "requests": split_requests,
+                "retries": split_retries,
+                "call_seconds": split_call_seconds,
+                "usage": split_usage,
+            },
+        )
 
     eval_dir.mkdir(parents=True, exist_ok=True)
     if verbose:
         print(f"Evaluating Gemini model: {model_id}")
         print(f"Eval dir: {eval_dir}")
 
-    dev_preds, dev_refs, dev_failures = translate_split(valid_manifest)
-    test_preds, test_refs, test_failures = translate_split(test_manifest)
+    eval_started = time.perf_counter()
+    started_utc = datetime.now(timezone.utc).isoformat()
+    dev_preds, dev_refs, dev_failures, dev_runtime = translate_split(valid_manifest)
+    test_preds, test_refs, test_failures, test_runtime = translate_split(test_manifest)
 
-    dev_scores = score_with_sacrebleu(dev_preds, dev_refs)
-    test_scores = score_with_sacrebleu(test_preds, test_refs)
+    dev_scores = score_corpus_metrics(dev_preds, dev_refs)
+    test_scores = score_corpus_metrics(test_preds, test_refs)
+
+    from scripts_communs.export_eval_review import write_eval_review_artifacts
+
+    write_eval_review_artifacts(eval_dir, "dev", valid_manifest, dev_preds)
+    write_eval_review_artifacts(eval_dir, "test", test_manifest, test_preds)
+    elapsed_seconds = time.perf_counter() - eval_started
+    finished_utc = datetime.now(timezone.utc).isoformat()
+
+    total_usage = {
+        "prompt_tokens": dev_runtime["usage"]["prompt_tokens"]
+        + test_runtime["usage"]["prompt_tokens"],
+        "candidate_tokens": dev_runtime["usage"]["candidate_tokens"]
+        + test_runtime["usage"]["candidate_tokens"],
+        "total_tokens": dev_runtime["usage"]["total_tokens"]
+        + test_runtime["usage"]["total_tokens"],
+    }
+    total_requests = int(dev_runtime["requests"]) + int(test_runtime["requests"])
+    cost_dev_usd = _estimate_cost_usd(
+        dev_runtime["usage"], int(dev_runtime["requests"])
+    )
+    cost_test_usd = _estimate_cost_usd(
+        test_runtime["usage"],
+        int(test_runtime["requests"]),
+    )
+    cost_total_usd = cost_dev_usd + cost_test_usd
 
     (eval_dir / "dev_predictions.txt").write_text(
         "\n".join(dev_preds) + ("\n" if dev_preds else ""),
@@ -213,6 +281,34 @@ def run_evaluate_gemini(
                 "max_retries": max_retries,
                 "limit": limit,
             },
+            "runtime": {
+                "started_utc": started_utc,
+                "finished_utc": finished_utc,
+                "elapsed_seconds": elapsed_seconds,
+                "elapsed_minutes": elapsed_seconds / 60.0,
+                "api_call_seconds": float(dev_runtime["call_seconds"])
+                + float(test_runtime["call_seconds"]),
+            },
+            "gemini_usage": {
+                "dev": dev_runtime,
+                "test": test_runtime,
+                "total": {
+                    "samples": int(dev_runtime["samples"])
+                    + int(test_runtime["samples"]),
+                    "requests": total_requests,
+                    "retries": int(dev_runtime["retries"])
+                    + int(test_runtime["retries"]),
+                    "usage": total_usage,
+                },
+            },
+            "gemini_cost_estimate_usd": {
+                "input_per_1m_tokens_usd": input_per_1m_tokens_usd,
+                "output_per_1m_tokens_usd": output_per_1m_tokens_usd,
+                "fixed_per_request_usd": fixed_per_request_usd,
+                "dev": cost_dev_usd,
+                "test": cost_test_usd,
+                "total": cost_total_usd,
+            },
             "dev": dev_scores,
             "test": test_scores,
             "failures": {
@@ -222,10 +318,46 @@ def run_evaluate_gemini(
         },
     )
 
+    segment_mode = str(deep_get(config, "data.segment_mode", "utterance"))
+    lang_pair = str(deep_get(config, "experiment.lang_pair", "fr-en"))
+    write_eval_protocol_artifact(
+        eval_dir,
+        build_protocol_record(
+            pipeline="gemini_st",
+            lang_pair=lang_pair,
+            run_id=run_id,
+            segment_mode=segment_mode,
+            config_path=config_path,
+            decode={
+                "model_id": model_id,
+                "temperature": temperature,
+                "max_output_tokens": max_output_tokens,
+                "prompt": prompt,
+            },
+            sacrebleu_signatures={
+                "dev": dev_scores["signature"],
+                "test": test_scores["signature"],
+            },
+            n_segments={"dev": len(dev_preds), "test": len(test_preds)},
+            extra={"limit": limit, "max_retries": max_retries},
+        ),
+    )
+
     print("Gemini evaluation complete.")
     print(f"  BLEU dev:  {dev_scores['bleu']:.2f}")
     print(f"  BLEU test: {test_scores['bleu']:.2f}")
+    print(f"  Duration:  {elapsed_seconds / 60.0:.2f} min")
+    print(f"  Cost est:  ${cost_total_usd:.6f}")
     print(f"  Eval dir:  {eval_dir}")
+
+    try:
+        from scripts_communs.update_experiments_tracking import sync_run_from_metrics
+
+        if sync_run_from_metrics(run_dir):
+            print(f"  Tracking:  runs/experiments_tracking.csv (run_id={run_id})")
+    except OSError as exc:
+        print(f"  WARNING: tracking CSV not updated: {exc}", file=sys.stderr)
+
     return 0
 
 

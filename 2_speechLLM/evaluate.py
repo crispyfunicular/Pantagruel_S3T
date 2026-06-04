@@ -2,7 +2,7 @@
 """
 Évaluation speechLLM — décodage valid/test et métriques SacreBLEU signées.
 
-Entrées : config YAML, checkpoint ``best.pt`` (projecteur).
+Entrées : config YAML, checkpoint ``best.pt`` (projecteur ; + encodeur si ``freeze_encoder: false``).
 Sorties : ``runs/.../eval/`` (prédictions, sacrebleu_*.txt, metrics.json).
 """
 
@@ -13,10 +13,13 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
-import sacrebleu
 import torch
+from scripts_communs.eval_protocol import (
+    build_protocol_record,
+    score_corpus_metrics,
+    write_eval_protocol_artifact,
+)
 from speechLLM.speechllm_common import (
     PROJECT_ROOT,
     SpeechLLMModel,
@@ -32,25 +35,6 @@ from speechLLM.speechllm_common import (
     write_json,
 )
 from torch.utils.data import DataLoader
-
-
-def score_with_sacrebleu(preds: list[str], refs: list[str]) -> dict[str, Any]:
-    """Calculer BLEU, CHRF, TER corpus et la signature SacreBLEU."""
-    bleu_metric = sacrebleu.metrics.BLEU()
-    chrf_metric = sacrebleu.metrics.CHRF()
-    ter_metric = sacrebleu.metrics.TER()
-    bleu = bleu_metric.corpus_score(preds, [refs])
-    chrf = chrf_metric.corpus_score(preds, [refs])
-    ter = ter_metric.corpus_score(preds, [refs])
-    return {
-        "bleu": float(bleu.score),
-        "chrf": float(chrf.score),
-        "ter": float(ter.score),
-        "signature": str(bleu_metric.get_signature()),
-        "bleu_text": str(bleu),
-        "chrf_text": str(chrf),
-        "ter_text": str(ter),
-    }
 
 
 def decode_manifest(
@@ -183,8 +167,23 @@ def run_evaluate(
         num_beams=num_beams,
     )
 
-    dev_scores = score_with_sacrebleu(dev_preds, dev_refs)
-    test_scores = score_with_sacrebleu(test_preds, test_refs)
+    dev_scores = score_corpus_metrics(dev_preds, dev_refs)
+    test_scores = score_corpus_metrics(test_preds, test_refs)
+
+    from scripts_communs.export_eval_review import write_eval_review_artifacts
+
+    write_eval_review_artifacts(
+        eval_dir,
+        "dev",
+        PROJECT_ROOT / str(deep_get(config, "data.valid_manifest")),
+        dev_preds,
+    )
+    write_eval_review_artifacts(
+        eval_dir,
+        "test",
+        PROJECT_ROOT / str(deep_get(config, "data.test_manifest")),
+        test_preds,
+    )
 
     (eval_dir / "dev_predictions.txt").write_text(
         "\n".join(dev_preds) + ("\n" if dev_preds else ""),
@@ -253,10 +252,50 @@ def run_evaluate(
         },
     )
 
+    segment_mode = str(
+        deep_get(
+            config,
+            "data.segment_mode",
+            "sentence_like"
+            if "manifests_sentence" in str(deep_get(config, "data.valid_manifest", ""))
+            else "utterance",
+        )
+    )
+    lang_pair = str(deep_get(config, "experiment.lang_pair", "fr-en"))
+    write_eval_protocol_artifact(
+        eval_dir,
+        build_protocol_record(
+            pipeline="speechllm",
+            lang_pair=lang_pair,
+            run_id=run_id,
+            segment_mode=segment_mode,
+            config_path=config_path,
+            decode={
+                "beam_size": num_beams,
+                "max_new_tokens": max_new_tokens,
+                "prompt": prompt,
+            },
+            sacrebleu_signatures={
+                "dev": dev_scores["signature"],
+                "test": test_scores["signature"],
+            },
+            n_segments={"dev": len(dev_preds), "test": len(test_preds)},
+        ),
+    )
+
     print("speechLLM evaluation complete.")
     print(f"  BLEU dev:  {dev_scores['bleu']:.2f}")
     print(f"  BLEU test: {test_scores['bleu']:.2f}")
     print(f"  Eval dir:  {eval_dir}")
+
+    try:
+        from scripts_communs.update_experiments_tracking import sync_run_from_metrics
+
+        if sync_run_from_metrics(run_dir):
+            print(f"  Tracking:  runs/experiments_tracking.csv (run_id={run_id})")
+    except OSError as exc:
+        print(f"WARNING: tracking CSV not updated: {exc}", file=sys.stderr)
+
     return 0
 
 
