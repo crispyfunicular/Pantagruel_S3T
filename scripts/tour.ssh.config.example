@@ -1,0 +1,21 @@
+# Exemple à fusionner dans ~/.ssh/config (chmod 600)
+# Permet : ssh modyco-tour   et   ./scripts/tour.sh check
+#
+# Avant la première connexion :
+#   ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_modyco -N ''
+#   ssh-copy-id -i ~/.ssh/id_ed25519_modyco.pub mpellissier@10.8.0.2
+
+Host modyco-tour
+    HostName 10.8.0.2
+    User mpellissier
+    IdentityFile ~/.ssh/id_ed25519_modyco
+    IdentitiesOnly yes
+    BatchMode yes
+    PreferredAuthentications publickey
+    PasswordAuthentication no
+
+# Puis dans le shell :
+#   export TOUR_USER=mpellissier
+#   export TOUR_HOST=10.8.0.2
+# ou utiliser directement :
+#   ssh modyco-tour

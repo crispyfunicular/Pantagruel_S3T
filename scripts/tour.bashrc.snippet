@@ -1,0 +1,13 @@
+# Raccourcis optionnels à ajouter dans ~/.bashrc (après alias modyco existant).
+#
+#   alias modyco="ssh mpellissier@10.8.0.2"
+#   source ~/git/GETALP/S3T/scripts/tour.bashrc.snippet   # ou copier-coller
+
+S3T_LOCAL="${S3T_LOCAL:-$HOME/git/GETALP/S3T}"
+
+# Shell sur la tour, directement dans le dépôt S3T
+alias modyco-s3t='ssh mpellissier@10.8.0.2 -t "cd ~/S3T && exec bash -l"'
+
+# Raccourcis rsync / test (délègue à scripts/tour.sh, clé SSH uniquement)
+alias modyco-check="${S3T_LOCAL}/scripts/tour.sh check"
+alias modyco-rsync-eval="${S3T_LOCAL}/scripts/tour.sh rsync-eval"
