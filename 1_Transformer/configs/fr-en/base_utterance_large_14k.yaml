@@ -1,0 +1,47 @@
+# Baseline ST end-to-end — fr-en, utterance, encodeur Pantagruel-L-14k (Table 8).
+# HF : PantagrueLLM/speech-large-14K (313M, hidden 1024) — cible papier ~24,0 BLEU test.
+#
+# Mêmes manifests / SPM que base_utterance.yaml (m-TEDx utterance, vocab 1k).
+# Run cible : run_010_transformer_baseline_utterance_large_14k
+
+experiment:
+  name: "fr-en_baseline_utterance_large_14k"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_010_transformer_baseline_utterance_large_14k"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  spm_model: "datasets/processed/spm/fr-en_1000.model"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  decoder_layers: 6
+  decoder_heads: 8
+  hidden_dim: 1024
+  dropout: 0.1
+
+train:
+  max_updates: 80000
+  warmup_updates: 4000
+  freeze_encoder_updates: 1000
+  learning_rate_peak: 0.0002
+  weight_decay: 0.01
+  label_smoothing: 0.1
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 2000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 5
+  max_len_b: 128

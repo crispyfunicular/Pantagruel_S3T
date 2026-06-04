@@ -1,0 +1,53 @@
+#!/usr/bin/env yaml
+# speechLLM B1 — fr-en, sentence_like, encodeur Pantagruel dégelé.
+#
+# Hypothèse : le plafond de performance de B1 "projecteur seul" est limité ; dégel
+# de l'encodeur peut améliorer l'alignement audio→texte à coût GPU similaire.
+#
+# Référence : run_002_speechllm_b1_sentence_long (encodeur gelé, decode beam=1/48).
+
+experiment:
+  name: "fr-en_speechllm_b1_sentence_long_unfreeze_encoder"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_005_speechllm_b1_sentence_long_unfreeze_encoder"
+  seed: 42
+  deterministic: true
+
+data:
+  train_manifest: "datasets/manifests_sentence/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-base-1K"
+  llm_name: "microsoft/phi-2"
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: false
+  freeze_llm: true
+  trust_remote_code: true
+
+prompt:
+  template: "Translate the French speech to English."
+
+train:
+  # Même budget que run_002 ; ajuster si la courbe BLEU continue à monter.
+  max_updates: 20000
+  warmup_updates: 1000
+  # LR un peu plus bas quand on dégele l'encodeur pour limiter l'instabilité.
+  learning_rate_peak: 0.00005
+  weight_decay: 0.01
+  batch_size: 2
+  gradient_accumulation: 4
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+# Décodage retenu pour les scores SacreBLEU "officiels" (évite les boucles).
+decode:
+  beam_size: 1
+  max_new_tokens: 48
+

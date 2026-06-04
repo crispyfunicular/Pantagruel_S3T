@@ -1,0 +1,52 @@
+# Baseline ST end-to-end Pantagruel — fr-en, segments sentence_like.
+# Comparaison Table 8 Pantagruel (~24–25 BLEU) ; protocole aligné speechLLM/Gemini.
+#
+# Prérequis :
+#   - datasets/manifests_sentence/fr-en/*.tsv (+ train.target.txt)
+#   - SPM entraîné sur les cibles sentence_like (voir script run_001_…nohup.sh)
+#
+# Run cible : run_001_transformer_baseline_sentence_like
+
+experiment:
+  name: "fr-en_baseline_sentence_like"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_001_transformer_baseline_sentence_like"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "sentence_like"
+  train_manifest: "datasets/manifests_sentence/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+  spm_model: "datasets/processed/spm/fr-en_1000.model"
+  sample_rate: 16000
+
+model:
+  # HF : Pantagruel-B-1k (papier) = PantagrueLLM/speech-base-1K — pas « Pantagruel-Base » (404).
+  encoder_name: "PantagrueLLM/speech-base-1K"
+  trust_remote_code: true
+  decoder_layers: 6
+  decoder_heads: 8
+  hidden_dim: 768
+  dropout: 0.1
+
+train:
+  # Budget « sérieux » (PRD Table 8 : jusqu'à 120k) ; early stop manuel si dev plafonne.
+  max_updates: 80000
+  warmup_updates: 4000
+  freeze_encoder_updates: 1000
+  learning_rate_peak: 0.0002
+  weight_decay: 0.01
+  label_smoothing: 0.1
+  batch_size: 2
+  gradient_accumulation: 4
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 2000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 5
+  max_len_b: 128

@@ -1,0 +1,29 @@
+# Gemini 3.5 Flash — utterance (m-TEDx natif), comparaison papier + vs 2.5 utterance.
+# Modèle GA : gemini-3.5-flash — https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash
+# Prérequis : datasets/manifests/fr-en/{valid,test}.tsv + WAV processed/fr-en/
+
+experiment:
+  name: "fr-en_gemini_35_flash_utterance"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_003_gemini_35_flash_utterance"
+
+data:
+  segment_mode: "utterance"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+
+model:
+  gemini_id: "gemini-3.5-flash"
+
+prompt:
+  template: "Translate the French speech to English."
+
+decode:
+  temperature: 0.0
+  max_output_tokens: 256
+
+pricing:
+  # Gemini 3.5 Flash — tier Standard ; https://ai.google.dev/gemini-api/docs/pricing#gemini-3.5-flash
+  input_per_1m_tokens_usd: 1.50
+  output_per_1m_tokens_usd: 9.00
+  fixed_per_request_usd: 0.0

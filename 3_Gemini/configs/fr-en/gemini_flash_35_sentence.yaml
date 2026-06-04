@@ -1,0 +1,31 @@
+# Gemini 3.5 Flash — sentence_like (comparaison avec run_001_gemini_flash_sentence_like_v2 en 2.5).
+# Modèle GA : gemini-3.5-flash — https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash
+# Prérequis : datasets/manifests_sentence/fr-en/{valid,test}.tsv
+
+experiment:
+  name: "fr-en_gemini_35_flash_sentence_like"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_003_gemini_35_flash_sentence_like"
+
+data:
+  segment_mode: "sentence_like"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+
+model:
+  gemini_id: "gemini-3.5-flash"
+
+prompt:
+  template: "Translate the French speech to English."
+
+decode:
+  temperature: 0.0
+  max_output_tokens: 256
+
+pricing:
+  # Gemini 3.5 Flash — Developer API, tier Standard (mai 2026).
+  # Entrée audio = même tarif que texte/image/vidéo ; sortie inclut thinking tokens.
+  # https://ai.google.dev/gemini-api/docs/pricing#gemini-3.5-flash
+  input_per_1m_tokens_usd: 1.50   # paid tier ($/1M tokens, multimodal)
+  output_per_1m_tokens_usd: 9.00   # paid tier ($/1M tokens)
+  fixed_per_request_usd: 0.0

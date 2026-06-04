@@ -1,11 +1,17 @@
+# speechLLM B1 — fr-en, utterance (m-TEDx natif), entraînement long (~20k updates).
+# À comparer au papier / à la baseline ST utterance ; pas réutiliser un checkpoint sentence_like.
+#
+# Run cible : run_003_speechllm_b1_utterance_long
+
 experiment:
-  name: "fr-en_speechllm_b1"
+  name: "fr-en_speechllm_b1_utterance_long"
   lang_pair: "fr-en"
-  output_dir: "runs/fr-en/run_001_speechllm_b1"
+  output_dir: "runs/fr-en/run_003_speechllm_b1_utterance_long"
   seed: 42
   deterministic: true
 
 data:
+  segment_mode: "utterance"
   train_manifest: "datasets/manifests/fr-en/train.tsv"
   valid_manifest: "datasets/manifests/fr-en/valid.tsv"
   test_manifest: "datasets/manifests/fr-en/test.tsv"
@@ -24,18 +30,18 @@ prompt:
   template: "Translate the French speech to English."
 
 train:
-  max_updates: 500
-  warmup_updates: 100
+  max_updates: 20000
+  warmup_updates: 1000
   learning_rate_peak: 0.0001
   weight_decay: 0.0
   batch_size: 2
   gradient_accumulation: 4
   gradient_clip_norm: 1.0
   amp_dtype: "fp16"
-  eval_every_updates: 50
+  eval_every_updates: 1000
   max_eval_batches: 20
   max_target_tokens: 256
 
 decode:
-  beam_size: 4
-  max_new_tokens: 128
+  beam_size: 1
+  max_new_tokens: 48

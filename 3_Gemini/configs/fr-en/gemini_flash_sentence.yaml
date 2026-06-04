@@ -22,3 +22,10 @@ prompt:
 decode:
   temperature: 0.0
   max_output_tokens: 256
+
+pricing:
+  # Gemini 2.5 Flash — Developer API (juin 2026), entrée audio ST.
+  # https://ai.google.dev/gemini-api/docs/pricing
+  input_per_1m_tokens_usd: 1.00   # audio input ($/1M tokens)
+  output_per_1m_tokens_usd: 2.50  # text output, incl. thinking tokens
+  fixed_per_request_usd: 0.0

@@ -1,0 +1,45 @@
+# speechLLM B1 — fr-en, segments sentence_like, entraînement long (~20k updates).
+# Prérequis : datasets/manifests_sentence/fr-en/ et processed_sentence/.
+# Run de référence : runs/fr-en/run_002_speechllm_b1_sentence_long
+
+experiment:
+  name: "fr-en_speechllm_b1_sentence_long"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_002_speechllm_b1_sentence_long"
+  seed: 42
+  deterministic: true
+
+data:
+  train_manifest: "datasets/manifests_sentence/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-base-1K"
+  llm_name: "microsoft/phi-2"
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+
+prompt:
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 2
+  gradient_accumulation: 4
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+# Décodage retenu pour l'éval SacreBLEU (run_002, juin 2026) — voir RUN_NOTES.md du run.
+decode:
+  beam_size: 1
+  max_new_tokens: 48
