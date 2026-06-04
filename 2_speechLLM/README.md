@@ -51,8 +51,8 @@ Sous `runs/fr-en/<run_id>/` (ou `experiment.output_dir` dans le YAML) :
 | Fichier | Rôle |
 |---------|------|
 | `config.yaml` | Copie de la config |
-| `checkpoints/best.pt` | Projecteur (sélection BLEU dev) |
-| `checkpoints/last.pt` | Dernier état |
+| `checkpoints/best.pt` | Poids entraînés (projecteur ; + encodeur si `freeze_encoder: false`) |
+| `checkpoints/last.pt` | Dernier état (même format) |
 | `train.log` | JSONL par update |
 | `metrics.json` | Résumé entraînement |
 | `eval/sacrebleu_*.txt` | Métriques signées |

@@ -94,6 +94,7 @@ class SpeechLLMModel(nn.Module):
         projector_hidden: int = 2048,
         freeze_encoder: bool = True,
         freeze_llm: bool = True,
+        trust_remote_code: bool = False,
     ) -> None:
         """
         Initialiser le modèle speechLLM (encodeur + projecteur + LLM).
@@ -108,7 +109,11 @@ class SpeechLLMModel(nn.Module):
         """
         super().__init__()
         self.downsample_k = max(1, int(downsample_k))
-        self.encoder = AutoModel.from_pretrained(encoder_name)
+        # Certains checkpoints Pantagruel exposent du code HF custom (trust_remote_code requis).
+        self.encoder = AutoModel.from_pretrained(
+            encoder_name,
+            trust_remote_code=trust_remote_code,
+        )
         self.llm = AutoModelForCausalLM.from_pretrained(llm_name)
         self.tokenizer = AutoTokenizer.from_pretrained(llm_name)
         if self.tokenizer.pad_token is None:
@@ -119,7 +124,8 @@ class SpeechLLMModel(nn.Module):
         self.encoder_proj = (
             nn.Identity() if encoder_dim == llm_dim else nn.Linear(encoder_dim, llm_dim)
         )
-        input_dim = encoder_dim * self.downsample_k
+        # Après encoder_proj + downsample k, la taille d'entrée du projecteur est llm_dim * k.
+        input_dim = llm_dim * self.downsample_k
         self.projector = nn.Sequential(
             nn.Linear(input_dim, projector_hidden),
             nn.ReLU(),
@@ -140,10 +146,18 @@ class SpeechLLMModel(nn.Module):
         return int(self.llm.config.hidden_size)
 
     def trainable_parameters(self) -> list[nn.Parameter]:
-        """Paramètres mis à jour par l'optimiseur (projecteur + éventuelle projection encodeur)."""
+        """Paramètres mis à jour par l'optimiseur.
+
+        Par défaut (B1), seul le projecteur est entraîné. Si l'encodeur n'est pas gelé,
+        on inclut aussi ses paramètres afin que `freeze_encoder: false` ait un effet réel
+        (sinon on paie le backward sans mettre à jour les poids).
+        """
         params: list[nn.Parameter] = list(self.projector.parameters())
         if isinstance(self.encoder_proj, nn.Linear):
             params.extend(self.encoder_proj.parameters())
+        # Encoder: entraîné uniquement si dégelé via `freeze_encoder: false`.
+        if any(parameter.requires_grad for parameter in self.encoder.parameters()):
+            params.extend([p for p in self.encoder.parameters() if p.requires_grad])
         return params
 
     def encode_speech(
@@ -357,6 +371,9 @@ class SpeechLLMModel(nn.Module):
             attention_mask,
             prompt=prompt,
         )
+        # Aligner le dtype sur le LLM (évite Half vs Float en beam search hors autocast).
+        llm_dtype = next(self.llm.parameters()).dtype
+        inputs_embeds = inputs_embeds.to(dtype=llm_dtype)
         prompt_lengths = attn.sum(dim=1)
         generated = self.llm.generate(
             inputs_embeds=inputs_embeds,
@@ -421,6 +438,7 @@ def load_speechllm_from_config(
     projector_hidden = int(deep_get(config, "model.projector_hidden", 2048))
     freeze_encoder = bool(deep_get(config, "model.freeze_encoder", True))
     freeze_llm = bool(deep_get(config, "model.freeze_llm", True))
+    trust_remote_code = bool(deep_get(config, "model.trust_remote_code", False))
     model = SpeechLLMModel(
         encoder_name=encoder_name,
         llm_name=llm_name,
@@ -428,6 +446,7 @@ def load_speechllm_from_config(
         projector_hidden=projector_hidden,
         freeze_encoder=freeze_encoder,
         freeze_llm=freeze_llm,
+        trust_remote_code=trust_remote_code,
     )
     return model.to(device)
 
@@ -454,10 +473,24 @@ def load_projector_checkpoint(
     model: SpeechLLMModel,
     payload: dict[str, Any],
 ) -> None:
-    """Restaurer les poids entraînables (projecteur) depuis un checkpoint."""
+    """Restaurer projecteur (et encodeur si présent dans le payload) depuis un checkpoint."""
     state = payload.get("trainable_state")
     if isinstance(state, dict):
         model.load_state_dict(state, strict=False)
+
+
+def _speechllm_checkpoint_prefixes(config: dict[str, Any]) -> tuple[str, ...]:
+    """
+    Préfixes des tenseurs à persister pour evaluate/infer.
+
+    B1 gelé : projecteur (+ ``encoder_proj`` si présent). Si ``freeze_encoder: false``,
+    inclure aussi l'encodeur fine-tuné — sinon l'éval recharge le HF de base et le BLEU
+    s'effondre.
+    """
+    prefixes: list[str] = ["projector.", "encoder_proj."]
+    if not bool(deep_get(config, "model.freeze_encoder", True)):
+        prefixes.append("encoder.")
+    return tuple(prefixes)
 
 
 def save_projector_checkpoint(
@@ -470,11 +503,12 @@ def save_projector_checkpoint(
     update: int,
     best_bleu_dev: float,
 ) -> None:
-    """Sauvegarder projecteur (+ métadonnées) pour evaluate/infer."""
+    """Sauvegarder les poids entraînés (projecteur, encodeur si dégelé) pour evaluate/infer."""
+    prefixes = _speechllm_checkpoint_prefixes(config)
     trainable = {
         key: value.cpu()
         for key, value in model.state_dict().items()
-        if key.startswith("projector.") or key.startswith("encoder_proj.")
+        if key.startswith(prefixes)
     }
     torch.save(
         {

@@ -110,8 +110,11 @@ def test_evaluate_gemini_writes_eval_files(
     monkeypatch.setattr(evaluate_gemini, "create_gemini_client", lambda: object())
     monkeypatch.setattr(
         evaluate_gemini,
-        "translate_audio",
-        lambda **_: "hello world",
+        "translate_audio_with_metadata",
+        lambda **_: evaluate_gemini.GeminiTranslationResult(
+            text="hello world",
+            usage=evaluate_gemini.GeminiUsage(),
+        ),
     )
 
     code = evaluate_gemini.run_evaluate_gemini(
