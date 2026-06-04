@@ -2,7 +2,7 @@
 """
 Enregistrement de namespaces Python pour dossiers à nom non importable (préfixe numérique).
 
-Les variantes vivent sous ``2_2_speechLLM/``, ``3_3_Gemini/``, ``4_cascade/`` mais le code
+Les variantes vivent sous ``2_speechLLM/``, ``3_Gemini/``, ``4_cascade/`` mais le code
 historique importe ``speechLLM.*``, ``Gemini.*``, ``Cascade.*``. Ce module charge les
 fichiers ``.py`` du répertoire cible dans ``sys.modules`` sous l'alias demandé.
 """
@@ -23,7 +23,7 @@ def register_variant_package(alias: str, directory: Path) -> None:
 
     Paramètres :
         alias : Nom importable (ex. ``speechLLM``, ``Gemini``).
-        directory : Dossier racine de la variante (ex. ``2_2_speechLLM/``).
+        directory : Dossier racine de la variante (ex. ``2_speechLLM/``).
 
     Effet :
         Renseigne ``sys.modules[alias.<module>]`` pour chaque script sibling (hors
@@ -57,15 +57,17 @@ def register_variant_package(alias: str, directory: Path) -> None:
 
 
 def bootstrap_speechllm() -> None:
-    """Enregistrer le package logique ``speechLLM`` depuis ``2_2_speechLLM/``."""
+    """Enregistrer le package logique ``speechLLM`` depuis ``2_speechLLM/``."""
     register_variant_package("speechLLM", PROJECT_ROOT / "2_speechLLM")
 
 
 def bootstrap_gemini() -> None:
-    """Enregistrer le package logique ``Gemini`` depuis ``3_3_Gemini/``."""
+    """Enregistrer ``Gemini`` (dépend de ``speechLLM`` pour les utilitaires communs)."""
+    bootstrap_speechllm()
     register_variant_package("Gemini", PROJECT_ROOT / "3_Gemini")
 
 
 def bootstrap_cascade() -> None:
-    """Enregistrer le package logique ``Cascade`` depuis ``4_cascade/``."""
+    """Enregistrer ``Cascade`` (dépend de ``speechLLM`` pour les utilitaires communs)."""
+    bootstrap_speechllm()
     register_variant_package("Cascade", PROJECT_ROOT / "4_cascade")

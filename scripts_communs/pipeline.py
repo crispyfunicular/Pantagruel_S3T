@@ -211,7 +211,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_prepare.add_argument(
         "--resume", action=argparse.BooleanOptionalAction, default=True
     )
+    p_prepare.add_argument(
+        "--progress",
+        type=Path,
+        default=None,
+        help="Fichier JSON de progression (défaut: artifacts/prepare_<langpair>.progress.json)",
+    )
     p_prepare.add_argument("--report", type=Path, default=None)
+    p_prepare.add_argument(
+        "--dedupe-target-overlap",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Retirer de valid/test les cibles déjà vues dans train.",
+    )
     p_prepare.add_argument("--verify-only", action="store_true")
     p_prepare.set_defaults(func=cmd_prepare)
 
