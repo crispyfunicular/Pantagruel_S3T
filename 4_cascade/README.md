@@ -14,9 +14,9 @@ Les métriques finales utilisent le **même protocole SacreBLEU** que la baselin
 | Routeur `4_cascade/pipeline.py` | implémenté |
 | Configs YAML (`configs/fr-en/`) | implémenté |
 | `--dry-run` (evaluate / infer) | implémenté |
-| Backends ASR (Whisper, etc.) | **à implémenter** (`cascade_common.transcribe_french`) |
-| Backends MT (Marian, NLLB, etc.) | **à implémenter** (`cascade_common.translate_french_to_english`) |
-| Évaluation SacreBLEU complète | bloquée tant que ASR+MT ne sont pas câblés |
+| Backends ASR (`whisper`) | implémenté (`cascade_common.transcribe_french`) |
+| Backends MT (`marian`) | implémenté (`cascade_common.translate_french_to_english`) |
+| Évaluation SacreBLEU complète | implémenté (GPU recommandé ; smoke `--limit 5`) |
 
 ## Prérequis
 
@@ -43,17 +43,23 @@ python 4_cascade/pipeline.py infer \
 
 Segments **sentence_like** : utiliser [`configs/fr-en/cascade_sentence.yaml`](configs/fr-en/cascade_sentence.yaml).
 
-Quand les backends seront branchés :
-
 ```bash
+# Smoke (5 segments)
 python 4_cascade/pipeline.py evaluate \
-  --config 4_cascade/configs/fr-en/cascade.yaml \
-  --run-id run_001_cascade_utterance -v
+  --config 4_cascade/configs/fr-en/cascade_sentence.yaml \
+  --run-id run_000_cascade_smoke5 --limit 5 -v
+
+# Run complet sentence_like
+python 4_cascade/pipeline.py evaluate \
+  --config 4_cascade/configs/fr-en/cascade_sentence.yaml \
+  --run-id run_001_cascade_sentence_like -v
 
 python 4_cascade/pipeline.py infer \
-  --config 4_cascade/configs/fr-en/cascade.yaml \
-  --input-audio path/to/audio.wav
+  --config 4_cascade/configs/fr-en/cascade_sentence.yaml \
+  --input-audio path/to/audio.wav -v
 ```
+
+**VRAM :** Whisper large-v3 + Marian — prévoir ~6–10 Go ; ne pas lancer en parallèle d'un long `1_Transformer/train` sur la même GPU.
 
 ## Config YAML
 
@@ -71,7 +77,7 @@ python 4_cascade/pipeline.py infer \
 |------|----------------|
 | `0` | Succès |
 | `2` | Config ou fichiers manquants |
-| `3` | Pipeline non câblé (ASR/MT non implémentés) |
+| `3` | Backend ASR/MT non supporté (autre que whisper / marian) |
 
 ## Backends prévus (implémentation)
 
@@ -100,7 +106,7 @@ runs/fr-en/<run_id>/eval/
 | Fichier | Rôle |
 |---------|------|
 | `pipeline.py` | Routeur CLI (`evaluate`, `infer`) |
-| `cascade_common.py` | Settings, enchaînement ASR→MT (stubs) |
+| `cascade_common.py` | Settings, Whisper ASR, Marian MT, cache modèles |
 | `evaluate_cascade.py` | SacreBLEU valid/test |
 | `infer_cascade.py` | JSONL inférence |
 
