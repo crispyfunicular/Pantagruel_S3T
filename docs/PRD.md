@@ -74,7 +74,7 @@ Alternative au décodeur Transformer : **Pantagruel gelé** → downsampling →
 | Config | `2_speechLLM/configs/fr-en/b1.yaml` | — | Pilote Phi-2 ; 7B en run production | implémenté |
 | Orchestrateur | `2_speechLLM/pipeline.py` | `run` | `train` → `evaluate` | routeur actif |
 
-**Artifacts :** même contrat que §2.3 (`runs/<lang_pair>/<run_id>/`, `eval/sacrebleu_*.txt`, signature SacreBLEU). Checkpoints : `trainable_state` (projecteur uniquement). Voir [plan_migration_speechllm.md](plan_migration_speechllm.md) et [2_speechLLM/README.md](../2_speechLLM/README.md).
+**Artifacts :** même contrat que §2.3 (`runs/<lang_pair>/<run_id>/`, `eval/sacrebleu_*.txt`, signature SacreBLEU). Checkpoints : `trainable_state` (projecteur ; + tenseurs `encoder.*` si `freeze_encoder: false`). Voir [plan_migration_speechllm.md](plan_migration_speechllm.md) et [2_speechLLM/README.md](../2_speechLLM/README.md).
 
 ### 2.3.2 Baseline API — Gemini ST (audio → texte)
 
@@ -104,7 +104,7 @@ Principes :
 - **Configs** : `4_cascade/configs/<langpair>/cascade.yaml` (utterance) et `cascade_sentence.yaml` (option).
 
 CLI (routeur `4_cascade/pipeline.py`) :
-- `evaluate` : décodage valid/test + SacreBLEU (backends ASR/MT **à implémenter** ; `--dry-run` disponible).
+- `evaluate` : décodage valid/test + SacreBLEU (ASR Whisper + MT Marian ; `--dry-run` et `--limit` disponibles).
 - `infer` : WAV arbitraire → JSONL.
 
 Backends cibles (YAML `asr` / `mt`) : Whisper + Marian par défaut ; extensible (Pantagruel ASR, NLLB, etc.).
@@ -198,6 +198,7 @@ runs/<langpair>/<run_id>/
     dev_predictions.txt
     test_predictions.txt
     sacrebleu_dev.txt      # avec signature
+    protocol.json          # version figée du protocole (protocole_evaluation.md)
     sacrebleu_test.txt
     metrics.json
 ```
@@ -252,7 +253,7 @@ un répertoire séparé (ex. `datasets/manifests_sentence/` + `datasets/processe
 > **Divergence SpeechBrain :** `5_evaluate.py` sépare explicitement **décodage** et **SacreBLEU CLI** (artifacts texte + signature) ; `6_infer.py` est un chemin hors splits m-TEDx — ce n'est pas le flux unique « eval recipe » SB — voir §2.5.
 
 * **RF-13 :** Implémentation d'une recherche par faisceau (**Beam Search Decoding**) avec une largeur de faisceau (*Beam Width*) de 5.
-* **RF-14 :** Évaluation via la bibliothèque officielle **SacreBLEU** avec la signature standard pour garantir la reproductibilité et la comparaison équitable avec LeBenchmark 2.0.
+* **RF-14 :** Évaluation via la bibliothèque officielle **SacreBLEU** avec la signature standard pour garantir la reproductibilité et la comparaison équitable avec LeBenchmark 2.0. Protocole opérationnel figé : [protocole_evaluation.md](protocole_evaluation.md) (`2026-06-02-v1`, module `scripts_communs/eval_protocol.py`, artefact `eval/protocol.json` par run).
 * **RF-15 :** Critère de sélection du meilleur checkpoint : `BLEU dev` prioritaire; `loss dev` utilisée comme signal secondaire en cas d'ambiguïté.
 
 ### 3.5 Protocole d'Évaluation Reproductible (Obligatoire)
@@ -372,7 +373,7 @@ Pour assurer une comparaison équitable, utilisez les valeurs cibles suivantes l
    * *Atténuation :* Journaliser systématiquement seeds, versions, commit Git, configuration complète et environnement matériel.
 4. **Écart de protocole BLEU avec le papier**
    * *Risque :* Une différence de normalisation/dé-tokenisation ou d'options SacreBLEU rend la comparaison avec Pantagruel invalide.
-   * *Atténuation :* Figer la commande canonique d'évaluation, stocker la signature SacreBLEU et appliquer un protocole texte identique sur toutes les expériences.
+   * *Atténuation :* Suivre [protocole_evaluation.md](protocole_evaluation.md) (version figée, `eval/protocol.json`, signature SacreBLEU) ; incrémenter la version de protocole si le décodage ou la normalisation change.
 
 ---
 
@@ -410,14 +411,14 @@ run_id,lang_pair,pipeline,segment_mode,seed,freeze_updates,vocab_size,beam,bleu_
 
 Mettre à jour après chaque run pour comparer à la Table 8 Pantagruel.
 
-**Coût API Gemini (baseline `gemini_st`)** — grille **Gemini 2.5 Flash** (Developer API, juin 2026, [tarifs officiels](https://ai.google.dev/gemini-api/docs/pricing)) :
+**Coût API Gemini (baseline `gemini_st`)** — grilles **tier Standard** ([tarifs officiels](https://ai.google.dev/gemini-api/docs/pricing)) :
 
-| Poste | Tarif payant (USD / 1M tokens) |
-|-------|--------------------------------|
-| Entrée **audio** (ST) | **1,00** |
-| Sortie texte (incl. thinking) | **2,50** |
+| Modèle | Entrée (ST audio) | Sortie texte (incl. thinking) | Config YAML |
+|--------|-------------------|-------------------------------|-------------|
+| **Gemini 2.5 Flash** | **1,00** USD / 1M tokens (audio ; texte/image/vidéo : 0,30) | **2,50** | `gemini_flash*.yaml` |
+| **Gemini 3.5 Flash** | **1,50** USD / 1M tokens (multimodal, audio = texte) | **9,00** | `gemini_flash_35_*.yaml` |
 
-Valeurs par défaut dans `3_Gemini/configs/fr-en/gemini_flash*.yaml` (`pricing.*`). L'étape `3_Gemini/evaluate_gemini.py` estime le coût dans `eval/metrics.json` (`gemini_cost_estimate_usd`) à partir des tokens API et met à jour le CSV via `scripts_communs/update_experiments_tracking.py`.
+L'étape `3_Gemini/evaluate_gemini.py` estime le coût dans `eval/metrics.json` (`gemini_cost_estimate_usd`) à partir des tokens API et des champs `pricing.*` de la config du run ; mise à jour CSV via `scripts_communs/update_experiments_tracking.py`.
 
 ```bash
 # Synchronisation manuelle (tous les runs avec eval/metrics.json)
@@ -437,6 +438,7 @@ python scripts_communs/update_experiments_tracking.py \
 - [ ] `train.log` et checkpoints `best.pt` / `last.pt`
 - [ ] `eval/dev_predictions.txt`, `eval/test_predictions.txt`
 - [ ] `eval/sacrebleu_dev.txt`, `eval/sacrebleu_test.txt` (signature SacreBLEU)
+- [ ] `eval/protocol.json` (version `eval_protocol_version`)
 - [ ] `eval/metrics.json`
 - [ ] ligne ajoutée à `experiments_tracking.csv`
 

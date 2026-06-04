@@ -69,6 +69,22 @@ USER: <embedding_speech> <prompt court> ASSISTANT: <traduction anglais référen
 
 Mettre en œuvre une pipeline ST fr→en **speechLLM** reproductible sur m-TEDx, avec Pantagruel comme encodeur parole et un LLM pour la génération anglaise, puis valider la faisabilité (convergence, BLEU, coût GPU) avant toute optimisation secondaire.
 
+## État d'avancement (juin 2026)
+
+### Résultats de référence (fr→en, `sentence_like`)
+
+- **Run principal (B1, projecteur seul ; encodeur + LLM gelés)** :
+  - **run_id** : `run_002_speechllm_b1_sentence_long`
+  - **Décodage officiel** : `beam_size=1`, `max_new_tokens=48`
+  - **SacreBLEU corpus** : **dev 19.99**, **test 15.89**
+  - **Anti-pattern** : `beam>=4` et/ou `max_new_tokens>=128` → répétitions/boucles, BLEU en baisse.
+
+### Tentative « encodeur dégelé » (juin 2026)
+
+- **run_004** (`run_004_speechllm_b1_sentence_long_unfreeze_encoder_v2`) : entraînement 20k updates terminé ; BLEU dev ~26 pendant le train (20 batches valid). **Éval corpus invalide** (BLEU dev 0.30) : `best.pt` ne persistait que le projecteur, pas `encoder.*`.
+- **Correctifs** : `trainable_parameters()` inclut l'encodeur si dégelé ; `save_projector_checkpoint` persiste `encoder.*` quand `freeze_encoder: false`.
+- **run_005** (`run_005_speechllm_b1_sentence_long_unfreeze_encoder`) : retrain avec checkpoint corrigé (`encoder.*` persisté). **SacreBLEU corpus** : **dev 19.25**, **test 18.83** (vs run_002 gelé : 19.99 / 15.89). Légère baisse dev, gain test notable ; à confirmer sur ≥ 2 seeds.
+
 ## Périmètre
 
 - **Priorité immédiate :**
@@ -146,6 +162,7 @@ La baseline ST n’est **pas abandonnée** : elle sert de point de comparaison q
 **Sous-étapes B2/B3 (si Phase 1 concluante) :**
 
 - **B2 :** projecteur linéaire vs MLP ; prompt ; beam 4 vs 5.
+- **B2bis — LLM gelé (tête de génération speechLLM) :** comparer Phi-2 (actuel) à un ou deux LLM instruct plus répandus (ex. Llama-3.2-3B, Mistral-7B avec quantisation si VRAM) ; **un entraînement projecteur par `llm_name`** (dimensions d’embedding différentes — pas un simple swap à l’éval).
 - **B3 :** dégel encodeur ou LoRA LLM seulement si plafond BLEU.
 
 ### Phase reportée — Baseline ST classique
