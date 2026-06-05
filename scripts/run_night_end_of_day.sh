@@ -7,8 +7,9 @@
 #
 # Modes :
 #   cascade   — évaluations cascade seulement (~3–6 h)
-#   st        — baseline ST utterance seulement (~8 h)
-#   all       — cascade puis ST (défaut, ~11–14 h, une seule GPU)
+#   st        — baseline ST utterance run_002 (legacy, ~8 h)
+#   st-v2     — baseline ST utterance v2 run_004 (gel 5k + early stop, ~2–4 h)
+#   all       — cascade puis ST run_002 (défaut, ~11–14 h, une seule GPU)
 #
 # Lancement (sur la tour, dans ~/S3T) :
 #   cd ~/S3T && source .venv/bin/activate
@@ -65,8 +66,13 @@ run_cascade() {
 }
 
 run_st_utterance() {
-  echo "=== $(date -Is) PHASE ST utterance (Table 8) ==="
+  echo "=== $(date -Is) PHASE ST utterance (Table 8, run_002 legacy) ==="
   bash "${ROOT}/1_Transformer/scripts/run_002_baseline_utterance_nohup.sh"
+}
+
+run_st_utterance_v2() {
+  echo "=== $(date -Is) PHASE ST utterance v2 (run_004, early stop) ==="
+  bash "${ROOT}/1_Transformer/scripts/run_004_baseline_utterance_v2_nohup.sh"
 }
 
 update_tracking() {
@@ -88,12 +94,15 @@ update_tracking() {
     st)
       run_st_utterance
       ;;
+    st-v2)
+      run_st_utterance_v2
+      ;;
     all)
       run_cascade
       run_st_utterance
       ;;
     *)
-      echo "Usage: $0 [all|cascade|st]" >&2
+      echo "Usage: $0 [all|cascade|st|st-v2]" >&2
       exit 2
       ;;
   esac

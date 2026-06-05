@@ -196,6 +196,8 @@ def run_train(
     max_target_tokens = int(deep_get(config, "train.max_target_tokens", 256))
     decode_max_new = int(deep_get(config, "decode.max_len_b", 128))
     amp_dtype = str(deep_get(config, "train.amp_dtype", "fp16")).lower()
+    # 0 = désactivé ; sinon nombre d'évals dev consécutives sans gain BLEU avant arrêt (PRD §9).
+    early_stopping_patience = int(deep_get(config, "train.early_stopping_patience", 0))
 
     if not train_manifest.is_file() or not valid_manifest.is_file():
         print("ERROR: missing train/valid manifest in config", file=sys.stderr)
@@ -213,6 +215,7 @@ def run_train(
         print(f"  spm_model:   {spm_model_path}")
         print(f"  encoder:     {encoder_name}")
         print(f"  max_updates: {max_updates}")
+        print(f"  early_stopping_patience: {early_stopping_patience}")
         return 0
 
     start_wall_s = time.time()
@@ -299,6 +302,8 @@ def run_train(
     accumulated = 0
     train_events: list[TrainLogEvent] = []
     stop_training = False
+    evals_without_improvement = 0
+    early_stopped = False
 
     amp_enabled = device.type == "cuda"
     amp_type = torch.bfloat16 if amp_dtype == "bf16" else torch.float16
@@ -366,6 +371,7 @@ def run_train(
                     )
                     if bleu_dev > best_bleu:
                         best_bleu = bleu_dev
+                        evals_without_improvement = 0
                         torch.save(
                             {
                                 "run_id": run_id,
@@ -381,6 +387,20 @@ def run_train(
                             },
                             checkpoints_dir / "best.pt",
                         )
+                    else:
+                        evals_without_improvement += 1
+                        if (
+                            early_stopping_patience > 0
+                            and evals_without_improvement >= early_stopping_patience
+                        ):
+                            early_stopped = True
+                            stop_training = True
+                            if verbose:
+                                print(
+                                    f"Early stopping at update={global_update} "
+                                    f"(patience={early_stopping_patience}, "
+                                    f"best_bleu_dev={best_bleu:.2f})"
+                                )
 
                 event = TrainLogEvent(
                     timestamp_utc=datetime.now(timezone.utc).isoformat(),
@@ -453,6 +473,8 @@ def run_train(
             "git_commit": git_commit,
             "updates": global_update,
             "best_bleu_dev": float(best_bleu if best_bleu >= 0 else 0.0),
+            "early_stopped": early_stopped,
+            "early_stopping_patience": early_stopping_patience,
             "train_events": len(train_events),
             "checkpoints": {
                 "best": str((checkpoints_dir / "best.pt").resolve()),
