@@ -20,7 +20,8 @@ python scripts_communs/pipeline.py prepare --langpair fr-en
 
 | Variante | Run ID | Config | Entraînement | Durée ordre de grandeur |
 |----------|--------|--------|--------------|-------------------------|
-| ST Table 8 | `run_002_transformer_baseline_utterance` | `1_Transformer/configs/fr-en/base_utterance.yaml` | **80k updates** | ~8 h GPU |
+| ST Table 8 | `run_002_transformer_baseline_utterance` | `1_Transformer/configs/fr-en/base_utterance.yaml` | **80k updates** | ~8 h GPU — **échec** (collapse, BLEU test 3,79) |
+| ST Table 8 **v2** | `run_004_transformer_baseline_utterance_v2` | `1_Transformer/configs/fr-en/base_utterance_v2.yaml` | early stop @20k + gel 5k | **ok** — 16,84 / 16,68 (tour, 2026-06-05) |
 | Gemini Flash | `run_002_gemini_flash_utterance` | `3_Gemini/configs/fr-en/gemini_flash_utterance.yaml` | aucun (API) | ~1–2 h + coût API |
 | Cascade | `run_001_cascade_utterance` | `4_cascade/configs/fr-en/cascade.yaml` | aucun | ~3–5 h GPU |
 | speechLLM B1 | `run_003_speechllm_b1_utterance_long` | `2_speechLLM/configs/fr-en/b1_utterance_long.yaml` | **20k updates** | ~3–4 h GPU |
@@ -46,6 +47,39 @@ bash scripts/run_utterance_pantagruel_metrics.sh cascade  # cascade seul
 ```
 
 ### Baseline ST (réplication Table 8)
+
+**run_002** (juin 2026, tour) : entraînement terminé mais **mode collapse** (~26k updates) — BLEU dev/test **3,90 / 3,79** ; hypothèses répétitives (`iveive…`, `me me me…`). Non comparable au papier (~17,5).
+
+**run_004 v2** (correctifs : `freeze_encoder_updates: 5000`, `early_stopping_patience: 2`, `learning_rate_peak: 1e-4`) — **terminé 2026-06-05** (tour, ~1 h 15) : early stop à **20 000** updates (meilleur checkpoint @16k) ; SacreBLEU corpus **dev 16,84 / test 16,68** (`eval/sacrebleu_*.txt`). Proche Table 8 (~17,5) ; écart ~0,8 BLEU (greedy v1 vs beam 5 papier, stack PyTorch/HF).
+
+```bash
+# ThinkPad → tour (avant lancement)
+rsync -avz 1_Transformer/4_train.py mpellissier@10.8.0.2:~/S3T/1_Transformer/
+rsync -avz 1_Transformer/scripts/run_004_baseline_utterance_v2_nohup.sh \
+  mpellissier@10.8.0.2:~/S3T/1_Transformer/scripts/
+rsync -avz 1_Transformer/configs/fr-en/base_utterance_v2.yaml \
+  mpellissier@10.8.0.2:~/S3T/1_Transformer/configs/fr-en/
+rsync -avz scripts/run_night_end_of_day.sh mpellissier@10.8.0.2:~/S3T/scripts/
+
+# Tour
+cd ~/S3T && source .venv/bin/activate
+chmod +x 1_Transformer/scripts/run_004_baseline_utterance_v2_nohup.sh
+mkdir -p logs
+nohup bash 1_Transformer/scripts/run_004_baseline_utterance_v2_nohup.sh \
+  > logs/run_004_transformer_utterance_v2_wrapper.log 2>&1 &
+echo $! > logs/run_004_transformer_utterance_v2.pid
+tail -f logs/run_004_transformer_baseline_utterance_v2_spm_train_eval.log
+```
+
+Contrôle qualité après ~30 min :
+
+```bash
+head -3 runs/fr-en/run_004_transformer_baseline_utterance_v2/eval/test_predictions.txt
+grep Early logs/run_004_transformer_baseline_utterance_v2_spm_train_eval.log
+python -c "import json; print(json.loads(open('runs/fr-en/run_004_transformer_baseline_utterance_v2/metrics.json').read())['early_stopped'])"
+```
+
+Legacy run_002 (ne pas relancer sauf ablation) :
 
 ```bash
 nohup bash 1_Transformer/scripts/run_002_baseline_utterance_nohup.sh \

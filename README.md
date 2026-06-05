@@ -57,7 +57,8 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 |----------|-----|----------|-----------|--------|
 | Cascade ASR→MT | `run_001_cascade_utterance` | **38.17** | **37.41** | ok (tour) |
 | Gemini 2.5 Flash | `run_001_gemini_flash_utterance_full` | **33.76** | **33.72** | ok |
-| ST B-1k Table 8 | `run_002_transformer_baseline_utterance` | — | — | à lancer |
+| ST B-1k Table 8 | `run_002_transformer_baseline_utterance` | 3.90 | 3.79 | **échec** (collapse) |
+| ST B-1k Table 8 **v2** | `run_004_transformer_baseline_utterance_v2` | **16.84** | **16.68** | ok (tour, gel 5k + early stop @20k) |
 | speechLLM B1 | `run_003_speechllm_b1_utterance_long` | — | — | à lancer |
 
 Ne pas comparer les colonnes utterance et sentence_like entre elles ni directement à la Table 8 sans le même `segment_mode`.
@@ -70,7 +71,7 @@ Trois axes **indépendants** (ne pas les confondre) :
 |-----|-------------|-------------------|
 | **Paradigme** | ST E2E, speechLLM, Gemini, cascade, Speech_Text | Table 8 = ST E2E seulement |
 | **Taille encodeur** | **1k** aujourd’hui (`speech-base-1K`) | papier aussi **14k / 114k** (~24–25 BLEU) → **à planifier** |
-| **Segmentation** | `sentence_like` (runs actuels) vs `utterance` (bench papier) | utterance = Table 8 |
+| **Segmentation** | `utterance` (bench papier) et `sentence_like` (runs historiques) | utterance = Table 8 |
 
 **Fichiers de suivi :** `runs/experiments_tracking.csv` ; tableaux complets [rapport.md §5](rapport.md#5-résultats) ; FAQ [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; bench utterance [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md).
 
@@ -80,10 +81,10 @@ Trois axes **indépendants** (ne pas les confondre) :
 
 - **Baseline ST Table 8** : terminée en `sentence_like` — **16.12** dev / **14.97** test (`run_001_transformer_baseline_sentence_like`).
 - Protocole d'évaluation **figé** : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
-- **Bench utterance** (comparaison papier) — [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md) : rsync données + `run_002_transformer_baseline_utterance`.
+- **Bench utterance** — [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5).
 - **Encodeur 14k / 114k** (priorité encadrant) : configs + scripts [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md) § encodeurs Large (`speech-large-14K` / `speech-large-114K`, runs `run_010`…`run_013`, `scripts/run_pantagruel_encoder_scale_utterance.sh`).
 - **Gemini 3.5 Flash** : `gemini-3.5-flash` — configs [`gemini_flash_35_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence.yaml) / [`gemini_flash_35_utterance.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance.yaml) ; conserver les scores **2.5** pour l’historique.
-- **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad ; cascade `sentence_like` optionnelle.
+- **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.
 - **Relecture qualitative** :
   - inspecter `eval/dev_predictions.txt` sur speechLLM vs Gemini (répétitions, longueur, erreurs systématiques).

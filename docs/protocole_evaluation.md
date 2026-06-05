@@ -93,6 +93,7 @@ Les paramètres **réellement exécutés** doivent figurer dans `eval/protocol.j
 | Mode | **Greedy** (pas de beam search dans le code) | `decode.beam_size: 5` (journalisé seulement) |
 | Longueur max | `decode.max_len_b` (défaut **128**) | `base_*.yaml` |
 | Checkpoint | `checkpoints/best.pt` | meilleur BLEU **dev** en train (greedy, 20 batches max) |
+| Early stopping | `train.early_stopping_patience` (0 = off) | Arrêt si N évals dev consécutives sans gain BLEU (`4_train.py`, juin 2026) |
 
 **Écart connu :** le papier Pantagruel / Table 8 mentionne beam 5 ; l’implémentation S3T v1 reste greedy. Passer à beam 5 = **nouvelle version de protocole** + relance de tous les runs ST comparables.
 
@@ -188,7 +189,7 @@ Prérequis : checkpoints / clé API selon la variante ; manifests cohérents ave
 ## 9. Comparaison Pantagruel Table 8
 
 - Papier : BLEU **test**, segmentation **utterance**, encodeur + décodeur fairseq/LeBenchmark.  
-- S3T v1 : utterance bench en cours ; ST actuellement en **greedy** (pas beam 5) ; encodeur **B-1k** seulement.  
+- S3T v1 : bench utterance **partiel** — cascade **37,41** et Gemini **33,72** test OK ; ST run_002 **3,79** (échec) ; **run_004 v2** **16,68** test (réplication partielle Table 8) ; ST en **greedy** (pas beam 5) ; encodeur **B-1k** seulement.  
 - Les scores `sentence_like` sont **indicatifs** et ne remplacent pas la ligne Table 8 utterance.
 
 ---
