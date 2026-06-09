@@ -72,6 +72,12 @@ def run_evaluate_gemini(
     model_id = str(deep_get(config, "model.gemini_id", DEFAULT_GEMINI_MODEL_ID))
     temperature = float(deep_get(config, "decode.temperature", 0.0))
     max_output_tokens = int(deep_get(config, "decode.max_output_tokens", 256))
+    thinking_level_raw = deep_get(config, "decode.thinking_level", None)
+    thinking_level = (
+        str(thinking_level_raw).strip()
+        if thinking_level_raw is not None and str(thinking_level_raw).strip()
+        else None
+    )
     input_per_1m_tokens_usd = float(
         deep_get(config, "pricing.input_per_1m_tokens_usd", 0.0)
     )
@@ -88,6 +94,7 @@ def run_evaluate_gemini(
         print(f"  model:     {model_id}")
         print(f"  prompt:    {prompt}")
         print(f"  limit:     {limit if limit > 0 else 'none'}")
+        print(f"  thinking:  {thinking_level or '(API default)'}")
         print("  pricing:   input/output per 1M tokens + fixed/request")
         return 0
 
@@ -106,6 +113,7 @@ def run_evaluate_gemini(
         prompt=prompt,
         temperature=temperature,
         max_output_tokens=max_output_tokens,
+        thinking_level=thinking_level,
     )
 
     def _usage_to_dict(usage: GeminiUsage) -> dict[str, int]:
@@ -278,6 +286,7 @@ def run_evaluate_gemini(
             "decode": {
                 "temperature": temperature,
                 "max_output_tokens": max_output_tokens,
+                "thinking_level": thinking_level,
                 "max_retries": max_retries,
                 "limit": limit,
             },
@@ -332,6 +341,7 @@ def run_evaluate_gemini(
                 "model_id": model_id,
                 "temperature": temperature,
                 "max_output_tokens": max_output_tokens,
+                "thinking_level": thinking_level,
                 "prompt": prompt,
             },
             sacrebleu_signatures={

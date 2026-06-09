@@ -171,10 +171,14 @@ def write_eval_review_artifacts(
     """
     manifest_rows = read_manifest_rows(manifest_path)
     if len(manifest_rows) != len(predictions):
-        raise ValueError(
-            f"Review export: {len(predictions)} hypothèses, "
-            f"{len(manifest_rows)} lignes dans {manifest_path.name}"
-        )
+        if len(predictions) < len(manifest_rows):
+            # Smoke test / --limit : hypothèses alignées sur le début du manifest.
+            manifest_rows = manifest_rows[: len(predictions)]
+        else:
+            raise ValueError(
+                f"Review export: {len(predictions)} hypothèses, "
+                f"{len(manifest_rows)} lignes dans {manifest_path.name}"
+            )
     rows = build_review_rows(manifest_rows, predictions)
     review_path = eval_dir / f"{split}_review.tsv"
     write_review_tsv(review_path, rows)

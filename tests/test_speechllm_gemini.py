@@ -27,6 +27,18 @@ def test_gemini_request_defaults() -> None:
     req = GeminiRequest(model_id="gemini-2.5-flash", prompt="x")
     assert req.temperature == 0.0
     assert req.max_output_tokens == 256
+    assert req.thinking_level is None
+
+
+def test_gemini_request_thinking_level_optional() -> None:
+    req = GeminiRequest(
+        model_id="gemini-3.5-flash",
+        prompt="x",
+        thinking_level="minimal",
+        max_output_tokens=1024,
+    )
+    assert req.thinking_level == "minimal"
+    assert req.max_output_tokens == 1024
 
 
 def test_infer_gemini_writes_jsonl(

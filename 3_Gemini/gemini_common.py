@@ -38,6 +38,9 @@ class GeminiRequest:
     prompt: str
     temperature: float = 0.0
     max_output_tokens: int = 256
+    # Gemini 3.x : ``minimal`` / ``low`` / ``medium`` / ``high`` (voir docs thinking_level).
+    # None = laisser le défaut API du modèle (ex. ``medium`` pour 3.5 Flash).
+    thinking_level: str | None = None
 
 
 @dataclass(frozen=True)
@@ -175,6 +178,27 @@ def _extract_usage_from_response(response: Any) -> GeminiUsage:
     )
 
 
+def build_generate_content_config(request: GeminiRequest) -> Any:
+    """
+    Construire ``GenerateContentConfig`` pour une requête ST.
+
+    Pour Gemini 3.x, ``decode.thinking_level`` (ex. ``minimal``) limite les tokens
+    *thinking* internes et laisse plus de budget pour la traduction visible sous
+    ``max_output_tokens``.
+    """
+    from google.genai import types  # type: ignore[import-not-found]
+
+    kwargs: dict[str, Any] = {
+        "temperature": float(request.temperature),
+        "max_output_tokens": int(request.max_output_tokens),
+    }
+    if request.thinking_level:
+        kwargs["thinking_config"] = types.ThinkingConfig(
+            thinking_level=str(request.thinking_level)
+        )
+    return types.GenerateContentConfig(**kwargs)
+
+
 def translate_audio_with_metadata(
     *,
     client: Any,
@@ -204,10 +228,7 @@ def translate_audio_with_metadata(
         request.prompt,
         types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
     ]
-    config = types.GenerateContentConfig(
-        temperature=float(request.temperature),
-        max_output_tokens=int(request.max_output_tokens),
-    )
+    config = build_generate_content_config(request)
     response = client.models.generate_content(
         model=request.model_id,
         contents=contents,

@@ -10,7 +10,7 @@ Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`,
 | — | [`scripts_communs/`](scripts_communs/) | Données m-TEDx (étapes 0–2) | implémenté | [`scripts_communs/pipeline.py`](scripts_communs/pipeline.py) |
 | **1** | [`1_Transformer/`](1_Transformer/) | Baseline ST end-to-end (Pantagruel + décodeur Transformer 6 couches, SPM) | implémenté | [`1_Transformer/pipeline.py`](1_Transformer/pipeline.py) |
 | **2** | [`2_speechLLM/`](2_speechLLM/) | speechLLM B1 (projecteur seul + LLM gelé) | implémenté, priorité fr→en | [`2_speechLLM/pipeline.py`](2_speechLLM/pipeline.py) |
-| **3** | [`3_Gemini/`](3_Gemini/) | Gemini 2.5 Flash (API audio→EN) | implémenté | [`3_Gemini/pipeline.py`](3_Gemini/pipeline.py) |
+| **3** | [`3_Gemini/`](3_Gemini/) | Gemini 2.5 / 3.5 Flash (API audio→EN) | implémenté | [`3_Gemini/pipeline.py`](3_Gemini/pipeline.py) |
 | **4** | [`4_cascade/`](4_cascade/) | Cascade ASR→MT (Whisper + Marian) | implémenté (evaluate/infer) | [`4_cascade/pipeline.py`](4_cascade/pipeline.py) |
 | **5** | [`5_Pantagruel_multimodal/`](5_Pantagruel_multimodal/) | Pantagruel `Speech_Text` + décodeur ST (expérimental) | implémenté (délég. `1_Transformer`) | [`5_Pantagruel_multimodal/pipeline.py`](5_Pantagruel_multimodal/pipeline.py) |
 
@@ -59,11 +59,16 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 |----------|-----|----------|-----------|--------|
 | Cascade ASR→MT | `run_001_cascade_utterance` | **38.17** | **37.41** | ok (tour) |
 | Gemini 2.5 Flash | `run_001_gemini_flash_utterance_full` | **33.76** | **33.72** | ok |
+| Gemini 3.5 Flash | `run_003_gemini_35_flash_utterance` | 11.66 | 13.39 | ok (local, 99 min, **0,60 $** API) — troncature probable |
+| Gemini 3.5 Flash | `run_003_gemini_35_flash_sentence_like` | 1.62 | 1.45 | ok (local, 42 min, **0,52 $**) — troncature probable |
+| Gemini 3.5 Flash **v2** | `run_004_gemini_35_flash_utterance_v2` | 50.64* | 55.39* | smoke `--limit 5` ok ; run complet **à lancer**
 | ST B-1k Table 8 | `run_002_transformer_baseline_utterance` | 3.90 | 3.79 | **échec** (collapse) |
 | ST B-1k Table 8 **v2** | `run_004_transformer_baseline_utterance_v2` | **16.84** | **16.68** | ok (tour, gel 5k + early stop @20k) |
 | speechLLM B1 | `run_003_speechllm_b1_utterance_long` | **10.00** | **7.47** | ok (tour, 2026-06-05) |
+| speechLLM B1 **L-14k** | `run_012_speechllm_b1_utterance_large_14k` | **15.49** | **15.03** | ok (OVH, ~1,4 h GPU) |
+| speechLLM B1 **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | — | — | **en cours** (OVH) |
 | ST L-14k Table 8 | `run_010_transformer_baseline_utterance_large_14k` | 0.00 | 0.00 | **échec** (collapse, tour, ~10 h 23 train + ~11 min éval, 2026-06-09) |
-| ST L-14k Table 8 **v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | — | — | **à lancer** (retry : gel 5k, LR 1e-4, early stop ; script nocturne Modyco) |
+| ST L-14k Table 8 **v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | — | — | **en cours** (Modyco, retry gel 5k + LR 1e-4 + early stop) |
 
 Ne pas comparer les colonnes utterance et sentence_like entre elles ni directement à la Table 8 sans le même `segment_mode`.
 
@@ -86,8 +91,8 @@ Trois axes **indépendants** (ne pas les confondre) :
 - **Baseline ST Table 8** : terminée en `sentence_like` — **16.12** dev / **14.97** test (`run_001_transformer_baseline_sentence_like`).
 - Protocole d'évaluation **figé** : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
 - **Bench utterance** — [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
-- **Encodeur 14k / 114k** (priorité encadrant) : ST L-14k `run_010` **terminé** (collapse 0,00 / 0,00, tour, **~10 h 23** train GPU + **~11 min** éval, 80k updates) — retry **`run_014` v2** prêt (`scripts/run_modyco_night_st_large_14k_v2.sh`, lancement nocturne Modyco) ; speechLLM Large `run_012` / `run_013` sur OVH — voir [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md).
-- **Gemini 3.5 Flash** : `gemini-3.5-flash` — configs [`gemini_flash_35_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence.yaml) / [`gemini_flash_35_utterance.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance.yaml) ; conserver les scores **2.5** pour l’historique.
+- **Encodeur 14k / 114k** (priorité encadrant) : ST L-14k `run_010` **terminé** (collapse 0,00 / 0,00, tour) — **`run_014` v2 en cours** sur Modyco ; speechLLM L-14k **`run_012` terminé** (15,49 / 15,03, OVH) ; L-114k **`run_013` en cours** sur OVH — voir [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md).
+- **Gemini 3.5 Flash** : runs `run_003_*` **terminés** mais **non conclusifs** (troncature sous `max_output_tokens=256` + thinking API default) — utterance **11,66 / 13,39**, sentence_like **1,62 / 1,45**. Relance **`run_004_*_v2`** préparée (`gemini_flash_35_*_v2.yaml` : budget 1024 + `thinking_level: minimal`). Conserver les scores **2.5** pour l’historique.
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.
 - **Relecture qualitative** :
@@ -143,7 +148,7 @@ Paramètres du mode `sentence_like` : `--sentence-target-duration` (défaut 10s)
 
 - Baseline : `1_Transformer/configs/<langpair>/base.yaml` (template [PRD §9](docs/PRD.md#9-template-de-configuration-run-yaml)) — référence `data.spm_model` ; pointer `data.*_manifest` vers `manifests/` ou `manifests_sentence/` selon le découpage choisi.
 - speechLLM : [`2_speechLLM/configs/fr-en/b1.yaml`](2_speechLLM/configs/fr-en/b1.yaml) — pas de SPM ; champs `model.llm_name`, `prompt.template`, `prompt.format` (B2bis : [`b2bis_qwen25_3b.yaml`](2_speechLLM/configs/fr-en/b2bis_qwen25_3b.yaml), [`b2bis_mistral_7b.yaml`](2_speechLLM/configs/fr-en/b2bis_mistral_7b.yaml)).
-- Gemini : **2.5** [`gemini_flash.yaml`](3_Gemini/configs/fr-en/gemini_flash.yaml) / [`gemini_flash_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_sentence.yaml) ; **3.5** [`gemini_flash_35_utterance.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance.yaml) / [`gemini_flash_35_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence.yaml) — `model.gemini_id` (`gemini-2.5-flash` vs `gemini-3.5-flash`).
+- Gemini : **2.5** [`gemini_flash.yaml`](3_Gemini/configs/fr-en/gemini_flash.yaml) / [`gemini_flash_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_sentence.yaml) ; **3.5** [`gemini_flash_35_utterance.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance.yaml) / [`gemini_flash_35_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence.yaml) ; **3.5 v2** (relance) [`gemini_flash_35_utterance_v2.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance_v2.yaml) / [`gemini_flash_35_sentence_v2.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence_v2.yaml) — `model.gemini_id` (`gemini-2.5-flash` vs `gemini-3.5-flash`).
 - Cascade : [`cascade.yaml`](4_cascade/configs/fr-en/cascade.yaml) (utterance) ; [`cascade_sentence.yaml`](4_cascade/configs/fr-en/cascade_sentence.yaml) — champs `asr.*`, `mt.*`, `data.*_manifest` ; voir [4_cascade/README.md](4_cascade/README.md).
 
 **Artifacts runs :** `runs/<langpair>/<run_id>/` (checkpoints, `train.log`, `eval/sacrebleu_*.txt`). Nommage conseillé : inclure le découpage dans les notes (`utterance` vs `sentence_like`) et la piste (`speechllm_b1`, `gemini_st`, etc.).
@@ -204,7 +209,7 @@ Ces baselines servent de points de référence pour les tâches aval (texte + pa
 
 ### 3) `3_Gemini` — API (baseline externe)
 - **But** : obtenir une baseline rapide à comparer aux pipelines locaux, avec le **même protocole SacreBLEU** et un **prompt réutilisable**.
-- **Implémentation** : `3_Gemini/` (client + `evaluate` + `infer`) ; modèle par défaut **`gemini-2.5-flash`**.
+- **Implémentation** : `3_Gemini/` (client + `evaluate` + `infer`) ; modèles supportés **`gemini-2.5-flash`** (référence) et **`gemini-3.5-flash`** (configs `gemini_flash_35_*.yaml`).
 - **Orchestration** : `3_Gemini/pipeline.py`.
 - **Données** : lit les manifests TSV produits par `2_prepare` (`utterance` ou `sentence_like` selon la config YAML `data.*_manifest`). Pas d’entraînement local ; clé API via `GEMINI_API_KEY`.
 

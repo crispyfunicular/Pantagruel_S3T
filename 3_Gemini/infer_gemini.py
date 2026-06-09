@@ -63,6 +63,12 @@ def run_infer_gemini(
     )
     temperature = float(deep_get(config, "decode.temperature", 0.0))
     max_output_tokens = int(deep_get(config, "decode.max_output_tokens", 256))
+    thinking_level_raw = deep_get(config, "decode.thinking_level", None)
+    thinking_level = (
+        str(thinking_level_raw).strip()
+        if thinking_level_raw is not None and str(thinking_level_raw).strip()
+        else None
+    )
 
     try:
         client = create_gemini_client()
@@ -75,6 +81,7 @@ def run_infer_gemini(
         prompt=prompt,
         temperature=temperature,
         max_output_tokens=max_output_tokens,
+        thinking_level=thinking_level,
     )
 
     last_error: str | None = None
@@ -105,6 +112,7 @@ def run_infer_gemini(
         "decode": {
             "temperature": temperature,
             "max_output_tokens": max_output_tokens,
+            "thinking_level": thinking_level,
             "max_retries": max_retries,
         },
     }

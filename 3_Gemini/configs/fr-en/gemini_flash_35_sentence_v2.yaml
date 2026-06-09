@@ -1,0 +1,34 @@
+# Gemini 3.5 Flash — sentence_like v2 (relance anti-troncature).
+# vs run_003 sentence_like (BLEU test 1,45 sous max_output_tokens=256).
+#
+# Lancement :
+#   nohup python 3_Gemini/pipeline.py evaluate \
+#     --config 3_Gemini/configs/fr-en/gemini_flash_35_sentence_v2.yaml \
+#     --run-id run_004_gemini_35_flash_sentence_like_v2 -v \
+#     > runs/logs/gemini_35_sentence_like_v2.log 2>&1 &
+
+experiment:
+  name: "fr-en_gemini_35_flash_sentence_like_v2"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_004_gemini_35_flash_sentence_like_v2"
+
+data:
+  segment_mode: "sentence_like"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+
+model:
+  gemini_id: "gemini-3.5-flash"
+
+prompt:
+  template: "Translate the French speech to English."
+
+decode:
+  temperature: 0.0
+  max_output_tokens: 8192
+  thinking_level: minimal
+
+pricing:
+  input_per_1m_tokens_usd: 1.50
+  output_per_1m_tokens_usd: 9.00
+  fixed_per_request_usd: 0.0

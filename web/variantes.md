@@ -127,7 +127,7 @@ C’est la piste de référence de l’article [Pantagruel](vocabulaire.md#panta
 | *utterance* [^1] | **~16,7** | ~1 h 15 |
 | *sentence_like* [^2] | ~15 | ~8 h |
 
-**Pistes d'amélioration :**
+**Pistes d’amélioration :**
 - Passer à un encodeur pré-entraîné sur plus de données ([14k ou 114k h](vocabulaire.md#b-1k--l-14k--l-114k-échelle-de-pré-entraînement) de parole française) — priorité actuelle après un premier essai 14k non concluant.
 - Implémenter le [décodage par faisceau](vocabulaire.md#beam-search-beam-5) (beam 5, comme dans l’article) à la place du greedy utilisé aujourd’hui.
 - Affiner l’entraînement : durée, [gel de l’encodeur](vocabulaire.md#freeze_encoder_updates), taux d’apprentissage, taille des lots.
@@ -161,7 +161,7 @@ Le modèle apprend avec un format de type dialogue : une consigne du côté [USE
 | *sentence_like*, encodeur gelé [^4] | ~16 | ~2 h |
 | *sentence_like*, encodeur dégelé [^5] | **~19** | ~2 h |
 
-**Pistes d'amélioration :**
+**Pistes d’amélioration :**
 - Lire les exemples produits (`eval/dev_predictions.txt`) : répétitions, traductions trop courtes ou trop longues, erreurs récurrentes.
 - Tester un encodeur plus grand (14k / 114k h), comme pour la variante 1.
 - Essayer d’autres [LLM](vocabulaire.md#llm-grand-modèle-de-langue) gelés (Llama, Mistral, Qwen) -> chaque modèle demande un projecteur réentraîné.
@@ -186,20 +186,24 @@ Coût : facturation à l’appel ; suivie dans les logs de run.
 
 **Pourquoi cette variante ?** C’est une ligne de référence externe : que vaut un grand modèle multimodal commercial, comparé à nos systèmes entraînés sur m-TEDx ? Utile pour situer le travail de stage par rapport à l’état de l’art « prêt à l’emploi ».
 
-**Résultats indicatifs :** (Gemini 2.5 Flash — pas d’entraînement local)
+**Résultats indicatifs :**
 
-| Caractéristiques | BLEU test | Durée | Coût API |
-|------------------|----------:|-------|----------|
-| *utterance* [^6] | **~34** | ~1–2 h | voir `eval/metrics.json` |
-| *sentence_like* [^7] | ~23 | ~1–2 h | voir `eval/metrics.json` |
+| Modèle | Découpage | Réf. | BLEU test | Durée | Coût API |
+|--------|-----------|:----:|----------:|------:|---------:|
+| **2.5 Flash** | *utterance* | [^6] | **~34** | ~1–2 h | voir `eval/metrics.json` (runs historiques) |
+| **2.5 Flash** | *sentence_like* | [^7] | ~23 | ~1–2 h | idem |
+| **3.5 Flash** | *utterance* | [^10] | **~13** | ~99 min | **~0,60 $** |
+| **3.5 Flash** | *sentence_like* | [^11] | — | — | **en cours** (juin 2026) |
+
+**Comparaison 2.5 vs 3.5 (*utterance*, même prompt, *température* 0, max 256 tokens) :** le 3.5 affiche un BLEU test **~20 points sous le 2.5** (13,4 vs 33,7). Les hypothèses 3.5 sont en moyenne **~2× plus courtes** que la référence (~48 % de la longueur) et souvent **coupées en plein milieu de phrase** — vraisemblablement parce que le plafond `max_output_tokens=256` est largement consommé par les tokens *thinking* internes du modèle, laissant peu de tokens pour la traduction visible. **Ce run ne tranche pas encore sur la qualité intrinsèque du 3.5** : une relance avec budget sortie plus élevé et thinking minimal est prévue avant conclusion.
 
 **Point de vigilance :**  
 Les extraits m-TEDx sont librement accessibles sur Internet (vidéos, transcriptions, sous-titres) et le corpus complet est librement téléchargeable en ligne. On ne peut pas exclure que Gemini ait rencontré des contenus proches lors de son pré-entraînement. Les scores de cette baseline se comparent donc avec prudence aux systèmes entraînés uniquement sur nos jeux train/dev/test : une partie de la performance peut refléter une familiarité avec le corpus plutôt qu’une vraie généralisation.
 
-**Pistes d'amélioration :**
-- Comparer Gemini 3.5 Flash et 2.5 Flash sur les deux découpages, à prompt et *température* identiques (paramètre qui règle le hasard à la génération : 0 = toujours le choix le plus probable, donc reproductible ; plus elle monte, plus les réponses varient).
-- Affiner la consigne (prompt) envoyée au modèle.
-- Documenter le coût par run ([API](vocabulaire.md#2-abréviations-et-acronymes) facturée à l’usage) pour situer la référence commerciale face aux systèmes locaux.
+**Pistes d’amélioration :**
+- Relancer Gemini 3.5 avec **`max_output_tokens` plus élevé** (ex. 1024) et **thinking minimal** (`thinking_level: minimal`) avant de conclure sur le 3.5.
+- Affiner la consigne (prompt) : traduction **complète**, anglais uniquement, sans commentaire ni markdown.
+- Documenter le coût par run ([API](vocabulaire.md#2-abréviations-et-acronymes) facturée à l’usage) — champs `gemini_cost_estimate_usd` et `runtime` dans `eval/metrics.json`.
 
 **Dossier :** `3_Gemini/`
 
@@ -229,7 +233,7 @@ Ce n’est pas de la traduction bout en bout (E2E) : l’anglais ne dépend que 
 | *utterance* [^8] | ~37 | ~4 h |
 | *sentence_like* | — | — |
 
-**Pistes d'amélioration :**
+**Pistes d’amélioration :**
 - Tester un modèle [ASR](vocabulaire.md#2-abréviations-et-acronymes) plus léger ou plus lourd (Whisper medium vs large) et mesurer le compromis vitesse / qualité.
 - Essayer un autre traducteur texte ([MT](vocabulaire.md#2-abréviations-et-acronymes)), par exemple NLLB à la place de Marian.
 - Compléter le bench en *sentence_like* pour avoir le tableau complet sur les deux découpages.
@@ -260,7 +264,7 @@ L’encodeur [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal)
 | *utterance* | — | — |
 | *sentence_like* [^9] | ~8 | ~8 h |
 
-**Pistes d'amélioration :**
+**Pistes d’amélioration :**
 - Reprendre les réglages d’entraînement de la variante 1 (gel, durée, décodage) avant de conclure sur l’encodeur multimodal.
 - Lancer un run en *utterance* pour comparer au protocole article.
 - Tester un checkpoint [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal) plus récent ou plus grand, si disponible.
@@ -277,7 +281,7 @@ Audio français (m-TEDx)
         │
         ├──► [1] Pantagruel + décodeur     ──► anglais  (E2E, référence article)
         ├──► [2] Pantagruel → projecteur → LLM ──► anglais  (peu de paramètres entraînés)
-        ├──► [3] Gemini (cloud)          ──► anglais  (pas d'entraînement local)
+        ├──► [3] Gemini (cloud)          ──► anglais  (pas d’entraînement local)
         ├──► [4] Whisper → Marian        ──► anglais  (deux modèles en série)
         └──► [5] Speech_Text + décodeur  ──► anglais  (encodeur multimodal)
 ```
@@ -301,10 +305,11 @@ Meilleur BLEU test SacreBLEU observé par variante. Les paramètres listés sont
 | 1 | Transformer ST | [^1] | ~16,7 | *utterance* | Encodeur B-1k ; gel encodeur 5k updates puis dégel ; early stop @20k ; décodage greedy |
 | 2 | speechLLM B1 | [^5] | ~19 | *sentence_like* | Encodeur B-1k dégelé ; Phi-2 gelé ; projecteur seul entraîné ; 20k updates ; beam 1 / 48 tokens |
 | 3 | Gemini 2.5 Flash | [^6] | ~34 | *utterance* | API `gemini-2.5-flash` ; pas d’entraînement local ; *température* 0 ; max 256 tokens |
+| 3 | Gemini 3.5 Flash | [^10] | ~13 | *utterance* | API `gemini-3.5-flash` ; même protocole ; troncatures observées (voir §3) |
 | 4 | Cascade ASR→MT | [^8] | ~37 | *utterance* | Whisper large-v3 → Marian opus-mt-fr-en ; inférence seule |
 | 5 | Speech_Text + ST | [^9] | ~8 | *sentence_like* | Encodeur Speech_Text B-1k ; décodeur 6 couches + SPM ; 80k updates ; greedy |
 
-Sur *utterance*, la cascade (~37) et Gemini (~34) devancent les modèles entraînés localement (~16,7 pour la baseline Transformer). Sur *sentence_like*, Gemini (~23) reste en tête, devant speechLLM dégelé (~19). Les scores *utterance* et *sentence_like* ne sont pas directement comparables entre eux (voir ci-dessous).
+Sur *utterance*, la cascade (~37) et **Gemini 2.5** (~34) devancent les modèles entraînés localement (~16,7 pour la baseline Transformer B-1k ; ~15 pour speechLLM L-14k [^12]). **Gemini 3.5** (~13, run préliminaire) est pour l’instant **sous le 2.5** — interprétation prudente tant que le budget de sortie n’est pas recalibré. Sur *sentence_like*, Gemini 2.5 (~23) reste en tête, devant speechLLM dégelé (~19). Les scores *utterance* et *sentence_like* ne sont pas directement comparables entre eux (voir ci-dessous).
 
 ## Comment lire les chiffres
 
@@ -329,3 +334,6 @@ Syntaxe : notes de bas de page Markdown (`[^n]`), supportées par Pandoc, GitHub
 [^7]: `run_001_gemini_flash_sentence_like_v2`
 [^8]: `run_001_cascade_utterance`
 [^9]: `run_001_pantagruel_multimodal`
+[^10]: `run_003_gemini_35_flash_utterance`
+[^11]: `run_003_gemini_35_flash_sentence_like`
+[^12]: `run_012_speechllm_b1_utterance_large_14k`

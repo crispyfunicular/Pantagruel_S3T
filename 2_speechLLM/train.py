@@ -135,6 +135,11 @@ def run_train(
     max_new_tokens = int(deep_get(config, "decode.max_new_tokens", 128))
     num_beams = int(deep_get(config, "decode.beam_size", 1))
     amp_dtype = str(deep_get(config, "train.amp_dtype", "fp16")).lower()
+    # None = désactivé ; sinon, arrêt après `patience` évaluations sans amélioration
+    _patience_raw = deep_get(config, "train.early_stopping_patience", None)
+    early_stopping_patience: int | None = (
+        int(_patience_raw) if _patience_raw is not None else None
+    )
 
     if not train_manifest.is_file() or not valid_manifest.is_file():
         print("ERROR: missing train/valid manifest", file=sys.stderr)
@@ -213,6 +218,8 @@ def run_train(
     global_update = 0
     accumulated = 0
     stop_training = False
+    # Compteur de patience : incrémenté après chaque éval sans amélioration du BLEU dev
+    patience_counter = 0
 
     def current_lr() -> float:
         """Scheduler simplifié : warmup linéaire puis plateau."""
@@ -278,6 +285,7 @@ def run_train(
                     )
                     if bleu_dev > best_bleu:
                         best_bleu = bleu_dev
+                        patience_counter = 0
                         save_projector_checkpoint(
                             path=checkpoints_dir / "best.pt",
                             model=model,
@@ -287,6 +295,20 @@ def run_train(
                             update=global_update,
                             best_bleu_dev=best_bleu,
                         )
+                    else:
+                        patience_counter += 1
+                        if (
+                            early_stopping_patience is not None
+                            and patience_counter >= early_stopping_patience
+                        ):
+                            if verbose:
+                                print(
+                                    f"Early stopping : pas d'amélioration depuis "
+                                    f"{patience_counter} évaluations "
+                                    f"(update={global_update}, "
+                                    f"best_bleu_dev={best_bleu:.2f})"
+                                )
+                            stop_training = True
 
                 event = TrainLogEvent(
                     timestamp_utc=datetime.now(timezone.utc).isoformat(),

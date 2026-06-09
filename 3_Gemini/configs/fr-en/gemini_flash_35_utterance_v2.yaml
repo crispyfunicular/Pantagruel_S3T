@@ -1,0 +1,42 @@
+# Gemini 3.5 Flash — utterance v2 (relance anti-troncature).
+# vs run_003 (max_output_tokens=256, thinking API default ~medium) → hypothèses ~2× trop courtes.
+# Correctifs : budget sortie 1024 + thinking_level minimal.
+#
+# Lancement (ThinkPad, GEMINI_API_KEY requis) :
+#   nohup python 3_Gemini/pipeline.py evaluate \
+#     --config 3_Gemini/configs/fr-en/gemini_flash_35_utterance_v2.yaml \
+#     --run-id run_004_gemini_35_flash_utterance_v2 -v \
+#     > runs/logs/gemini_35_utterance_v2.log 2>&1 &
+#
+# Smoke test :
+#   python 3_Gemini/pipeline.py evaluate \
+#     --config 3_Gemini/configs/fr-en/gemini_flash_35_utterance_v2.yaml \
+#     --run-id run_004_gemini_35_flash_utterance_v2 --limit 5 -v
+
+experiment:
+  name: "fr-en_gemini_35_flash_utterance_v2"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_004_gemini_35_flash_utterance_v2"
+
+data:
+  segment_mode: "utterance"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+
+model:
+  gemini_id: "gemini-3.5-flash"
+
+prompt:
+  template: "Translate the French speech to English."
+
+decode:
+  temperature: 0.0
+  # Plafond combiné thinking + sortie (Gemini 3.x). 8192 laisse de la marge sans
+  # viser le max API (65k) : nos utterances font ≤ ~75 mots (~100 tokens visibles).
+  max_output_tokens: 8192
+  thinking_level: minimal
+
+pricing:
+  input_per_1m_tokens_usd: 1.50
+  output_per_1m_tokens_usd: 9.00
+  fixed_per_request_usd: 0.0

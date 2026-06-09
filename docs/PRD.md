@@ -86,6 +86,7 @@ Principes :
 - **Prompt** : instruction textuelle (champ `prompt.template`) conçue pour être réutilisable par la partie LLM de `speechLLM`.
 - **Sorties** : même contrat d’artefacts d’évaluation (`runs/.../eval/` + signature SacreBLEU) avec `pipeline = gemini_st`.
 - **Tracking coût/temps** : `eval/metrics.json` inclut `runtime.elapsed_minutes` et `gemini_cost_estimate_usd` (estimé via `pricing.*` dans la config Gemini).
+- **Décodage Gemini 3.x** : champ optionnel `decode.thinking_level` (`minimal`, `low`, `medium`, `high`) — configs `gemini_flash_35_*_v2.yaml` (relance : `max_output_tokens: 8192`, `thinking_level: minimal`).
 - **Authentification** : variable d’environnement `GEMINI_API_KEY` (aucun secret versionné).
 
 CLI (routeur `3_Gemini/pipeline.py`) :
