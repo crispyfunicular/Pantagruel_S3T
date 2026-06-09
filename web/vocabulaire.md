@@ -94,6 +94,7 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 | **S2T** | Synonyme courant en anglais pour la même tâche (*speech-to-text translation*). | Parfois dans la littérature ; S3T utilise surtout **ST** |
 | **E2E** | Bout en bout : un seul modèle (ou une seule chaîne entraînée) de l’audio à la traduction. | Opposé à **cascade** |
 | **SSL** | Apprentissage auto-supervisé sur de grandes quantités de parole/texte sans transcriptions alignées pour le pré-entraînement. | Encodeurs Pantagruel, LeBenchmark |
+| **JEPA** | Prédiction dans l’espace latent (pas de reconstruction du signal brut) ; cadre théorique derrière data2vec et Pantagruel. | [Entrée détaillée §6](#jepa-joint-embedding-predictive-architecture) |
 | **ASR** | Reconnaissance vocale : audio → transcription dans la même langue (ici français). | Étape 1 de la cascade (`4_cascade`) |
 | **MT** | Traduction automatique texte→texte (ici fr→en via Marian). | Étape 2 de la cascade |
 | **SPM** | SentencePiece : découpe le texte anglais en sous-mots (tokens) pour le décodeur Transformer. | Étape `3_spm`, variantes 1 et 5 |
@@ -256,9 +257,39 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 
 | | |
 |---|---|
-| **En clair** | Famille d’encodeurs français auto-supervisés pour texte et parole (JEPA / data2vec 2.0), utilisée comme « oreille » du système ST. |
+| **En clair** | Famille d’encodeurs français auto-supervisés pour texte et parole ([JEPA](#jepa-joint-embedding-predictive-architecture) / data2vec 2.0), utilisée comme « oreille » du système ST. |
 | **Identifiant** | Article 2026 ; checkpoints HF `PantagrueLLM/...` |
 | **Où** | PRD, README, configs `model.encoder_name` |
+
+### JEPA (Joint Embedding Predictive Architecture)
+
+| | |
+|---|---|
+| **En clair** | Famille d’approches d’[apprentissage auto-supervisé](#2-abréviations-et-acronymes) où le modèle **ne reconstruit pas** l’entrée brute (audio, image, texte) : il **prédit des représentations internes** (vecteurs continus) dans un espace latent. L’idée, formalisée par LeCun (2022), est d’apprendre la **structure** du signal plutôt que sa surface. |
+| **Identifiant** | *Joint Embedding Predictive Architecture* ; implémentation Pantagruel : **data2vec 2.0** (Baevski et al., 2023) |
+| **Où** | Article Pantagruel §3 ; encodeurs `PantagrueLLM/speech-*` utilisés en variantes 1, 2 et 5 |
+
+**Mécanisme (article Pantagruel, figure 1) :**
+
+1. L’audio (ou le texte) passe dans un **encodeur professeur** qui voit l’entrée **complète**.
+2. Un **encodeur étudiant** ne voit qu’une partie de l’entrée (le reste est **masqué**).
+3. Un petit **décodeur** doit prédire, pour les zones masquées, les représentations que le professeur a calculées.
+4. La perte mesure l’écart (distance L2) entre prédiction et cible — pas entre sortie et signal d’origine.
+5. Les poids du professeur ne s’entraînent pas directement : ils suivent une **moyenne mobile exponentielle** (EMA) de ceux de l’étudiant, ce qui stabilise l’apprentissage.
+
+**Contraste avec d’autres pré-entraînements :**
+
+| Approche | Ce que le modèle prédit | Exemple |
+|----------|-------------------------|---------|
+| **BERT / MLM** | Tokens textuels discrets masqués | CamemBERT, FlauBERT |
+| **wav2vec 2.0 / HuBERT** | Unités acoustiques quantifiées (pseudo-phonèmes) | LeBenchmark 2.0 |
+| **JEPA / data2vec** | Vecteurs continus contextualisés (espace latent) | **Pantagruel** (parole) |
+
+Pour la **parole**, Pantagruel utilise une perte purement JEPA (prédiction dans l’espace latent). Pour le **texte**, l’article combine JEPA et MLM (prédiction de tokens masqués en complément), car le texte discret bénéficie encore d’une composante token-level.
+
+**Lien avec S3T :** nous n’entraînons pas l’encodeur Pantagruel — nous **chargeons** un checkpoint déjà pré-entraîné (1k, 14k ou 114k h de parole française) et l’utilisons comme point de départ pour la traduction. La qualité de ces représentations JEPA conditionne en grande partie les scores ST.
+
+**Cousins cités dans l’article :** I-JEPA et V-JEPA (image / vidéo), A-JEPA et WavJEPA (audio).
 
 ### Table 8 (Pantagruel)
 
