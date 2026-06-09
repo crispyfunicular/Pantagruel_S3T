@@ -14,7 +14,7 @@ Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`,
 | Document | Rôle |
 |----------|------|
 | [docs/PRD.md](docs/PRD.md) | Vision, exigences, hyperparamètres, ablations, template YAML, protocole runs |
-| [docs/vocabulaire.md](docs/vocabulaire.md) | Glossaire des termes techniques, abréviations et codes du projet |
+| [web/vocabulaire.md](web/vocabulaire.md) | Glossaire des termes techniques, abréviations et codes du projet |
 | [docs/protocole_evaluation.md](docs/protocole_evaluation.md) | **Méthodologie d'évaluation figée** (SacreBLEU, décodage, `eval/protocol.json`) |
 | [docs/corpus_oralite_externe.md](docs/corpus_oralite_externe.md) | Tests ST sur audio FR externe (corpus oralité pluriTAL) |
 | [docs/plan_migration_speechllm.md](docs/plan_migration_speechllm.md) | Plan speechLLM, critères B1/B2 |
