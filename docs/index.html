@@ -63,7 +63,7 @@
     .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
 
     .hero {
-      padding: 2rem 1.5rem 1.5rem;
+      padding: 2rem 3rem 1.5rem;
     }
 
     .hero h1 {
@@ -315,6 +315,8 @@
       <p class="section-intro">
         SacreBLEU corpus — meilleur run observé par variante. Les découpages
         <em>utterance</em> et <em>sentence_like</em> ne sont pas directement comparables entre eux.
+        Les scores de l'article Pantagruel dépendent de l'échelle de pré-entraînement de l'encodeur
+        (B-1k ~17,5 · L-14k ~24 · L-114k ~25 BLEU test).
       </p>
 
       <div class="chart" aria-label="Graphique des scores BLEU test">
@@ -339,7 +341,7 @@
           <div class="chart-value">~16,7</div>
         </div>
         <div class="chart-row">
-          <div class="chart-label">Article Pantagruel<span class="chart-sublabel">utterance · cible</span></div>
+          <div class="chart-label">Article Pantagruel-B-1k<span class="chart-sublabel">utterance · encodeur 1k h</span></div>
           <div class="chart-bar-wrap"><div class="chart-bar chart-bar--ref" style="width: 47.3%"></div></div>
           <div class="chart-value">17,5</div>
         </div>
@@ -352,8 +354,9 @@
 
       <div class="note">
         Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n'est qu'un indicateur.
-        Sur <em>utterance</em>, la cascade et Gemini devancent les modèles entraînés localement ; la baseline Transformer
-        (~16,7) se rapproche de la cible article (17,5 ± 0,4).
+        Sur <em>utterance</em>, la cascade et Gemini devancent les modèles entraînés localement. Notre baseline Transformer
+        (~16,7, encodeur B-1k) se rapproche de la cible article pour cette échelle (17,5 ± 0,4) ; l'article rapporte de
+        meilleurs scores avec les encodeurs Large (~24 L-14k, ~25 L-114k).
       </div>
     </div>
   </section>
