@@ -97,7 +97,6 @@ cmd_rsync_code() {
     "${ROOT}/requirements.txt" \
     "${ROOT}/pyproject.toml" \
     "${ROOT}/README.md" \
-    "${ROOT}/AGENTS.md" \
     "${ROOT}/rapport.md" \
     "${AKER_USER}@${AKER_HOST}:${AKER_S3T}/"
   echo "Terminé. Sur aker : cd ${AKER_S3T} && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"

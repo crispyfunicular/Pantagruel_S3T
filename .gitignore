@@ -31,4 +31,9 @@ requirements.lock.txt
 .DS_Store
 Thumbs.db
 
+# Cursor / agents (local uniquement, jamais versionné)
+AGENTS.md
+.cursor/
+.cursorrules
+
 *:Zone.Identifier

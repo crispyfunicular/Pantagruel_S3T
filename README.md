@@ -19,7 +19,6 @@ Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`,
 | [docs/corpus_oralite_externe.md](docs/corpus_oralite_externe.md) | Tests ST sur audio FR externe (corpus oralité pluriTAL) |
 | [docs/plan_migration_speechllm.md](docs/plan_migration_speechllm.md) | Plan speechLLM, critères B1/B2 |
 | [2_speechLLM/README.md](2_speechLLM/README.md) | Usage CLI speechLLM, VRAM, format USER/ASSISTANT |
-| [AGENTS.md](AGENTS.md) | Conventions agents, qualité, workflow avant commit |
 | [requirements.txt](requirements.txt) | Dépendances runtime + dev (une seule install pour les deux pistes) |
 | [docs/estimation_ressources_fr_en.md](docs/estimation_ressources_fr_en.md) | Budget disque / GPU (fr→en) |
 
@@ -235,7 +234,7 @@ pip install -r requirements.txt
 
 ## Développement et qualité
 
-**Langues :** code en anglais, documentation projet en français (voir [AGENTS.md](AGENTS.md)).
+**Langues :** code en anglais, documentation projet en français.
 
 Installation des outils dev :
 

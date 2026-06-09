@@ -130,12 +130,11 @@ CLI (routeur `5_Pantagruel_multimodal/pipeline.py`) :
 
 ### 2.4 Qualité logicielle et workflow de contribution
 
-* **Langues :** code et commentaires en **anglais** ; documentation projet (`README.md`, `PRD.md`, `AGENTS.md`, etc.) en **français**.
+* **Langues :** code et commentaires en **anglais** ; documentation projet (`README.md`, `PRD.md`, etc.) en **français**.
 * **Lint / format :** **Ruff** obligatoire avant chaque commit (`ruff check`, `ruff format --check`).
 * **Tests :** **pytest** obligatoire avant chaque commit.
-* **Hooks :** configuration `pre-commit` recommandée (voir [AGENTS.md](AGENTS.md)).
+* **Hooks :** configuration `pre-commit` recommandée (voir `.pre-commit-config.yaml`).
 * **Documentation :** toute évolution fonctionnelle du pipeline doit mettre à jour **PRD.md** et **README.md** dans le même commit.
-* **Référence agents :** conventions détaillées dans [AGENTS.md](AGENTS.md).
 
 ### 2.5 Source de vérité historique et transposition SpeechBrain
 

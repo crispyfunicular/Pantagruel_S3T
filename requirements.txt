@@ -1,4 +1,4 @@
-# S3T — dépendances runtime + développement (PRD.md, AGENTS.md, README.md)
+# S3T — dépendances runtime + développement (PRD.md, README.md)
 # Python 3.10+ — fichier unique pour les deux pistes :
 #   - données : scripts/ 0…3 (preflight → prepare ; spm = baseline ST)
 #   - baseline ST : scripts/ 4…6 (+ sentencepiece)

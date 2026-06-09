@@ -42,7 +42,7 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 |---|---|
 | **En clair** | Nom du dépôt : projet de réplication des expériences de traduction de la parole (ST) autour de l’article Pantagruel, avec plusieurs variantes comparables sur les mêmes données. |
 | **Identifiant** | `S3T` (racine du repo GETALP) |
-| **Où** | README, `AGENTS.md`, tous les pipelines |
+| **Où** | README, tous les pipelines |
 
 ### Variante (numérotée 1 à 5)
 
@@ -74,7 +74,7 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 |---|---|
 | **En clair** | Document d’exigences produit : objectifs scientifiques, architecture, hyperparamètres cibles, contrat des fichiers de run. |
 | **Identifiant** | [docs/PRD.md](PRD.md) |
-| **Où** | Référence obligatoire avant commit si le comportement change (`AGENTS.md`) |
+| **Où** | Référence obligatoire avant commit si le comportement change |
 
 ### Temps A / Temps B (présentation)
 
@@ -835,7 +835,6 @@ Voir [estimation_ressources_fr_en.md](estimation_ressources_fr_en.md) pour ordre
 | [corpus_oralite_externe.md](corpus_oralite_externe.md) | Tests hors m-TEDx |
 | [estimation_ressources_fr_en.md](estimation_ressources_fr_en.md) | Budget disque/GPU |
 | [rapport.md](../rapport.md) | Rapport de stage (synthèse résultats) |
-| [AGENTS.md](../AGENTS.md) | Règles pour contributeurs et agents |
 | `Pantagruel_2026.pdf` | Article source (si présent localement) |
 
 ---
