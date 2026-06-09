@@ -16,9 +16,10 @@ __pycache__/
 .env
 .env.*
 
-# Project runtime artifacts
+# Project runtime artifacts (checkpoints .pt, eval/, logs — jamais versionnés)
 runs/
 artifacts/
+*.pt
 inference/
 logs/
 *.log
