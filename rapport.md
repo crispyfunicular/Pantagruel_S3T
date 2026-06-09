@@ -1,7 +1,7 @@
 # Multimodalité : speech-to-text translation avec Pantagruel
 # Traduction parole français → anglais sur m-TEDx : réplication Pantagruel et variantes multimodales
 
-Statut : bench utterance partiel ; ST B-1k run_002 échoué (3,79) ; run_004 v2 **terminé** (16,84 / 16,68 — proche Table 8 ~17,5)
+Statut : bench utterance partiel ; ST B-1k run_002 échoué (3,79) ; run_004 v2 **terminé** (16,84 / 16,68 — proche Table 8 ~17,5) ; ST L-14k `run_010` **échec** (0,00 / 0,00, ~10 h 23 GPU, 2026-06-09) — retry `run_014` v2 prêt ; speechLLM `run_003` **terminé** (10,00 / 7,47 — sous ST utterance)
 
 Références : [Pantagruel (2026)](docs/Pantagruel_2026.pdf) ; dépôt et protocole [PRD](docs/PRD.md), [README](README.md).
 
@@ -11,7 +11,7 @@ Références : [Pantagruel (2026)](docs/Pantagruel_2026.pdf) ; dépôt et protoc
 
 Nous étudions la traduction de la parole (ST) français → anglais sur le corpus multilingual TEDx (m-TEDx), en nous appuyant sur les encodeurs Pantagruel et le protocole d’évaluation SacreBLEU de l’article *Pantagruel: Unified Self-Supervised Encoders for French Text and Speech* (2026). Le dépôt S3T implémente la réplication end-to-end (encodeur SSL + décodeur Transformer 6 couches, Table 8 du papier) ainsi que quatre approches alternatives : speechLLM (projecteur + LLM gelé), API Gemini 2.5 Flash, cascade Whisper → Marian, et une variante expérimentale Speech_Text multimodale.
 
-Les expériences couvrent deux segmentations : **`sentence_like`** (fusion de segments, runs historiques) et **`utterance`** (segments m-TEDx natifs, bench Pantagruel). Sur **utterance**, la cascade Whisper→Marian atteint **38,17 / 37,41** BLEU (dev/test), devant Gemini 2.5 Flash (**33,76 / 33,72**, run `run_001_gemini_flash_utterance_full`). La réplication ST Table 8 B-1k est **partielle** : run_002 en échec (**3,79** test) ; run_004 v2 **terminé** (**16,84 / 16,68**, early stop @20k, tour — ~0,8 BLEU sous le papier ~17,5). Sur **sentence_like**, Gemini reste en tête (**21,44 / 23,15**), puis speechLLM dégelé (**19,25 / 18,83**), ST greedy (**16,12 / 14,97**) et Speech_Text multimodal faible (**8,39 / 7,95**). Les tableaux détaillés par variante, paramètre et segmentation sont en **§5** ; ne pas mélanger utterance et sentence_like dans une même colonne de comparaison au papier.
+Les expériences couvrent deux segmentations : **`sentence_like`** (fusion de segments, runs historiques) et **`utterance`** (segments m-TEDx natifs, bench Pantagruel). Sur **utterance**, la cascade Whisper→Marian atteint **38,17 / 37,41** BLEU (dev/test), devant Gemini 2.5 Flash (**33,76 / 33,72**, run `run_001_gemini_flash_utterance_full`). La réplication ST Table 8 B-1k est **partielle** : run_002 en échec (**3,79** test) ; run_004 v2 **terminé** (**16,84 / 16,68**, early stop @20k, tour — ~0,8 BLEU sous le papier ~17,5). L’encodeur **L-14k** (`run_010`, tour Modyco, juin 2026) a **échoué** en collapse (**0,00** test, **~10 h 23** train + **~10 min** éval) ; retry **`run_014` v2** préparé. speechLLM utterance (`run_003`) **terminé** (**10,00 / 7,47**, tour — bien sous ST et papier ; hypothèses probablement trop longues). Sur **sentence_like**, Gemini reste en tête (**21,44 / 23,15**), puis speechLLM dégelé (**19,25 / 18,83**), ST greedy (**16,12 / 14,97**) et Speech_Text multimodal faible (**8,39 / 7,95**). Les tableaux détaillés par variante, paramètre et segmentation sont en **§5** ; ne pas mélanger utterance et sentence_like dans une même colonne de comparaison au papier.
 
 Ce document synthétise le cadre expérimental, les différences entre variantes, les hyperparamètres testés, les résultats et les écarts de protocole par rapport au papier — matière première pour un article ou un chapitre expérimental.
 
@@ -90,7 +90,7 @@ Autre confusion possible : « variante 1 / 2 » du dépôt = dossiers `1_Transfo
 | Axe | Exemples |
 |-----|----------|
 | Paradigme | ST E2E, speechLLM, Gemini, cascade |
-| Taille encodeur | B-1k (actuel), L-14k (à faire) |
+| Taille encodeur | B-1k (mesuré), L-14k (`run_010` échec → `run_014` v2) |
 | Segmentation | `utterance` (papier) vs `sentence_like` (S3T) |
 | Décodage | beam 5 (ST), beam 1 / 48 tokens (speechLLM) |
 
@@ -104,7 +104,7 @@ Autre confusion possible : « variante 1 / 2 » du dépôt = dossiers `1_Transfo
 | **Cascade** | Whisper medium/large ; NLLB vs Marian | — | utterance | — | erreur ASR en cascade |
 | **Speech_Text + ST** | autre checkpoint | comme ST | utterance | beam | prétrain multimodal complet |
 
-Priorité encadrant : **encodeur 14k** pour ST et speechLLM **avant** de pousser Phi-2 ou le décodage.
+Priorité encadrant : **encodeur 14k** pour ST (`run_014` v2 après échec `run_010`) et speechLLM (`run_012` / `run_013`) **avant** de pousser Phi-2 ou le décodage.
 
 #### Gemini 3.5 Flash (point 5)
 
@@ -188,7 +188,7 @@ Runs dédiés (configs et scripts dans le dépôt, voir [docs/protocole_utteranc
 | Gemini 2.5 Flash | `run_001_gemini_flash_utterance_full` | **OK** — 33,76 / 33,72 (local) |
 | ST Transformer + SPM | `run_002_transformer_baseline_utterance` | **échec** — 3,90 / 3,79 (collapse) |
 | ST Transformer + SPM v2 | `run_004_transformer_baseline_utterance_v2` | **ok** — 16,84 / 16,68 (tour, early stop @20k) |
-| speechLLM B1 | `run_003_speechllm_b1_utterance_long` | à lancer (~20k updates) |
+| speechLLM B1 | `run_003_speechllm_b1_utterance_long` | **ok** — 10,00 / 7,47 (tour, 2026-06-05) |
 
 Règle : ne pas réutiliser un modèle entraîné sur `sentence_like` pour scorer des manifests utterance.
 
@@ -372,7 +372,9 @@ Métrique : **SacreBLEU corpus** (signature habituelle `tok:13a|smooth:exp|versi
 | Gemini 2.5 Flash | `run_001_gemini_flash_utterance_full` | `gemini-2.5-flash` | temp 0, max 256 tok | **33,76** | **33,72** | ok (local) |
 | ST E2E Transformer B-1k | `run_002_transformer_baseline_utterance` | `speech-base-1K` + décodeur 6L + SPM 1k | greedy (v1) | 3,90 | 3,79 | **échec** (collapse ~26k) |
 | ST E2E Transformer B-1k **v2** | `run_004_transformer_baseline_utterance_v2` | idem + gel 5k + early stop | greedy (v1) | **16,84** | **16,68** | ok (tour) |
-| speechLLM B1 | `run_003_speechllm_b1_utterance_long` | `speech-base-1K` gelé → Phi-2 gelé | beam 1, max 48 tok | — | — | à lancer |
+| speechLLM B1 | `run_003_speechllm_b1_utterance_long` | `speech-base-1K` gelé → Phi-2 gelé | beam 1, max 48 tok | **10,00** | **7,47** | ok (tour) |
+| ST E2E Transformer **L-14k** | `run_010_transformer_baseline_utterance_large_14k` | `speech-large-14K` + décodeur 6L + SPM 1k | greedy (v1) | 0,00 | 0,00 | **échec** (collapse, tour, 2026-06-09) |
+| ST E2E Transformer **L-14k v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | idem + gel 5k + early stop + LR 1e-4 | greedy (v1) | — | — | **à lancer** (retry Modyco) |
 | Gemini (alias protocole) | `run_002_gemini_flash_utterance` | idem 2.5 Flash | idem | — | — | config dédiée ; scores = `run_001_gemini_flash_utterance_full` si même corpus |
 
 ### 5.3 Même paradigme : `utterance` vs `sentence_like` (BLEU test)
@@ -381,7 +383,7 @@ Métrique : **SacreBLEU corpus** (signature habituelle `tok:13a|smooth:exp|versi
 |-----------|----------------------|---------------------------|-------------------|
 | Cascade | **37,41** | — | — |
 | Gemini 2.5 Flash | **33,72** | 23,15 | +10,6 |
-| speechLLM B1 (gelé) | — | 15,89 | — |
+| speechLLM B1 (gelé) | **7,47** (`run_003`) | 15,89 (`run_002`) | −8,4 (utt. vs sent.) |
 | speechLLM B1 (dégelé) | — | 18,83 | — |
 | ST Transformer B-1k | **16,68** (run_004 v2) ; run_002 échec 3,79 | 14,97 | +1,7 (v2 utterance vs sentence_like) |
 
@@ -397,8 +399,10 @@ Métrique : **SacreBLEU corpus** (signature habituelle `tok:13a|smooth:exp|versi
 | `run_001_transformer_baseline_sentence_like` | transformer | sentence_like | speech-base-1K | 80k upd. | greedy (v1) | freeze 1k upd. |
 | `run_002_transformer_baseline_utterance` | transformer | utterance | speech-base-1K | 80k upd. | greedy (v1) | freeze 1k upd. — **échec** |
 | `run_004_transformer_baseline_utterance_v2` | transformer | utterance | speech-base-1K | early stop | greedy (v1) | freeze 5k upd. |
+| `run_003_speechllm_b1_utterance_long` | speechllm | utterance | speech-base-1K | 20k upd. | beam 1 | **gelé** |
 | `run_001_pantagruel_multimodal` | pantagruel_mm | sentence_like | Speech_Text 1K | 80k upd. | greedy (v1) | freeze 1k upd. |
-| `run_010_transformer_baseline_utterance_large_14k` | transformer | utterance | speech-large-14K | 80k upd. (prévu) | greedy (v1) | freeze 1k upd. |
+| `run_010_transformer_baseline_utterance_large_14k` | transformer | utterance | speech-large-14K | 80k upd. | greedy (v1) | freeze 1k upd. — **échec** |
+| `run_014_transformer_baseline_utterance_large_14k_v2` | transformer | utterance | speech-large-14K | early stop (prévu) | greedy (v1) | freeze 5k upd. |
 | `run_011_transformer_baseline_utterance_large_114k` | transformer | utterance | speech-large-114K | 80k upd. (prévu) | greedy (v1) | freeze 1k upd. |
 
 ### 5.5 Référence papier — Table 8 ST E2E (`utterance` uniquement)
@@ -407,7 +411,7 @@ Métrique : **SacreBLEU corpus** (signature habituelle `tok:13a|smooth:exp|versi
 |--------------------------|--------------------------|----------------|
 | LeBenchmark-w2v-B-1k | 14,0 ± 0,5 | — |
 | **Pantagruel-B-1k** | **17,5 ± 0,4** | `run_004_transformer_baseline_utterance_v2` — **16,68** test (écart ~0,8) |
-| Pantagruel-L-14k | 24,0 ± 0,4 | `run_010_…` (prévu) |
+| Pantagruel-L-14k | 24,0 ± 0,4 | `run_010` — **0,00** test (échec collapse) ; retry `run_014` v2 |
 | Pantagruel-L-114k | 25,2 ± 0,4 | `run_011_…` (prévu) |
 
 Les variantes **cascade, Gemini, speechLLM** ne figurent pas dans la Table 8 du papier.
@@ -425,9 +429,10 @@ Les variantes **cascade, Gemini, speechLLM** ne figurent pas dans la Table 8 du 
 | Référence | BLEU fr→en (papier, utterance) | BLEU fr→en (S3T) |
 |-----------|-------------------------------|------------------|
 | Pantagruel-B-1k | 17,5 ± 0,4 | ST utterance run_004 v2 : **16,68** ; run_002 : **3,79** (échec) ; sentence_like : 14,97 |
-| Pantagruel-L-14k / L-114k | 24–25 | Runs `run_010` / `run_011` prévus |
+| Pantagruel-L-14k / L-114k | 24–25 | `run_010` : **0,00** (échec) ; `run_014` v2 à lancer ; `run_011` prévu |
 | Gemini 2.5 Flash | hors Table 8 | 33,72 test (utterance) ; 23,15 (sentence_like) |
 | Cascade | hors Table 8 | 37,41 test (utterance) |
+| speechLLM B1 (Phi-2) | hors Table 8 | **7,47** test (utterance, `run_003`) ; 18,83 (sentence_like dégelé) |
 
 Lecture prudente : stack PyTorch/HF vs fairseq historique ; ST v1 en greedy vs beam 5 papier.
 
@@ -438,7 +443,9 @@ Lecture prudente : stack PyTorch/HF vs fairseq historique ; ST v1 en greedy vs b
 3. speechLLM : le dégel encodeur (run_005) améliore le test (+2,9 vs run_002) au prix d’une légère baisse dev (−0,7) sur sentence_like.
 4. Écart dev/test important pour run_002 speechLLM (19,99 → 15,89) : longueur max 48 tokens, sur-adaptation valid, ou effet segmentation.
 5. Speech_Text multimodal sous-performe (8,39 / 7,95) : piste encodeur multimodal vs tâche ST pure.
-6. **run_002 utterance** : collapse décodeur (répétitions `iveive…`, BLEU 3,79). **run_004 v2** (gel 5k, early stop, LR 1e-4) : **16,84 / 16,68** (2026-06-05, tour, early stop @20k) — réplication partielle Table 8 (~0,8 BLEU sous le papier). Encodeurs Large (`run_010` / `run_011`) à lancer ensuite.
+6. **run_002 utterance** : collapse décodeur (répétitions `iveive…`, BLEU 3,79). **run_004 v2** (gel 5k, early stop, LR 1e-4) : **16,84 / 16,68** (2026-06-05, tour, early stop @20k) — réplication partielle Table 8 (~0,8 BLEU sous le papier).
+7. **run_010 utterance L-14k** (2026-06-08/09, tour Modyco) : même schéma d’échec qu’en B-1k (`freeze_encoder_updates: 1000`, LR 2e-4, 80k updates sans early stop) — BLEU dev/test **0,00** (meilleur dev en cours de train ~0,025) ; hypothèses répétitives (`I I I…`, ratio hyp/réf ~7×). Durée mesurée : **~10 h 23** train GPU (`metrics.json`, 37 380 s) + **~10 min** éval (626 s) ; fenêtre 22h17 → 08h53. Retry **`run_014` v2** (correctifs calqués sur run_004) prêt, lancement nocturne Modyco.
+8. **run_003 speechLLM utterance** : **10,00 / 7,47** (2026-06-05, tour) — fort recul vs sentence_like (15,89) et vs ST utterance (16,68) ; ratio longueur hyp/réf ~2,3× (SacreBLEU) — relecture `eval/dev_predictions.txt` avant ablation dégel (`run_006`) ou encodeurs Large.
 
 ---
 
@@ -466,16 +473,17 @@ Lecture prudente : stack PyTorch/HF vs fairseq historique ; ST v1 en greedy vs b
 
 | Priorité | Action | Variantes concernées |
 |----------|--------|----------------------|
-| P0 | Bench **utterance** : ST `run_004` ok (16,68) ; lancer `run_003_speechllm_b1_utterance_long` | speechLLM |
+| P0 | Bench **utterance** : ST `run_004` ok (16,68) ; `run_003` ok (7,47) — **relecture qualitative** puis ablation dégel utterance | speechLLM |
 | P0 | **Figer** protocole SacreBLEU / décodage par écrit | toutes |
-| P1 | Runs encodeur **`speech-base-14K`** (ST + speechLLM), utterance | 1_Transformer, 2_speechLLM |
+| P1 | ST L-14k : **`run_014` v2** (retry après échec `run_010`) ; speechLLM Large `run_012` / `run_013` | 1_Transformer, 2_speechLLM |
 | P2 | **Gemini 3.5 Flash** (`gemini-3.5-flash`, configs `gemini_flash_35_*.yaml`) vs 2.5 | 3_Gemini |
 | P3 | Ablations décodage / LLM / cascade | selon gains sur dev |
 
 ### 6.4 Travaux en cours techniques
 
-- **`run_004_transformer_baseline_utterance_v2`** : terminé (2026-06-05, tour) — rsync `runs/fr-en/run_004_…/eval/` vers ThinkPad et `update_experiments_tracking.py`.
-- Lancer **`run_003_speechllm_b1_utterance_long`** (GPU libre après run_004).
+- **`run_004_transformer_baseline_utterance_v2`** : terminé (2026-06-05, tour) — rsync `eval/` vers ThinkPad si besoin.
+- **`run_010_transformer_baseline_utterance_large_14k`** : terminé (2026-06-09, tour Modyco) — **échec** (0,00 / 0,00) ; ~10 h 23 train + ~10 min éval ; rsync `eval/` recommandé ; lancer **`run_014` v2** en soirée (`scripts/run_modyco_night_st_large_14k_v2.sh`).
+- **`run_003_speechllm_b1_utterance_long`** : terminé (2026-06-05, tour, 10,00 / 7,47) — rsync `eval/` + `update_experiments_tracking.py` ; analyse hypothèses longues.
 - Optionnel : rsync `eval/` cascade utterance (tour → ThinkPad) ; cascade `run_001_cascade_sentence_like` (sentence_like) pour tableau §5.3 complet.
 - Ablations ST : greedy vs beam (nouvelle version protocole si beam 5 implémenté).
 - Ablations speechLLM : LLM gelés (Llama-3.2-3B, Mistral-7B 4-bit) ; cascade Whisper medium vs large × MT NLLB.
@@ -487,7 +495,7 @@ Lecture prudente : stack PyTorch/HF vs fairseq historique ; ST v1 en greedy vs b
 
 - Résultats fr→en uniquement ; une seed (42) pour la plupart des runs.
 - `sentence_like` non présent dans le papier Pantagruel — comparaison Table 8 indicative.
-- `run_004_speechllm_*` (invalid_eval checkpoint) exclu des conclusions ; réplication ST Table 8 **partielle** (run_004 ST v2 : 16,68 test ; run_002 échec 3,79 ; greedy vs beam 5 papier).
+- `run_004_speechllm_*` (invalid_eval checkpoint) exclu des conclusions ; réplication ST Table 8 **partielle** (run_004 ST v2 : 16,68 test ; run_002 échec 3,79 ; run_010 L-14k échec 0,00 ; greedy vs beam 5 papier).
 - Coûts GPU/API partiellement renseignés dans le CSV.
 - Pas encore de significativité statistique ni d’analyse d’erreur systématique (répétitions, longueur, OOV).
 
@@ -495,7 +503,7 @@ Lecture prudente : stack PyTorch/HF vs fairseq historique ; ST v1 en greedy vs b
 
 ## 8. Conclusion (provisoire)
 
-Le projet S3T met en place un bench reproductible pour la ST fr→en sur m-TEDx avec cinq familles de modèles autour de Pantagruel. Sur **utterance**, la cascade (37,41 test) et Gemini (33,72) dominent ; la baseline ST B-1k v2 (`run_004`, **16,68** test, greedy) se rapproche de la Table 8 Pantagruel (~17,5) après correction du collapse run_002. Sur **sentence_like**, Gemini reste en tête (23,15 test), devant speechLLM dégelé (18,83) et ST (14,97). L’écart résiduel au papier peut refléter greedy vs beam 5, la stack PyTorch/HF ou des hyperparamètres encore perfectibles.
+Le projet S3T met en place un bench reproductible pour la ST fr→en sur m-TEDx avec cinq familles de modèles autour de Pantagruel. Sur **utterance**, la cascade (37,41 test) et Gemini (33,72) dominent ; la baseline ST B-1k v2 (`run_004`, **16,68** test, greedy) se rapproche de la Table 8 Pantagruel (~17,5) après correction du collapse run_002. L’encodeur **L-14k** (`run_010`, ~10 h GPU) a reproduit le même type d’échec (0,00 test) — un retry v2 (`run_014`) est préparé. Sur **sentence_like**, Gemini reste en tête (23,15 test), devant speechLLM dégelé (18,83) et ST (14,97). L’écart résiduel au papier peut refléter greedy vs beam 5, la stack PyTorch/HF ou des hyperparamètres encore perfectibles.
 
 ---
 

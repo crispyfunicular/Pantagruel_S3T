@@ -35,8 +35,8 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 |---------|-----|---------------------------------------------|---------|----------|-----------|-----------|
 | *Pantagruel (2026) — ST E2E* | — | **Pantagruel-B-1k** + décodeur Transformer 6L | `utterance` | — | **17.5 ± 0.4** | Cible de réplication S3T (`speech-base-1K` HF) |
 | *Pantagruel (2026) — ST E2E* | — | LeBenchmark-w2v-**B-1k** + décodeur | `utterance` | — | **14.0 ± 0.5** | Baseline wav2vec 2.0 (même protocole ST) |
-| *Pantagruel (2026) — ST E2E* | — | Pantagruel-**L-14k** + décodeur | `utterance` | — | **24.0 ± 0.4** | Hors scope S3T actuel (encodeur 1K seulement) |
-| *Pantagruel (2026) — ST E2E* | — | Pantagruel-**L-114k** + décodeur | `utterance` | — | **25.2 ± 0.4** | Idem |
+| *Pantagruel (2026) — ST E2E* | — | Pantagruel-**L-14k** + décodeur | `utterance` | — | **24.0 ± 0.4** | Cible S3T : `run_010` (échec collapse) → retry `run_014` v2 |
+| *Pantagruel (2026) — ST E2E* | — | Pantagruel-**L-114k** + décodeur | `utterance` | — | **25.2 ± 0.4** | Cible S3T : `run_011` (prévu) |
 | *Pantagruel (2026)* | — | speechLLM, Gemini, cascade ASR→MT | — | — | — | **Non rapportés** dans Table 8 (variantes S3T uniquement) |
 
 **Tableaux détaillés** (par variante, `segment_mode`, décodage, runs smoke exclus) : **[rapport.md §5](rapport.md#5-résultats)**.
@@ -59,7 +59,9 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | Gemini 2.5 Flash | `run_001_gemini_flash_utterance_full` | **33.76** | **33.72** | ok |
 | ST B-1k Table 8 | `run_002_transformer_baseline_utterance` | 3.90 | 3.79 | **échec** (collapse) |
 | ST B-1k Table 8 **v2** | `run_004_transformer_baseline_utterance_v2` | **16.84** | **16.68** | ok (tour, gel 5k + early stop @20k) |
-| speechLLM B1 | `run_003_speechllm_b1_utterance_long` | — | — | à lancer |
+| speechLLM B1 | `run_003_speechllm_b1_utterance_long` | **10.00** | **7.47** | ok (tour, 2026-06-05) |
+| ST L-14k Table 8 | `run_010_transformer_baseline_utterance_large_14k` | 0.00 | 0.00 | **échec** (collapse, tour, ~10 h 23 train + ~11 min éval, 2026-06-09) |
+| ST L-14k Table 8 **v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | — | — | **à lancer** (retry : gel 5k, LR 1e-4, early stop ; script nocturne Modyco) |
 
 Ne pas comparer les colonnes utterance et sentence_like entre elles ni directement à la Table 8 sans le même `segment_mode`.
 
@@ -70,7 +72,7 @@ Trois axes **indépendants** (ne pas les confondre) :
 | Axe | Valeurs S3T | Rapport au papier |
 |-----|-------------|-------------------|
 | **Paradigme** | ST E2E, speechLLM, Gemini, cascade, Speech_Text | Table 8 = ST E2E seulement |
-| **Taille encodeur** | **1k** aujourd’hui (`speech-base-1K`) | papier aussi **14k / 114k** (~24–25 BLEU) → **à planifier** |
+| **Taille encodeur** | **1k** mesuré (`speech-base-1K`) ; **L-14k** tenté (`run_010`, échec) | papier **14k / 114k** (~24–25 BLEU) ; retry `run_014` v2 préparé |
 | **Segmentation** | `utterance` (bench papier) et `sentence_like` (runs historiques) | utterance = Table 8 |
 
 **Fichiers de suivi :** `runs/experiments_tracking.csv` ; tableaux complets [rapport.md §5](rapport.md#5-résultats) ; FAQ [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; bench utterance [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md).
@@ -81,8 +83,8 @@ Trois axes **indépendants** (ne pas les confondre) :
 
 - **Baseline ST Table 8** : terminée en `sentence_like` — **16.12** dev / **14.97** test (`run_001_transformer_baseline_sentence_like`).
 - Protocole d'évaluation **figé** : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
-- **Bench utterance** — [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5).
-- **Encodeur 14k / 114k** (priorité encadrant) : configs + scripts [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md) § encodeurs Large (`speech-large-14K` / `speech-large-114K`, runs `run_010`…`run_013`, `scripts/run_pantagruel_encoder_scale_utterance.sh`).
+- **Bench utterance** — [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
+- **Encodeur 14k / 114k** (priorité encadrant) : ST L-14k `run_010` **terminé** (collapse 0,00 / 0,00, tour, **~10 h 23** train GPU + **~11 min** éval, 80k updates) — retry **`run_014` v2** prêt (`scripts/run_modyco_night_st_large_14k_v2.sh`, lancement nocturne Modyco) ; speechLLM Large `run_012` / `run_013` sur OVH — voir [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md).
 - **Gemini 3.5 Flash** : `gemini-3.5-flash` — configs [`gemini_flash_35_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence.yaml) / [`gemini_flash_35_utterance.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance.yaml) ; conserver les scores **2.5** pour l’historique.
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.
@@ -138,7 +140,7 @@ Paramètres du mode `sentence_like` : `--sentence-target-duration` (défaut 10s)
 **Configs YAML :**
 
 - Baseline : `1_Transformer/configs/<langpair>/base.yaml` (template [PRD §9](docs/PRD.md#9-template-de-configuration-run-yaml)) — référence `data.spm_model` ; pointer `data.*_manifest` vers `manifests/` ou `manifests_sentence/` selon le découpage choisi.
-- speechLLM : [`2_speechLLM/configs/fr-en/b1.yaml`](2_speechLLM/configs/fr-en/b1.yaml) — pas de SPM ; champs `model.llm_name`, `prompt.template`.
+- speechLLM : [`2_speechLLM/configs/fr-en/b1.yaml`](2_speechLLM/configs/fr-en/b1.yaml) — pas de SPM ; champs `model.llm_name`, `prompt.template`, `prompt.format` (B2bis : [`b2bis_qwen25_3b.yaml`](2_speechLLM/configs/fr-en/b2bis_qwen25_3b.yaml), [`b2bis_mistral_7b.yaml`](2_speechLLM/configs/fr-en/b2bis_mistral_7b.yaml)).
 - Gemini : **2.5** [`gemini_flash.yaml`](3_Gemini/configs/fr-en/gemini_flash.yaml) / [`gemini_flash_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_sentence.yaml) ; **3.5** [`gemini_flash_35_utterance.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance.yaml) / [`gemini_flash_35_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence.yaml) — `model.gemini_id` (`gemini-2.5-flash` vs `gemini-3.5-flash`).
 - Cascade : [`cascade.yaml`](4_cascade/configs/fr-en/cascade.yaml) (utterance) ; [`cascade_sentence.yaml`](4_cascade/configs/fr-en/cascade_sentence.yaml) — champs `asr.*`, `mt.*`, `data.*_manifest` ; voir [4_cascade/README.md](4_cascade/README.md).
 
@@ -714,9 +716,28 @@ Script dépôt (rsync `eval/`, commandes distantes, **sans** invite de mot de pa
 ./scripts/tour.sh check
 ./scripts/tour.sh ssh
 ./scripts/tour.sh rsync-eval run_001_gemini_flash_sentence_like_v2
+./scripts/tour.sh rsync-checkpoints              # checkpoints tour → local (runs/fr-en/)
+./scripts/tour.sh rsync-checkpoints RUN_ID       # un seul run
 ```
 
 Raccourcis optionnels : [`scripts/tour.bashrc.snippet`](scripts/tour.bashrc.snippet) (`modyco-s3t`, `modyco-rsync-eval`, …).
+
+---
+
+## Serveur IMAG aker (déploiement pipelines)
+
+Connexion : `ssh bonapelm@aker.imag.fr` — nœud **login** (pas de `nvidia-smi` direct ; jobs GPU via nœuds compute, ex. `lig-gpu1`, souvent même `$HOME` NFS).
+
+Déployer le code des **cinq pipelines** (+ `scripts_communs`, `docs/`, tests) **sans** données lourdes (`datasets/processed*`, `runs/`, `.venv`) :
+
+```bash
+ssh-copy-id bonapelm@aker.imag.fr   # une fois
+./scripts/aker.sh check
+./scripts/aker.sh rsync-code
+./scripts/aker.sh rsync-checkpoint run_005_speechllm_b1_sentence_long_unfreeze_encoder
+```
+
+Puis sur aker : `cd ~/S3T`, créer `.venv`, `pip install -r requirements.txt`, lancer infer/eval ; se connecter à un nœud GPU si besoin (`ssh lig-gpu1` ou Slurm selon politique labo).
 
 ---
 

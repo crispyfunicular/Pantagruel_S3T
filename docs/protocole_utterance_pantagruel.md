@@ -24,9 +24,10 @@ python scripts_communs/pipeline.py prepare --langpair fr-en
 | ST Table 8 **v2** | `run_004_transformer_baseline_utterance_v2` | `1_Transformer/configs/fr-en/base_utterance_v2.yaml` | early stop @20k + gel 5k | **ok** — 16,84 / 16,68 (tour, 2026-06-05) |
 | Gemini Flash | `run_002_gemini_flash_utterance` | `3_Gemini/configs/fr-en/gemini_flash_utterance.yaml` | aucun (API) | ~1–2 h + coût API |
 | Cascade | `run_001_cascade_utterance` | `4_cascade/configs/fr-en/cascade.yaml` | aucun | ~3–5 h GPU |
-| speechLLM B1 | `run_003_speechllm_b1_utterance_long` | `2_speechLLM/configs/fr-en/b1_utterance_long.yaml` | **20k updates** | ~3–4 h GPU |
-| ST **L-14k** | `run_010_transformer_baseline_utterance_large_14k` | `1_Transformer/configs/fr-en/base_utterance_large_14k.yaml` | **80k updates** | ~12–18 h GPU |
-| ST **L-114k** | `run_011_transformer_baseline_utterance_large_114k` | `1_Transformer/configs/fr-en/base_utterance_large_114k.yaml` | **80k updates** | ~12–18 h GPU |
+| speechLLM B1 | `run_003_speechllm_b1_utterance_long` | `2_speechLLM/configs/fr-en/b1_utterance_long.yaml` | **20k updates** | **ok** — 10,00 / 7,47 (tour, 2026-06-05) |
+| ST **L-14k** | `run_010_transformer_baseline_utterance_large_14k` | `1_Transformer/configs/fr-en/base_utterance_large_14k.yaml` | **80k updates** | **échec** — 0,00 / 0,00 (tour, 2026-06-09, **~10 h 23** train + **~11 min** éval) |
+| ST **L-14k v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | `1_Transformer/configs/fr-en/base_utterance_large_14k_v2.yaml` | early stop (prévu) | **à lancer** — gel 5k, LR 1e-4 ; ~4–8 h GPU estimées |
+| ST **L-114k** | `run_011_transformer_baseline_utterance_large_114k` | `1_Transformer/configs/fr-en/base_utterance_large_114k.yaml` | **80k updates** | ~10–12 h GPU (ordre de grandeur, d’après run_010) |
 | speechLLM **L-14k** | `run_012_speechllm_b1_utterance_large_14k` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k.yaml` | **20k updates** | ~4–6 h GPU |
 | speechLLM **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | `2_speechLLM/configs/fr-en/b1_utterance_large_114k.yaml` | **20k updates** | ~4–6 h GPU |
 
@@ -103,20 +104,38 @@ python scripts/smoke_pantagruel_encoders.py --encoders 14k,114k
 bash scripts/run_pantagruel_encoder_scale_utterance.sh dry-run
 ```
 
+**run_010** (juin 2026, tour Modyco) : entraînement **80k updates** terminé mais **mode collapse** — BLEU dev/test **0,00** (meilleur dev en cours de train ~0,025) ; hypothèses répétitives (`I I I…`). Durée mesurée (`metrics.json`) : **10 h 23 min** train GPU (37 380 s) + **10 min** éval (626 s) ; fenêtre **2026-06-08 22h17 → 2026-06-09 08h53**. Même cause probable qu’en B-1k (`run_002`) : gel encodeur trop court (1k), LR 2e-4, pas d’early stop.
+
+**run_014 v2** (retry) : correctifs calqués sur `run_004` (`freeze_encoder_updates: 5000`, `early_stopping_patience: 2`, `learning_rate_peak: 1e-4`). Lancement **nocturne** sur tour partagée (vérifie qu’aucun `pipeline.py train` n’est actif) :
+
+```bash
+# Tour Modyco (soirée, GPU partagé)
+cd ~/S3T && source .venv/bin/activate
+mkdir -p logs
+nohup bash scripts/run_modyco_night_st_large_14k_v2.sh \
+  > logs/run_014_st_large_14k_v2_chain_wrapper.log 2>&1 &
+tail -f logs/run_014_transformer_baseline_utterance_large_14k_v2_spm_train_eval.log
+```
+
 Entraînements (orchestrateur ou nohup ST) :
 
 ```bash
 bash scripts/run_pantagruel_encoder_scale_utterance.sh smoke
-# ST L-14k / L-114k (tour GPU) :
-nohup bash 1_Transformer/scripts/run_010_baseline_utterance_14k_nohup.sh \
-  > logs/run_010_wrapper.log 2>&1 &
+# ST L-114k (tour GPU, après run_014 v2) :
 nohup bash 1_Transformer/scripts/run_011_baseline_utterance_114k_nohup.sh \
   > logs/run_011_wrapper.log 2>&1 &
-# speechLLM :
+# speechLLM (OVH ou tour selon planning) :
 bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-14k
 bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-114k
 # Ré-évaluer si checkpoints déjà présents :
 bash scripts/run_pantagruel_encoder_scale_utterance.sh eval-all
+```
+
+Legacy **run_010** (ne pas relancer — échec documenté) :
+
+```bash
+nohup bash 1_Transformer/scripts/run_010_baseline_utterance_14k_nohup.sh \
+  > logs/run_010_wrapper.log 2>&1 &
 ```
 
 ## Règles de comparaison
