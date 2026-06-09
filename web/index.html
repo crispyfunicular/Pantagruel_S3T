@@ -314,12 +314,61 @@
       letter-spacing: -0.01em;
     }
 
-    footer {
-      padding: 2rem 0 3rem;
-      color: var(--muted);
-      font-size: 0.85rem;
+    .page-end {
+      margin-top: 2.5rem;
+      padding: 1.75rem 0 1.5rem;
+      background: #e8eaef;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .about-card {
+      max-width: 34rem;
+      margin: 0 auto;
       text-align: center;
     }
+
+    .about-card h2 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .about-card p {
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 0.75rem;
+      font-size: 0.78rem;
+    }
+
+    .about-links {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .page-end .btn-small {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.72rem;
+      border-radius: 8px;
+    }
+
+    .page-end .btn-outline {
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .page-end footer {
+      padding: 1rem 0 0;
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-align: center;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
   </style>
 </head>
 <body>
@@ -337,9 +386,9 @@
   <header class="hero container">
     <h1>Cinq façons de traduire la parole</h1>
     <p class="lead">
-      Comparaison de cinq approches pour passer de l'audio français au texte anglais sur le corpus
-      <a href="https://www.openslr.org/100" target="_blank" rel="noopener noreferrer"><strong>m-TEDx</strong></a>, avec le même protocole d'évaluation (<strong>SacreBLEU</strong>).
-      Projet de réplication autour de l'encodeur <a href="https://huggingface.co/PantagrueLLM" target="_blank" rel="noopener noreferrer"><strong>Pantagruel</strong></a> (<a href="http://lig-getalp.imag.fr/fr/accueil/" target="_blank" rel="noopener noreferrer">LIG-GETALP (UGA)</a>).
+      Comparaison de cinq approches pour passer de l’audio français au texte anglais sur le corpus
+      <a href="https://www.openslr.org/100" target="_blank" rel="noopener noreferrer"><strong>m-TEDx</strong></a>, avec le même protocole d’évaluation (<strong>SacreBLEU</strong>).
+      Projet de réplication autour de l’encodeur <a href="https://huggingface.co/PantagrueLLM" target="_blank" rel="noopener noreferrer"><strong>Pantagruel</strong></a> (<a href="http://lig-getalp.imag.fr/fr/accueil/" target="_blank" rel="noopener noreferrer">LIG-GETALP (UGA)</a>).
     </p>
     <div class="links">
       <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/web/variantes.md" target="_blank" rel="noopener noreferrer">Documentation complète ↗</a>
@@ -350,13 +399,13 @@
 
   <section id="pipeline" class="container">
     <div class="card">
-      <h2>Vue d'ensemble</h2>
+      <h2>Vue d’ensemble</h2>
       <p class="section-intro">Toutes les variantes partagent la même préparation des données (étapes 0–2), puis appliquent une recette distincte.</p>
       <pre class="pipeline">Audio français (m-TEDx)
         │
         ├──► [1] Pantagruel + décodeur     ──► anglais  (E2E, référence article)
         ├──► [2] Pantagruel → projecteur → LLM ──► anglais  (peu de paramètres entraînés)
-        ├──► [3] Gemini (cloud)          ──► anglais  (pas d'entraînement local)
+        ├──► [3] Gemini (cloud)          ──► anglais  (pas d’entraînement local)
         ├──► [4] Whisper → Marian        ──► anglais  (deux modèles en série)
         └──► [5] Speech_Text + décodeur  ──► anglais  (encodeur multimodal)</pre>
       <div class="variants-grid">
@@ -401,12 +450,22 @@
     </div>
   </section>
 
-  <footer class="container">
-    <p>
-      Morgane Bona-Pellissier · Stage LIG-GETALP ·
-      <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">Dépôt GitHub</a>
-    </p>
-  </footer>
+  <div class="page-end">
+    <section id="about" class="container">
+      <div class="about-card">
+        <h2>À propos</h2>
+        <p><strong>Morgane Bona-Pellissier</strong> est étudiante en master de traitement automatique des langues à l’Université Paris Nanterre après un doctorat en traductologie (Université de Genève, 2023). Ses recherches portent sur la traduction automatique neuronale et les langues peu dotées et minorisées ; elle parle notamment catalan et étudie le breton.</p>
+        <div class="about-links">
+          <a href="https://www.linkedin.com/in/morgane-bona-pellissier-0648aa112/" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-primary">LinkedIn ↗</a>
+          <a href="https://bona-pellissier.net/" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-outline">Site personnel ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="container">
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN</p>
+    </footer>
+  </div>
 
   <script>
     const SEGMENTS = {
@@ -415,7 +474,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n\'est qu\'un indicateur. Sur <em>utterance</em>, la cascade et Gemini devancent les modèles entraînés localement ; l\'article Pantagruel atteint 25,2 BLEU test avec l\'encodeur L-114k. Notre baseline Transformer (~16,7, encodeur B-1k) est en cours de réplication vers les encodeurs Large.',
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, la cascade et Gemini devancent les modèles entraînés localement ; l’article Pantagruel atteint 25,2 BLEU test avec l’encodeur L-114k. Notre baseline Transformer (~16,7, encodeur B-1k) est en cours de réplication vers les encodeurs Large.",
         rows: [
           {
             id: 4,
@@ -431,7 +490,7 @@
             chartLabel: '3 · Gemini',
             tableLabel: 'Gemini 2.5 Flash',
             score: 34,
-            params: 'API ; pas d\'entraînement local ; température 0'
+            params: "API ; pas d’entraînement local ; température 0"
           },
           {
             id: '—',
@@ -463,9 +522,9 @@
       sentence_like: {
         label: 'sentence_like',
         intro:
-          'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>sentence_like</em> (fusion de segments voisins). Ces scores ne sont pas directement comparables au protocole <em>utterance</em> de l\'article.',
+          "SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>sentence_like</em> (fusion de segments voisins). Ces scores ne sont pas directement comparables au protocole <em>utterance</em> de l’article.",
         note:
-          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n\'est qu\'un indicateur. Sur <em>sentence_like</em>, Gemini (~23) reste en tête, devant speechLLM dégelé (~19) puis la baseline Transformer (~15). La cascade et Speech_Text n\'ont pas encore de run sur ce découpage.',
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>sentence_like</em>, Gemini (~23) reste en tête, devant speechLLM dégelé (~19) puis la baseline Transformer (~15). La cascade et Speech_Text n’ont pas encore de run sur ce découpage.",
         rows: [
           {
             id: 3,
@@ -473,7 +532,7 @@
             chartLabel: '3 · Gemini',
             tableLabel: 'Gemini 2.5 Flash',
             score: 23,
-            params: 'API ; pas d\'entraînement local ; température 0'
+            params: "API ; pas d’entraînement local ; température 0"
           },
           {
             id: 2,
