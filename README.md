@@ -1,5 +1,8 @@
 # S3T — Speech Translation (Pantagruel replication)
 
+> **Page web** — [crispyfunicular.github.io/Pantagruel_S3T](https://crispyfunicular.github.io/Pantagruel_S3T/) · source [`web/index.html`](web/index.html)  
+> **GitHub Pages** — préférer **Settings → Pages → Source : GitHub Actions** (workflow [`.github/workflows/static.yml`](.github/workflows/static.yml), artefact `web/`). Tant que la source reste « Deploy from branch /docs », une copie de secours est maintenue dans [`docs/index.html`](docs/index.html).
+
 Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`, `fr-es`), évaluée avec **SacreBLEU**. Le dépôt expose **cinq variantes** partageant la même préparation des données (étapes 0–2), avec un choix de **découpage audio** au moment de `prepare` :
 
 | # | Dossier | Variante | Statut | Orchestrateur |
