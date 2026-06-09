@@ -15,6 +15,7 @@ soundfile>=0.12
 pyyaml>=6.0
 timm>=0.9.0
 transformers>=4.36
+bitsandbytes>=0.43.0  # speechLLM B2bis : LLM 7B+ en 4-bit (optionnel si Phi-2 / Qwen 3B seulement)
 sacrebleu>=2.3
 sentencepiece>=0.1.99
 tensorboard>=2.14

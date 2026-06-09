@@ -34,6 +34,107 @@ PROJECT_ROOT = SPEECHLLM_ROOT.parent
 
 IGNORE_INDEX = -100
 
+# Formats de prompt supportés pour l'injection speech → LLM (B1 Phi-2, B2bis Qwen/Mistral).
+SUPPORTED_PROMPT_FORMATS = frozenset({"phi2", "qwen_chatml", "mistral_inst"})
+
+
+@dataclass(frozen=True)
+class PromptTextParts:
+    """Fragments textuels autour des embeddings parole pour un template chat donné."""
+
+    prefix: str
+    suffix: str
+    assistant_marker: str
+
+
+def resolve_prompt_format(config: dict[str, Any]) -> str:
+    """
+    Déterminer le format de prompt depuis la config YAML.
+
+    Si ``prompt.format`` est absent, on infère depuis ``model.llm_name`` pour
+    rétrocompatibilité B1 (Phi-2 → ``phi2``).
+    """
+    explicit = deep_get(config, "prompt.format")
+    if explicit is not None:
+        format_name = str(explicit).strip().lower()
+        if format_name not in SUPPORTED_PROMPT_FORMATS:
+            supported = ", ".join(sorted(SUPPORTED_PROMPT_FORMATS))
+            raise ValueError(
+                f"Unsupported prompt.format={format_name!r} (expected: {supported})"
+            )
+        return format_name
+
+    llm_name = str(deep_get(config, "model.llm_name", "microsoft/phi-2")).lower()
+    if "qwen" in llm_name:
+        return "qwen_chatml"
+    if "mistral" in llm_name:
+        return "mistral_inst"
+    return "phi2"
+
+
+def build_prompt_text_parts(format_name: str, prompt: str) -> PromptTextParts:
+    """
+    Construire les fragments textuels avant/après les embeddings parole.
+
+    Séquence entraînement / inférence :
+    ``prefix`` + speech_embeds + ``suffix`` + (cible en train uniquement).
+    """
+    if format_name == "phi2":
+        return PromptTextParts(
+            prefix="USER: ",
+            suffix=f"{prompt} ASSISTANT: ",
+            assistant_marker="ASSISTANT:",
+        )
+    if format_name == "qwen_chatml":
+        return PromptTextParts(
+            prefix="<|im_start|>user\n",
+            suffix=f"{prompt}\n<|im_start|>assistant\n",
+            assistant_marker="assistant",
+        )
+    if format_name == "mistral_inst":
+        return PromptTextParts(
+            prefix="[INST] ",
+            suffix=f"{prompt} [/INST] ",
+            assistant_marker="[/INST]",
+        )
+    supported = ", ".join(sorted(SUPPORTED_PROMPT_FORMATS))
+    raise ValueError(
+        f"Unsupported prompt format {format_name!r} (expected: {supported})"
+    )
+
+
+def _load_causal_lm(
+    llm_name: str,
+    *,
+    load_in_4bit: bool,
+    load_in_8bit: bool,
+    trust_remote_code: bool,
+    device: torch.device,
+) -> AutoModelForCausalLM:
+    """
+    Charger un LLM causal Hugging Face, avec quantisation optionnelle (B2bis 7B).
+
+    ``bitsandbytes`` est requis uniquement si ``load_in_4bit`` ou ``load_in_8bit``.
+    """
+    kwargs: dict[str, Any] = {"trust_remote_code": trust_remote_code}
+    if load_in_4bit or load_in_8bit:
+        try:
+            from transformers import BitsAndBytesConfig
+        except ImportError as exc:
+            raise ImportError(
+                "bitsandbytes est requis pour model.load_in_4bit / load_in_8bit "
+                "(pip install bitsandbytes)"
+            ) from exc
+        kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=load_in_4bit,
+            load_in_8bit=load_in_8bit,
+        )
+        kwargs["device_map"] = {"": str(device)}
+    model = AutoModelForCausalLM.from_pretrained(llm_name, **kwargs)
+    if not (load_in_4bit or load_in_8bit):
+        model = model.to(device)
+    return model
+
 
 @dataclass
 class EncodedBatch:
@@ -78,6 +179,26 @@ def downsample_encoder_states(
     return reshaped, new_mask
 
 
+def _resolve_encoder_output_dim(encoder: nn.Module) -> int:
+    """
+    Déterminer la dimension de sortie réelle de l'encodeur Pantagruel.
+
+    Sur les checkpoints Large (14k / 114k), ``config.hidden_size`` peut indiquer 768
+    alors que ``last_hidden_state`` est en 1024 ; on sonde un forward minimal.
+    """
+    config_dim = int(encoder.config.hidden_size)
+    was_training = encoder.training
+    encoder.eval()
+    with torch.no_grad():
+        probe_wav = torch.randn(1, 8000)
+        probe_mask = torch.ones(1, probe_wav.size(1), dtype=torch.long)
+        outputs = encoder(input_values=probe_wav, attention_mask=probe_mask)
+        actual_dim = int(outputs.last_hidden_state.shape[-1])
+    if was_training:
+        encoder.train()
+    return actual_dim if actual_dim != config_dim else config_dim
+
+
 class SpeechLLMModel(nn.Module):
     """
     Pantagruel (parole) + projecteur + LLM causal pour ST fr→en.
@@ -95,6 +216,11 @@ class SpeechLLMModel(nn.Module):
         freeze_encoder: bool = True,
         freeze_llm: bool = True,
         trust_remote_code: bool = False,
+        llm_trust_remote_code: bool = False,
+        load_in_4bit: bool = False,
+        load_in_8bit: bool = False,
+        prompt_format: str = "phi2",
+        device: torch.device | None = None,
     ) -> None:
         """
         Initialiser le modèle speechLLM (encodeur + projecteur + LLM).
@@ -106,20 +232,48 @@ class SpeechLLMModel(nn.Module):
             projector_hidden : Dimension cachée du MLP projecteur.
             freeze_encoder : Geler les poids de l'encodeur.
             freeze_llm : Geler les poids du LLM.
+            trust_remote_code : ``trust_remote_code`` pour l'encodeur Pantagruel.
+            llm_trust_remote_code : ``trust_remote_code`` pour le LLM / tokenizer.
+            load_in_4bit : Charger le LLM en 4-bit (nécessite ``bitsandbytes``).
+            load_in_8bit : Charger le LLM en 8-bit (nécessite ``bitsandbytes``).
+            prompt_format : Template chat (`phi2`, `qwen_chatml`, `mistral_inst`).
+            device : Périphérique cible (requis si quantisation LLM activée).
         """
         super().__init__()
         self.downsample_k = max(1, int(downsample_k))
+        self.llm_name = llm_name
+        format_name = str(prompt_format).strip().lower()
+        if format_name not in SUPPORTED_PROMPT_FORMATS:
+            supported = ", ".join(sorted(SUPPORTED_PROMPT_FORMATS))
+            raise ValueError(
+                f"Unsupported prompt_format={format_name!r} (expected: {supported})"
+            )
+        self.prompt_format = format_name
+        self._quantized_llm = bool(load_in_4bit or load_in_8bit)
+        if self._quantized_llm and device is None:
+            raise ValueError("device is required when loading a quantized LLM")
+
         # Certains checkpoints Pantagruel exposent du code HF custom (trust_remote_code requis).
         self.encoder = AutoModel.from_pretrained(
             encoder_name,
             trust_remote_code=trust_remote_code,
         )
-        self.llm = AutoModelForCausalLM.from_pretrained(llm_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(llm_name)
+        llm_device = device if device is not None else torch.device("cpu")
+        self.llm = _load_causal_lm(
+            llm_name,
+            load_in_4bit=load_in_4bit,
+            load_in_8bit=load_in_8bit,
+            trust_remote_code=llm_trust_remote_code,
+            device=llm_device,
+        )
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            llm_name,
+            trust_remote_code=llm_trust_remote_code,
+        )
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        encoder_dim = int(self.encoder.config.hidden_size)
+        encoder_dim = _resolve_encoder_output_dim(self.encoder)
         llm_dim = int(self.llm.config.hidden_size)
         self.encoder_proj = (
             nn.Identity() if encoder_dim == llm_dim else nn.Linear(encoder_dim, llm_dim)
@@ -199,6 +353,13 @@ class SpeechLLMModel(nn.Module):
         tensor = torch.tensor(token_ids, dtype=torch.long, device=device)
         return self.llm.get_input_embeddings()(tensor)
 
+    def _prompt_token_ids(self, prompt: str) -> tuple[list[int], list[int]]:
+        """Ids tokenizer pour le préfixe et le suffixe textuels autour des embeddings parole."""
+        parts = build_prompt_text_parts(self.prompt_format, prompt)
+        prefix_ids = self.tokenizer.encode(parts.prefix, add_special_tokens=False)
+        suffix_ids = self.tokenizer.encode(parts.suffix, add_special_tokens=False)
+        return prefix_ids, suffix_ids
+
     def build_sequence(
         self,
         *,
@@ -211,13 +372,9 @@ class SpeechLLMModel(nn.Module):
         """
         Construire ``inputs_embeds`` et ``labels`` pour un échantillon.
 
-        Format : ``USER:`` + speech + prompt + ``ASSISTANT:`` + cible (loss sur la cible).
+        Format : ``prefix`` + speech + ``suffix`` + cible (loss sur la cible uniquement).
         """
-        user_ids = self.tokenizer.encode("USER: ", add_special_tokens=False)
-        mid_ids = self.tokenizer.encode(
-            f"{prompt} ASSISTANT: ",
-            add_special_tokens=False,
-        )
+        prefix_ids, suffix_ids = self._prompt_token_ids(prompt)
         target_ids = self.tokenizer.encode(target_text, add_special_tokens=False)[
             :max_target_tokens
         ]
@@ -225,16 +382,16 @@ class SpeechLLMModel(nn.Module):
         chunks: list[torch.Tensor] = []
         labels: list[int] = []
 
-        if user_ids:
-            chunks.append(self._embed_text_ids(user_ids, device))
-            labels.extend([IGNORE_INDEX] * len(user_ids))
+        if prefix_ids:
+            chunks.append(self._embed_text_ids(prefix_ids, device))
+            labels.extend([IGNORE_INDEX] * len(prefix_ids))
 
         chunks.append(speech_embeds)
         labels.extend([IGNORE_INDEX] * speech_embeds.size(0))
 
-        if mid_ids:
-            chunks.append(self._embed_text_ids(mid_ids, device))
-            labels.extend([IGNORE_INDEX] * len(mid_ids))
+        if suffix_ids:
+            chunks.append(self._embed_text_ids(suffix_ids, device))
+            labels.extend([IGNORE_INDEX] * len(suffix_ids))
 
         if target_ids:
             chunks.append(self._embed_text_ids(target_ids, device))
@@ -311,31 +468,27 @@ class SpeechLLMModel(nn.Module):
         *,
         prompt: str,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Embeddings prefixe ``USER:`` + speech + ``prompt ASSISTANT:`` (sans cible)."""
+        """Embeddings préfixe chat + speech + suffixe (sans cible)."""
         speech_embeds, speech_mask = self.encode_speech(input_values, attention_mask)
         device = input_values.device
         batch_size = input_values.size(0)
-        user_ids = self.tokenizer.encode("USER: ", add_special_tokens=False)
-        mid_ids = self.tokenizer.encode(
-            f"{prompt} ASSISTANT: ",
-            add_special_tokens=False,
-        )
+        prefix_ids, suffix_ids = self._prompt_token_ids(prompt)
 
         sequences: list[torch.Tensor] = []
         masks: list[torch.Tensor] = []
         for index in range(batch_size):
             chunks: list[torch.Tensor] = []
             mask_parts: list[int] = []
-            if user_ids:
-                chunks.append(self._embed_text_ids(user_ids, device))
-                mask_parts.extend([1] * len(user_ids))
+            if prefix_ids:
+                chunks.append(self._embed_text_ids(prefix_ids, device))
+                mask_parts.extend([1] * len(prefix_ids))
             speech = speech_embeds[index]
             valid = int(speech_mask[index].sum().item())
             chunks.append(speech[:valid])
             mask_parts.extend([1] * valid)
-            if mid_ids:
-                chunks.append(self._embed_text_ids(mid_ids, device))
-                mask_parts.extend([1] * len(mid_ids))
+            if suffix_ids:
+                chunks.append(self._embed_text_ids(suffix_ids, device))
+                mask_parts.extend([1] * len(suffix_ids))
             seq = torch.cat(chunks, dim=0)
             sequences.append(seq)
             masks.append(torch.tensor(mask_parts, dtype=torch.long, device=device))
@@ -396,7 +549,10 @@ class SpeechLLMModel(nn.Module):
                 full = self.tokenizer.decode(
                     generated[row_idx], skip_special_tokens=True
                 ).strip()
-                marker = "ASSISTANT:"
+                marker = build_prompt_text_parts(
+                    self.prompt_format,
+                    prompt,
+                ).assistant_marker
                 text = full.split(marker, 1)[-1].strip() if marker in full else full
             results.append(text)
         return results
@@ -439,6 +595,12 @@ def load_speechllm_from_config(
     freeze_encoder = bool(deep_get(config, "model.freeze_encoder", True))
     freeze_llm = bool(deep_get(config, "model.freeze_llm", True))
     trust_remote_code = bool(deep_get(config, "model.trust_remote_code", False))
+    llm_trust_remote_code = bool(
+        deep_get(config, "model.llm_trust_remote_code", trust_remote_code)
+    )
+    load_in_4bit = bool(deep_get(config, "model.load_in_4bit", False))
+    load_in_8bit = bool(deep_get(config, "model.load_in_8bit", False))
+    prompt_format = resolve_prompt_format(config)
     model = SpeechLLMModel(
         encoder_name=encoder_name,
         llm_name=llm_name,
@@ -447,7 +609,18 @@ def load_speechllm_from_config(
         freeze_encoder=freeze_encoder,
         freeze_llm=freeze_llm,
         trust_remote_code=trust_remote_code,
+        llm_trust_remote_code=llm_trust_remote_code,
+        load_in_4bit=load_in_4bit,
+        load_in_8bit=load_in_8bit,
+        prompt_format=prompt_format,
+        device=device,
     )
+    if model._quantized_llm:
+        # Le LLM quantifié est déjà placé via device_map ; encoder + projecteur sur GPU.
+        model.encoder = model.encoder.to(device)
+        model.encoder_proj = model.encoder_proj.to(device)
+        model.projector = model.projector.to(device)
+        return model
     return model.to(device)
 
 
@@ -532,7 +705,10 @@ def resolve_speechllm_config_path(path: Path) -> Path:
 __all__ = [
     "EncodedBatch",
     "IGNORE_INDEX",
+    "PromptTextParts",
+    "SUPPORTED_PROMPT_FORMATS",
     "SpeechLLMModel",
+    "build_prompt_text_parts",
     "collate_speechllm_batch",
     "downsample_encoder_states",
     "load_speechllm_checkpoint",
@@ -540,6 +716,7 @@ __all__ = [
     "load_speechllm_from_config",
     "load_yaml_config",
     "read_manifest",
+    "resolve_prompt_format",
     "resolve_run_dir",
     "resolve_speechllm_config_path",
     "save_projector_checkpoint",

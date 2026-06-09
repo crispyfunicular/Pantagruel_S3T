@@ -9,6 +9,7 @@ Référence : [embarrassingly_simple_approach.pdf](embarrassingly_simple_approac
 - Stages données S3T `0`–`3` exécutés (`datasets/manifests/fr-en/*.tsv`).
 - GPU recommandé ; pour debug pipeline, `microsoft/phi-2` dans `configs/fr-en/b1.yaml`.
 - Accès Hugging Face pour Pantagruel et le LLM.
+- B2bis (Qwen / Mistral) : voir [recap_decodeurs.md](recap_decodeurs.md) ; Mistral 7B requiert `bitsandbytes` (`load_in_4bit: true`).
 
 ## Commandes
 
@@ -58,15 +59,37 @@ Sous `runs/fr-en/<run_id>/` (ou `experiment.output_dir` dans le YAML) :
 | `eval/sacrebleu_*.txt` | Métriques signées |
 | `eval/dev_predictions.txt` | Hypothèses dev |
 
+## Configs B2bis (autres décodeurs LLM)
+
+| Config | LLM | Format prompt | Quantisation |
+|--------|-----|---------------|--------------|
+| `configs/fr-en/b2bis_qwen25_3b.yaml` | Qwen2.5-3B-Instruct | `qwen_chatml` | non |
+| `configs/fr-en/b2bis_mistral_7b.yaml` | Mistral-7B-Instruct-v0.3 | `mistral_inst` | 4-bit |
+
+Chaque LLM nécessite un **projecteur réentraîné** (dimensions d'embedding différentes). Les checkpoints Phi-2 B1 ne sont pas réutilisables.
+
+```bash
+python 2_speechLLM/pipeline.py train \
+  --config 2_speechLLM/configs/fr-en/b2bis_qwen25_3b.yaml \
+  --run-id run_010_speechllm_b2bis_qwen25_3b
+```
+
+Champs YAML clés : `model.llm_name`, `prompt.format` (`phi2` | `qwen_chatml` | `mistral_inst`), `model.load_in_4bit`.
+
 ## VRAM
 
 - **Phi-2** : pilote pipeline sur GPU 12–16 Go (batch réduit dans `b1.yaml`).
-- **7B chat** : prévoir quantisation (`bitsandbytes`) ou multi-GPU — à documenter dans la config du run.
+- **Qwen2.5-3B** : ~7 Go full-precision (config `b2bis_qwen25_3b.yaml`).
+- **Mistral-7B** : ~5 Go en 4-bit (`b2bis_mistral_7b.yaml`, `pip install bitsandbytes`).
 
 ## Format d'entraînement
 
-```text
-USER: <embeddings parole> <prompt> ASSISTANT: <traduction anglais>
-```
+Le format dépend du LLM (`prompt.format` dans le YAML) :
 
-La loss ne s'applique qu'aux tokens après `ASSISTANT:`.
+| Format | Séquence |
+|--------|----------|
+| `phi2` (défaut B1) | `USER: <speech> <prompt> ASSISTANT: <traduction>` |
+| `qwen_chatml` | `<\|im_start\|>user\n<speech><prompt>\n<\|im_start\|>assistant\n<traduction>` |
+| `mistral_inst` | `[INST] <speech><prompt> [/INST] <traduction>` |
+
+La loss ne s'applique qu'aux tokens de la traduction (après le marqueur assistant).

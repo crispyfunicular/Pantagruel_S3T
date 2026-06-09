@@ -71,7 +71,7 @@ Alternative au décodeur Transformer : **Pantagruel gelé** → downsampling →
 | Evaluate | `2_speechLLM/evaluate.py` | `evaluate` | SacreBLEU valid/test (texte brut, pas SPM) | implémenté |
 | Infer | `2_speechLLM/infer.py` | `infer` | WAV arbitraire → traduction anglaise | implémenté |
 | Common | `2_speechLLM/speechllm_common.py` | — | Modèle, collate, checkpoints projecteur | implémenté |
-| Config | `2_speechLLM/configs/fr-en/b1.yaml` | — | Pilote Phi-2 ; 7B en run production | implémenté |
+| Config | `2_speechLLM/configs/fr-en/b1.yaml` | — | Pilote Phi-2 ; B2bis Qwen/Mistral dans `b2bis_*.yaml` | implémenté |
 | Orchestrateur | `2_speechLLM/pipeline.py` | `run` | `train` → `evaluate` | routeur actif |
 
 **Artifacts :** même contrat que §2.3 (`runs/<lang_pair>/<run_id>/`, `eval/sacrebleu_*.txt`, signature SacreBLEU). Checkpoints : `trainable_state` (projecteur ; + tenseurs `encoder.*` si `freeze_encoder: false`). Voir [plan_migration_speechllm.md](plan_migration_speechllm.md) et [2_speechLLM/README.md](../2_speechLLM/README.md).

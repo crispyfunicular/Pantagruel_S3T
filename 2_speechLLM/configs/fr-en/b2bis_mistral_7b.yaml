@@ -1,0 +1,49 @@
+# speechLLM B2bis — fr-en, Mistral-7B-Instruct-v0.3 (4-bit, projecteur à réentraîner).
+# Prérequis : datasets/manifests_sentence/fr-en/, processed_sentence/, bitsandbytes.
+# Référence B1 Phi-2 : run_002_speechllm_b1_sentence_long (BLEU dev 19.99 / test 15.89).
+
+experiment:
+  name: "fr-en_speechllm_b2bis_mistral_7b"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_011_speechllm_b2bis_mistral_7b"
+  seed: 42
+  deterministic: true
+
+data:
+  train_manifest: "datasets/manifests_sentence/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-base-1K"
+  trust_remote_code: true
+  llm_name: "mistralai/Mistral-7B-Instruct-v0.3"
+  llm_trust_remote_code: true
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+  load_in_4bit: true
+  load_in_8bit: false
+
+prompt:
+  format: "mistral_inst"
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48
