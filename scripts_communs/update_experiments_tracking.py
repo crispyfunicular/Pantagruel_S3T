@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts_communs.st_common import deep_get, load_yaml_config  # noqa: E402
+from scripts_communs.config_utils import deep_get, load_yaml_config  # noqa: E402
 
 TRACKING_PATH = PROJECT_ROOT / "runs" / "experiments_tracking.csv"
 
@@ -65,6 +65,25 @@ def _fmt_float(value: float | int | None, *, digits: int = 4) -> str:
     return f"{float(value):.{digits}f}"
 
 
+def _infer_pipeline(payload: dict[str, Any], run_id: str) -> str:
+    """Déduire le pipeline si ``metrics.json`` ne contient pas le champ ``pipeline``."""
+    explicit = str(payload.get("pipeline", "")).strip()
+    if explicit:
+        return explicit
+    rid = run_id.lower()
+    if "speechllm" in rid:
+        return "speechllm"
+    if "cascade" in rid:
+        return "cascade"
+    if "gemini" in rid:
+        return "gemini_st"
+    if "multimodal" in rid or "pantagruel_multimodal" in rid:
+        return "pantagruel_multimodal"
+    if "transformer" in rid:
+        return "transformer"
+    return ""
+
+
 def _infer_segment_mode(config: dict[str, Any] | None) -> str:
     """Déduire utterance vs sentence_like depuis la config ou les chemins manifests."""
     if config is None:
@@ -92,8 +111,8 @@ def _load_metrics_row(metrics_path: Path) -> dict[str, str]:
         Dictionnaire colonne → valeur (chaînes) pour ``experiments_tracking.csv``.
     """
     payload = json.loads(metrics_path.read_text(encoding="utf-8"))
-    pipeline = str(payload.get("pipeline", ""))
     run_id = str(payload.get("run_id", metrics_path.parent.parent.name))
+    pipeline = _infer_pipeline(payload, run_id)
     config: dict[str, Any] | None = payload.get("config")
     if isinstance(config, str):
         config_path = Path(config)
@@ -158,7 +177,13 @@ def _load_metrics_row(metrics_path: Path) -> dict[str, str]:
             notes += f"; sacrebleu_signature={sig}"
         row["notes"] = notes
 
-    elif pipeline in ("speechllm", "pantagruel_multimodal"):
+    elif pipeline in (
+        "speechllm",
+        "pantagruel_multimodal",
+        "transformer",
+        "transformer_st",
+        "cascade",
+    ):
         row["gpu_hours"] = _fmt_float(payload.get("gpu_hours"), digits=3)
         row["estimated_gpu_cost_usd"] = _fmt_float(
             payload.get("estimated_cost_usd"), digits=4
@@ -293,7 +318,14 @@ def main(argv: list[str] | None = None) -> int:
     if sync_run_from_metrics(run_dir, tracking_path=tracking_path):
         print(f"Tracking mis à jour pour {run_dir.name} → {tracking_path}")
         return 0
-    print(f"ERROR: no metrics.json under {run_dir}", file=sys.stderr)
+    print(
+        f"ERROR: no metrics.json under {run_dir}\n"
+        "  Attendu : eval/metrics.json (ou metrics.json à la racine du run).\n"
+        "  Si le run est sur la tour GPU, rapatrier au minimum eval/ :\n"
+        "    rsync -avz mpellissier@10.8.0.2:~/S3T/runs/fr-en/<run_id>/eval/ \\\n"
+        "      runs/fr-en/<run_id>/eval/",
+        file=sys.stderr,
+    )
     return 2
 
 

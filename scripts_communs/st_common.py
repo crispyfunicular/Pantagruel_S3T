@@ -21,7 +21,6 @@ Dépendances : PyTorch, transformers (checkpoint Pantagruel), sentencepiece, sou
 
 from __future__ import annotations
 
-import json
 import os
 import random
 from dataclasses import dataclass
@@ -33,10 +32,25 @@ import sentencepiece as spm
 import soundfile as sf
 import torch
 import torch.nn as nn
-import yaml
 from transformers import AutoModel
 
+from scripts_communs.config_utils import deep_get, load_yaml_config, write_json
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+__all__ = [
+    "ManifestSample",
+    "PROJECT_ROOT",
+    "S3TModel",
+    "deep_get",
+    "ensure_project_relative",
+    "greedy_decode_batch",
+    "load_waveform",
+    "load_yaml_config",
+    "read_manifest",
+    "set_seed",
+    "write_json",
+]
 
 
 @dataclass
@@ -63,45 +77,6 @@ def set_seed(seed: int, deterministic: bool) -> None:
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = deterministic
     torch.backends.cudnn.benchmark = not deterministic
-
-
-def deep_get(config: dict[str, Any], key: str, default: Any = None) -> Any:
-    """
-    Lire une valeur de config imbriquée en notation pointée (ex. ``train.batch_size``).
-
-    Paramètres :
-        config : Dict imbriqué chargé depuis YAML.
-        key : Chemin séparé par des points.
-        default : Valeur renvoyée si un segment du chemin est absent.
-
-    Retour :
-        The value at ``key`` or ``default``.
-    """
-    cursor: Any = config
-    for part in key.split("."):
-        if not isinstance(cursor, dict) or part not in cursor:
-            return default
-        cursor = cursor[part]
-    return cursor
-
-
-def load_yaml_config(path: Path) -> dict[str, Any]:
-    """
-    Charger une config d'expérience YAML dans un dict simple.
-
-    Paramètres :
-        path : Chemin vers ``base.yaml`` ou équivalent.
-
-    Retour :
-        Parsed mapping.
-
-    Lève :
-        ValueError: If the root YAML node is not a mapping.
-    """
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError(f"Config must be a YAML object: {path}")
-    return payload
 
 
 def ensure_project_relative(path_like: str | Path) -> Path:
@@ -229,6 +204,26 @@ def build_s3t_model(
     )
 
 
+def _resolve_encoder_output_dim(encoder: nn.Module) -> int:
+    """
+    Déterminer la dimension de sortie réelle de l'encodeur Pantagruel.
+
+    Sur les checkpoints Large (14k / 114k), ``config.hidden_size`` peut indiquer 768
+    alors que ``last_hidden_state`` est en 1024 ; on sonde un forward minimal.
+    """
+    config_dim = int(encoder.config.hidden_size)
+    was_training = encoder.training
+    encoder.eval()
+    with torch.no_grad():
+        probe_wav = torch.randn(1, 8000)
+        probe_mask = torch.ones(1, probe_wav.size(1), dtype=torch.long)
+        outputs = encoder(input_values=probe_wav, attention_mask=probe_mask)
+        actual_dim = int(outputs.last_hidden_state.shape[-1])
+    if was_training:
+        encoder.train()
+    return actual_dim if actual_dim != config_dim else config_dim
+
+
 class S3TModel(nn.Module):
     """
     Traduction vocale bout en bout : encodeur parole Hugging Face + décodeur Transformer.
@@ -274,7 +269,7 @@ class S3TModel(nn.Module):
         if trust_remote_code:
             load_kwargs["trust_remote_code"] = True
         self.encoder = AutoModel.from_pretrained(encoder_name, **load_kwargs)
-        encoder_dim = int(self.encoder.config.hidden_size)
+        encoder_dim = _resolve_encoder_output_dim(self.encoder)
         self.encoder_proj: nn.Module
         if encoder_dim == hidden_dim:
             self.encoder_proj = nn.Identity()
@@ -556,18 +551,3 @@ def resolve_run_dir(
         return base.parent / run_id if base.name != run_id else base
     langpair = str(deep_get(config, "experiment.lang_pair", "fr-en"))
     return PROJECT_ROOT / "runs" / langpair / run_id
-
-
-def write_json(path: Path, payload: dict[str, Any]) -> None:
-    """
-    Écrire un artefact JSON en créant les répertoires parents si nécessaire.
-
-    Paramètres :
-        path : Chemin du fichier de sortie.
-        payload : Dict sérialisable (métriques, rapports, etc.).
-    """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )

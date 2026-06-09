@@ -50,6 +50,33 @@ def test_load_gemini_metrics_row_includes_pricing(tmp_path: Path) -> None:
     )
 
 
+def test_load_transformer_metrics_infers_pipeline(tmp_path: Path) -> None:
+    """Un run Transformer sans champ pipeline doit être reconnu via le run_id."""
+    metrics = {
+        "run_id": "run_004_transformer_baseline_utterance_v2",
+        "beam_size": 5,
+        "gpu_hours": 0.036,
+        "dev": {"bleu": 16.84, "chrf": 40.58, "ter": 72.86},
+        "test": {"bleu": 16.68, "chrf": 40.92, "ter": 73.17},
+        "config": {
+            "experiment": {"lang_pair": "fr-en", "seed": 42},
+            "data": {"segment_mode": "utterance"},
+            "train": {"freeze_encoder_updates": 5000},
+            "model": {"encoder_name": "PantagrueLLM/speech-base-1K"},
+        },
+    }
+    path = tmp_path / "eval" / "metrics.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(metrics), encoding="utf-8")
+
+    row = _load_metrics_row(path)
+    assert row["pipeline"] == "transformer"
+    assert row["segment_mode"] == "utterance"
+    assert row["bleu_test"] == "16.68"
+    assert row["freeze_updates"] == "5000"
+    assert row["seed"] == "42"
+
+
 def test_upsert_tracking_row_replaces_by_run_id(tmp_path: Path) -> None:
     """Le CSV doit remplacer une ligne existante avec le même run_id."""
     csv_path = tmp_path / "experiments_tracking.csv"

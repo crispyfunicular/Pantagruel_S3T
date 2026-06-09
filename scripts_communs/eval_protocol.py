@@ -198,7 +198,7 @@ def write_eval_protocol_artifact(
     Retour :
         Chemin du fichier écrit.
     """
-    from scripts_communs.st_common import write_json
+    from scripts_communs.config_utils import write_json
 
     eval_dir.mkdir(parents=True, exist_ok=True)
     path = eval_dir / "protocol.json"

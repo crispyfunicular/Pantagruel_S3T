@@ -27,7 +27,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts_communs.st_common import deep_get, load_yaml_config  # noqa: E402
+from scripts_communs.config_utils import deep_get, load_yaml_config  # noqa: E402
 
 REVIEW_COLUMNS = (
     "id",

@@ -319,6 +319,7 @@ def run_evaluate(
                 else 0.0
             ),
             "run_id": run_id,
+            "pipeline": "transformer",
             "checkpoint": str(checkpoint_path.resolve()),
             "beam_size": beam_size,
             "device": str(device),
