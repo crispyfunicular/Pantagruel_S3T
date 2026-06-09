@@ -4,7 +4,7 @@ Ce projet compare cinq approches pour passer de l’audio français à du texte 
 
 L’objectif n’est pas de dire qu’une méthode est « la meilleure » en absolu, mais de mesurer ce que chaque idée apporte, avec les mêmes règles d’évaluation pour toutes ([SacreBLEU](vocabulaire.md#sacrebleu-corpus-bleu) sur les mêmes jeux de test).
 
-> **Vocabulaire** — Les mots techniques (ST, E2E, encodeur, BLEU, etc.) sont définis simplement dans le [glossaire du projet](vocabulaire.md).
+> **Vocabulaire** — Les mots techniques (ST, [E2E](vocabulaire.md#2-abréviations-et-acronymes) — *bout en bout*, encodeur, BLEU, etc.) sont définis simplement dans le [glossaire du projet](vocabulaire.md).
 
 ---
 
@@ -12,7 +12,7 @@ L’objectif n’est pas de dire qu’une méthode est « la meilleure » en abs
 
 Quelle que soit la méthode choisie, les étapes 0 à 2 sont identiques :
 
-1. Télécharger le corpus m-TEDx.
+1. Télécharger le corpus m-TEDx : librement disponible en ligne sur [OpenSLR SLR100](https://www.openslr.org/100).
 2. Préparer les enregistrements (audio + textes) :
    - **2a. Découper** : Le corpus brut fournit de longs fichiers audio au format **FLAC** (fichier audio compressé, comme un MP3 mais sans perte de qualité). On en extrait de courts segments : chaque extrait correspond à une prise de parole repérée dans les métadonnées du corpus.
    - **2b. Convertir** : Chaque segment est réenregistré en **WAV**, le format audio standard utilisé par la suite du pipeline. On impose une cadence de **16 kHz** (16 000 mesures du signal par seconde — ce qu’attendent les modèles Pantagruel), une piste **mono** (un seul canal, pas de stéréo), et un encodage **PCM 16 bits** (chaque point du signal est stocké sur 16 bits : la manière classique de représenter le son dans un fichier WAV).
@@ -21,31 +21,109 @@ Quelle que soit la méthode choisie, les étapes 0 à 2 sont identiques :
 
 Ensuite seulement, chaque variante applique sa propre recette pour produire l’anglais à partir de l’audio.
 
-**Point important :** on peut découper l’audio de deux manières ([segmentation](vocabulaire.md#segmentation-général)) :
-- *utterance* : petits morceaux, comme dans l’article Pantagruel, ou
-- *sentence_like* : morceaux plus longs regroupés.  
+---
 
-Un score n’est comparable qu’entre systèmes entraînés et testés sur le même découpage.
+## Les réglages que l’on peut faire varier
+
+Chaque expérience combine plusieurs choix. Pour comparer deux résultats, il faut vérifier qu’on parle des mêmes réglages — sinon le score peut refléter autre chose que la variante elle-même.
+
+```text
+┌─────────────────┬──────────────────────────────────────────────────────────┐
+│ Réglage         │ Question                                                 │
+├─────────────────┼──────────────────────────────────────────────────────────┤
+│ Variante        │ Quelle recette ? (Transformer, speechLLM, Gemini, …)     │
+│ Découpage audio │ Petits ou longs morceaux ? (utterance / sentence_like)   │
+│ Encodeur        │ Combien d’heures de pré-entraînement ? (1k / 14k / 114k) │
+│ Gel / dégel     │ Quels blocs apprennent pendant l’entraînement ?          │
+│ Décodage        │ Comment le modèle choisit les mots à la génération ?     │
+└─────────────────┴──────────────────────────────────────────────────────────┘
+```
+
+### Variante (la recette globale)
+
+C’est le « comment » traduire : un seul modèle bout en bout, un LLM avec adaptateur, une API cloud, deux modèles en chaîne, etc. Les cinq pistes sont détaillées dans les sections suivantes.
+
+### Découpage audio : *utterance* ou *sentence_like*
+
+On ne change pas le corpus source, seulement la façon de le [découper](vocabulaire.md#segmentation-général) en exemples :
+
+| Mode | En clair | Usage typique |
+|------|----------|---------------|
+| *utterance* | Petits morceaux tels que fournis par m-TEDx | Comparaison avec l’article Pantagruel (Table 8) |
+| *sentence_like* | Fusion de morceaux voisins pour approcher une phrase complète (~10–15 s) | Segments souvent plus stables à l’entraînement |
+
+Un modèle entraîné sur l’un ne doit pas être évalué sur l’autre : les scores ne seraient pas comparables.
+
+### Taille de l’encodeur : 1k, 14k, 114k
+
+Il s’agit du volume de parole française que l’[encodeur](vocabulaire.md#encodeur-acoustique--ssl) Pantagruel a « entendue » pendant son pré-entraînement, avant notre fine-tuning sur m-TEDx. Ce n’est pas la durée d’un extrait audio.
+
+| Libellé | Ordre de grandeur | Rôle |
+|---------|-------------------|------|
+| [B-1k](vocabulaire.md#b-1k--l-14k--l-114k-échelle-de-pré-entraînement) | ~1 000 h | Référence principale du stage aujourd’hui |
+| L-14k | ~14 000 h | Variante Large de l’article (~24 BLEU en utterance) |
+| L-114k | ~114 000 h | Encore plus de données (~25 BLEU dans l’article) |
+
+
+### Gelé ou dégelé
+
+Lors de l’entraînement, chaque bloc du modèle peut être [gelé ou dégelé](vocabulaire.md#gelé-frozen--dégelé-unfrozen) :
+
+- **Gelé** : les poids restent fixes (on garde ce qu’apporte le pré-entraînement).
+- **Dégelé** : les poids peuvent être mis à jour (le bloc s’adapte à m-TEDx).
+
+Exemples dans ce projet :
+
+| Bloc | Variante 1 (Transformer) | Variante 2 (speechLLM B1) |
+|------|---------------------------|---------------------------|
+| **Encodeur Pantagruel** | Gelé au début, puis parfois dégelé après N pas d’entraînement | Gelé par défaut ; expérience « encodeur dégelé » testée |
+| **Décodeur ou projecteur** | Entraîné | Seul le projecteur est entraîné (mode B1) |
+| **LLM** | — | Gelé |
+
+Geler limite le coût GPU et évite d’« oublier » le pré-entraînement ; dégeler peut gagner quelques points de BLEU au prix d’un entraînement plus lourd et plus risqué.
+
+### Décodage : greedy et beam
+
+Une fois le modèle entraîné, il faut encore choisir comment produire le texte anglais, mot par mot :
+
+| Mode | En clair | Effet habituel |
+|------|----------|----------------|
+| [Greedy](vocabulaire.md#greedy-decoding) | À chaque pas, prendre le mot le plus probable | Rapide ; parfois sous-optimal |
+| [Beam search](vocabulaire.md#beam-search-beam-5) (ex. beam 5) | Garder plusieurs suites de mots en parallèle (ici 5) | Plus lent ; souvent meilleur BLEU |
+
+L’article Pantagruel utilise beam 5 ; la baseline ST de ce dépôt utilise encore le greedy à l’évaluation (écart documenté). speechLLM et Gemini ont leurs propres réglages (nombre de tokens max, température pour l’API).
+
+### Autres réglages (selon la variante)
+
+- Durée d’entraînement (nombre de [pas d’optimisation](vocabulaire.md#update-pas-depoch)).
+- Taux d’apprentissage, taille des lots, [gel de l’encodeur](vocabulaire.md#freeze_encoder_updates) pendant les N premiers pas.
+- Consigne envoyée au modèle ([prompt](vocabulaire.md#user--assistant-format-prompt)) pour speechLLM et Gemini.
+- Choix du LLM gelé (Phi-2, Mistral, Qwen, etc.) en speechLLM.
 
 ---
 
 ## 1. Traduction directe avec Transformer (baseline Pantagruel)
 
-**En une phrase :** un seul modèle apprend à lire l’audio et à écrire l’anglais, de bout en bout.
+**En une phrase :** un seul modèle apprend à lire l’audio et à écrire l’anglais, de bout en bout (*end-to-end* ou E2E).
 
 C’est la piste de référence de l’article [Pantagruel](vocabulaire.md#pantagruel-article--famille-de-modèles) (2026). Le système se compose de trois blocs :
 
-| Bloc | Rôle | Entraîné ? |
-|------|------|------------|
-| [Encodeur](vocabulaire.md#encodeur-acoustique--ssl) Pantagruel | Transforme l’audio en représentations internes (une sorte de « compréhension acoustique ») | D’abord [gelé](vocabulaire.md#gelé-frozen--dégelé-unfrozen), puis parfois affiné |
-| [Décodeur](vocabulaire.md#décodeur-transformer-6-couches) Transformer (6 couches) | Génère le texte anglais, mot par mot | Oui |
-| [SentencePiece](vocabulaire.md#2-abréviations-et-acronymes) (SPM) | Découpe l’anglais en petites unités que le décodeur manipule | Entraîné une fois sur les textes anglais du corpus |
+| Étape | Bloc | Rôle | Entraîné ? |
+|:-----:|------|------|------------|
+| 1 | **[Encodeur](vocabulaire.md#encodeur-acoustique--ssl) Pantagruel** | Transforme l’audio en représentations internes (une sorte de « compréhension acoustique ») | D’abord [gelé](vocabulaire.md#gelé-frozen--dégelé-unfrozen), puis parfois affiné |
+| 2 | **[Décodeur](vocabulaire.md#décodeur-transformer-6-couches) Transformer (6 couches)** | Génère le texte anglais, mot par mot (en unités SPM) | Oui |
+| 3 | **[SentencePiece](vocabulaire.md#2-abréviations-et-acronymes) (SPM)** | Découpe et recompose le texte anglais en petites unités (sous-mots) | Entraîné une fois sur les textes anglais du corpus |
+
+**Pourquoi SentencePiece ?** Le décodeur ne manipule pas des mots entiers : il prédit une suite de petites unités issues d’un vocabulaire fixe (ici ~1000, comme dans l’article Pantagruel). SentencePiece apprend ce vocabulaire sur les traductions anglaises du corpus. Intérêt : un mot rare ou absent à l’entraînement peut quand même être produit en le recomposant morceau par morceau ; le modèle reste plus compact qu’avec un dictionnaire « un mot = une entrée ». À l’entraînement, les phrases de référence sont découpées en unités SPM ; à la génération, le décodeur en émet une à une, puis SPM les rassemble en phrase lisible.
 
 **Pourquoi cette variante ?** C’est le cœur scientifique du stage : reproduire les résultats de l’article (environ 17,5 BLEU test sur le découpage *utterance*, encodeur pré-entraîné sur ~1000 h de parole française — voir [B-1k](vocabulaire.md#b-1k--l-14k--l-114k-échelle-de-pré-entraînement)).
 
 **Résultats indicatifs :**
-- *utterance* (comparabilité article Pantagruel) : **~16,7 BLEU** test après correction du protocole d’entraînement
-- *sentence_like* : ~15 BLEU.
+
+| Caractéristiques | BLEU test | Durée |
+|------------------|----------:|-------|
+| *utterance* [^1] | **~16,7** | ~1 h 15 |
+| *sentence_like* [^2] | ~15 | ~8 h |
 
 **Pistes d'amélioration :**
 - Passer à un encodeur pré-entraîné sur plus de données ([14k ou 114k h](vocabulaire.md#b-1k--l-14k--l-114k-échelle-de-pré-entraînement) de parole française) — priorité actuelle après un premier essai 14k non concluant.
@@ -61,26 +139,30 @@ C’est la piste de référence de l’article [Pantagruel](vocabulaire.md#panta
 
 **En une phrase :** on ne réentraîne presque rien, seulement un petit adaptateur entre l’oreille (Pantagruel) et un modèle de texte déjà très capable (un [LLM](vocabulaire.md#llm-grand-modèle-de-langue)).
 
-L’idée vient de l’article *SLAM-ASR* (« embarrassingly simple ») : au lieu de construire un décodeur sur mesure, on branche l’audio sur un LLM existant (ici Phi-2) via un [projecteur](vocabulaire.md#projecteur-speechllm) — quelques couches linéaires.
+L’idée vient de l’article [*An Embarrassingly Simple Approach for LLM with Strong ASR Capacity*](https://arxiv.org/abs/2402.08846) (méthode SLAM-ASR, Ma et al., 2024) : au lieu de construire un décodeur sur mesure, on branche l’audio sur un LLM existant (ici Phi-2) via un [projecteur](vocabulaire.md#projecteur-speechllm) — quelques couches linéaires.
 
-| Composant | Rôle | Entraîné ? |
-|-----------|------|------------|
-| Encodeur Pantagruel | Lit l’audio | Non ([gelé](vocabulaire.md#gelé-frozen--dégelé-unfrozen)) — sauf en expérience « encodeur dégelé » |
-| Projecteur | Adapte les signaux audio au format attendu par le LLM | Oui (c’est tout l’entraînement en mode [B1](vocabulaire.md#b1--b2-speechllm)) |
-| LLM (Phi-2) | Produit l’anglais comme dans une conversation | Non (gelé) |
+| Étape | Composant | Rôle | Entraîné ? |
+|:-----:|-----------|------|------------|
+| 1 | **Encodeur Pantagruel** | Lit l’audio | Non ([gelé](vocabulaire.md#gelé-frozen--dégelé-unfrozen)) — sauf en expérience « encodeur dégelé » |
+| 2 | **Projecteur** | Adapte les signaux audio au format attendu par le LLM | Oui (c’est tout l’entraînement en mode [B1](vocabulaire.md#b1--b2-speechllm)) |
+| 3 | **LLM (Phi-2)** | Produit l’anglais comme dans une conversation | Non (gelé) |
 
 Le modèle apprend avec un format de type dialogue : une consigne du côté [USER](vocabulaire.md#user--assistant-format-prompt), la traduction attendue du côté ASSISTANT.
 
-**Pourquoi cette variante ?** Tester si un LLM généraliste, avec très peu de paramètres entraînés, peut rivaliser avec un système ST classique — et comparer le coût matériel (beaucoup de mémoire GPU pour charger le LLM).
+**Pourquoi cette variante ?** Tester si un **LLM généraliste**, avec très peu de paramètres entraînés, peut rivaliser avec un système ST classique, et comparer le coût matériel (beaucoup de mémoire GPU pour charger le LLM).
 
-**Résultat indicatif :**
-- *sentence_like* : ~16 BLEU test (encodeur gelé) ; ~19 en dégelant l’encodeur.
-- *utterance* : ~7,5 BLEU test — écart net avec la baseline Transformer ; relecture qualitative des traductions prioritaire.
+**Résultats indicatifs :**
+
+| Caractéristiques | BLEU test | Durée |
+|------------------|----------:|-------|
+| *utterance* [^3] | ~7,5 | ~2 h |
+| *sentence_like*, encodeur gelé [^4] | ~16 | ~2 h |
+| *sentence_like*, encodeur dégelé [^5] | **~19** | ~2 h |
 
 **Pistes d'amélioration :**
 - Lire les exemples produits (`eval/dev_predictions.txt`) : répétitions, traductions trop courtes ou trop longues, erreurs récurrentes.
 - Tester un encodeur plus grand (14k / 114k h), comme pour la variante 1.
-- Essayer d’autres [LLM](vocabulaire.md#llm-grand-modèle-de-langue) gelés (Llama, Mistral, Qwen) — chaque modèle demande un projecteur réentraîné.
+- Essayer d’autres [LLM](vocabulaire.md#llm-grand-modèle-de-langue) gelés (Llama, Mistral, Qwen) -> chaque modèle demande un projecteur réentraîné.
 - Ajuster le décodage ([beam](vocabulaire.md#beam-search-beam-5), nombre max de tokens) et la durée d’entraînement du projecteur.
 - Pousser au-delà du mode [B1](vocabulaire.md#b1--b2-speechllm) (dégel partiel du LLM ou de l’encodeur sur *utterance*).
 
@@ -90,23 +172,30 @@ Le modèle apprend avec un format de type dialogue : une consigne du côté [USE
 
 ## 3. Modèle cloud Gemini (API)
 
-**En une phrase :** on envoie l’audio à Google Gemini et on récupère la traduction anglaise — sans entraînement local.
+**En une phrase :** on envoie l’audio à Google Gemini et on récupère la traduction anglaise, sans entraînement local.
 
-| Aspect | Détail |
-|--------|--------|
-| Entrée | Fichier audio ou flux audio |
-| Sortie | Texte anglais proposé par le modèle |
-| Entraînement | Aucun dans ce dépôt |
-| Coût | Facturation à l’appel ([API](vocabulaire.md#2-abréviations-et-acronymes)) ; suivie dans les logs de run |
+| Étape | Élément | Détail |
+|:-----:|---------|--------|
+| 1 | **Entrée** | Fichier audio ou flux audio (français) |
+| 2 | **Modèle Gemini** ([API](vocabulaire.md#2-abréviations-et-acronymes)) | Reçoit l’audio et produit la traduction anglaise — sans entraînement local |
+| 3 | **Sortie** | Texte anglais proposé par le modèle |
+
+Coût : facturation à l’appel ; suivie dans les logs de run.
 
 **Pourquoi cette variante ?** C’est une ligne de référence externe : que vaut un grand modèle multimodal commercial, comparé à nos systèmes entraînés sur m-TEDx ? Utile pour situer le travail de stage par rapport à l’état de l’art « prêt à l’emploi ».
 
-**Résultat indicatif :**
-- *utterance* : ~34 BLEU test.
-- *sentence_like* : ~23 BLEU test (Gemini 2.5 Flash).
+**Résultats indicatifs :** (Gemini 2.5 Flash — pas d’entraînement local)
+
+| Caractéristiques | BLEU test | Durée | Coût API |
+|------------------|----------:|-------|----------|
+| *utterance* [^6] | **~34** | ~1–2 h | voir `eval/metrics.json` |
+| *sentence_like* [^7] | ~23 | ~1–2 h | voir `eval/metrics.json` |
+
+**Point de vigilance :**  
+Les extraits m-TEDx sont librement accessibles sur Internet (vidéos, transcriptions, sous-titres) et le corpus complet est librement téléchargeable en ligne. On ne peut pas exclure que Gemini ait rencontré des contenus proches lors de son pré-entraînement. Les scores de cette baseline se comparent donc avec prudence aux systèmes entraînés uniquement sur nos jeux train/dev/test : une partie de la performance peut refléter une familiarité avec le corpus plutôt qu’une vraie généralisation.
 
 **Pistes d'amélioration :**
-- Comparer Gemini 3.5 Flash et 2.5 Flash sur les deux découpages, à prompt et température identiques.
+- Comparer Gemini 3.5 Flash et 2.5 Flash sur les deux découpages, à prompt et *température* identiques (paramètre qui règle le hasard à la génération : 0 = toujours le choix le plus probable, donc reproductible ; plus elle monte, plus les réponses varient).
 - Affiner la consigne (prompt) envoyée au modèle.
 - Documenter le coût par run ([API](vocabulaire.md#2-abréviations-et-acronymes) facturée à l’usage) pour situer la référence commerciale face aux systèmes locaux.
 
@@ -116,19 +205,27 @@ Le modèle apprend avec un format de type dialogue : une consigne du côté [USE
 
 ## 4. Deux étapes en chaîne : reconnaissance puis traduction (cascade)
 
-**En une phrase :** d’abord transcrire le français à l’écrit, puis traduire ce texte en anglais — comme le ferait un humain avec deux outils séparés.
+**En une phrase :** d’abord transcrire le français à l’écrit, puis traduire ce texte en anglais, comme le ferait un humain avec deux outils séparés.
 
-| Étape | Outil | Tâche |
-|-------|-------|-------|
-| 1 — [ASR](vocabulaire.md#2-abréviations-et-acronymes) | Whisper (large) | Audio français → texte français |
-| 2 — [MT](vocabulaire.md#2-abréviations-et-acronymes) | Marian (opus-mt-fr-en) | Texte français → texte anglais |
+### ASR et MT, les deux briques de la cascade
+- **Reconnaissance automatique de la parole** (*Automatic Speech Recognition* ou [ASR](vocabulaire.md#2-abréviations-et-acronymes)) : reconnaissance automatique de la parole : l’audio devient du texte dans la même langue (ici, français *oral* → français *écrit*).
+- **Traduction automatique** (TA) (*Machine Translation* ou MT) : le texte passe d’une langue à une autre (ici, français → anglais).
 
-Ce n’est pas de la traduction [bout en bout](vocabulaire.md#2-abréviations-et-acronymes) (E2E) : l’anglais ne dépend que de la transcription intermédiaire. Si l’ASR se trompe, l’erreur se propage.
+| Étape | Élément | Outil | Tâche |
+|:-----:|---------|-------|-------|
+| 1 | **[ASR](vocabulaire.md#2-abréviations-et-acronymes)** | Whisper (large) | Audio français → texte français |
+| 2 | **[MT](vocabulaire.md#2-abréviations-et-acronymes)** | Marian (opus-mt-fr-en) | Texte français → texte anglais |
+
+Ce n’est pas de la traduction bout en bout (E2E) : l’anglais ne dépend que de la transcription intermédiaire. Si l’ASR se trompe, l’erreur se propage.
 
 **Pourquoi cette variante ?** Les cascades restent très utilisées en production. Les comparer aux modèles E2E montre le compromis entre simplicité de déploiement, interprétabilité (on peut lire la transcription française) et score global.
 
-**Résultat indicatif :**
-- *utterance* : ~37 BLEU test — meilleur score du bench à ce jour sur ce découpage (comparaison valable seulement à protocole et segmentation identiques).
+**Résultats indicatifs :** (inférence seule, pas d’entraînement)
+
+| Caractéristiques | BLEU test | Durée |
+|------------------|----------:|-------|
+| *utterance* [^8] | ~37 | ~4 h |
+| *sentence_like* | — | — |
 
 **Pistes d'amélioration :**
 - Tester un modèle [ASR](vocabulaire.md#2-abréviations-et-acronymes) plus léger ou plus lourd (Whisper medium vs large) et mesurer le compromis vitesse / qualité.
@@ -144,12 +241,22 @@ Ce n’est pas de la traduction [bout en bout](vocabulaire.md#2-abréviations-et
 
 **En une phrase :** même architecture que la variante 1, mais avec un encodeur Pantagruel entraîné sur parole et texte ensemble, pas sur la parole seule.
 
-L’encodeur [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal) a vu du français oral et écrit pendant son pré-entraînement. L’hypothèse : ces représentations pourraient mieux servir la traduction. Le décodeur Transformer et SentencePiece restent les mêmes que en variante 1.
+L’encodeur [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal) a vu du français oral et écrit pendant son pré-entraînement. L’hypothèse : ces représentations pourraient mieux servir la traduction. Le décodeur Transformer et SentencePiece restent les mêmes qu’en variante 1 :
+
+| Étape | Bloc | Rôle | Entraîné ? |
+|:-----:|------|------|------------|
+| 1 | **Encodeur Speech_Text** | Transforme l’audio (pré-entraînement parole + texte) | D’abord gelé, puis parfois affiné |
+| 2 | **Décodeur Transformer (6 couches)** | Génère le texte anglais, mot par mot (en unités SPM) | Oui |
+| 3 | **SentencePiece (SPM)** | Fournit le vocabulaire et reconstitue la phrase à partir des unités générées | Entraîné une fois sur les textes anglais du corpus |
 
 **Pourquoi cette variante ?** Explorer si la multimodalité au niveau de l’encodeur aide la ST — piste annoncée dans le titre du rapport de stage.
 
-**Résultat indicatif :**
-- *sentence_like* : ~8 BLEU test — nettement sous la variante 1 sur le même découpage.
+**Résultats indicatifs :**
+
+| Caractéristiques | BLEU test | Durée |
+|------------------|----------:|-------|
+| *utterance* | — | — |
+| *sentence_like* [^9] | ~8 | ~8 h |
 
 **Pistes d'amélioration :**
 - Reprendre les réglages d’entraînement de la variante 1 (gel, durée, décodage) avant de conclure sur l’encodeur multimodal.
@@ -175,7 +282,7 @@ Audio français (m-TEDx)
 
 | # | Nom court | Paradigme | Entraînement local | Intérêt principal |
 |---|-----------|-----------|--------------------|-------------------|
-| 1 | Transformer ST | [E2E](vocabulaire.md#2-abréviations-et-acronymes) | Oui (GPU, long) | Réplication Pantagruel |
+| 1 | Transformer ST | E2E | Oui (GPU, long) | Réplication Pantagruel |
 | 2 | speechLLM B1 | E2E via LLM | Oui (projecteur surtout) | LLM + adaptateur minimal |
 | 3 | Gemini | API | Non | Référence commerciale |
 | 4 | Cascade | ASR puis MT | Non (inférence seule) | Baseline classique en deux temps |
@@ -183,14 +290,40 @@ Audio français (m-TEDx)
 
 ---
 
+## Synthèse des meilleurs scores
+
+Meilleur BLEU test SacreBLEU observé par variante. Les paramètres listés sont ceux du run correspondant — voir les sections détaillées ci-dessus.
+
+| # | Variante | Réf. | BLEU test | Découpage | Paramètres du run |
+|---|----------|:----:|----------:|-----------|-------------------|
+| 1 | Transformer ST | [^1] | ~16,7 | *utterance* | Encodeur B-1k ; gel encodeur 5k updates puis dégel ; early stop @20k ; décodage greedy |
+| 2 | speechLLM B1 | [^5] | ~19 | *sentence_like* | Encodeur B-1k dégelé ; Phi-2 gelé ; projecteur seul entraîné ; 20k updates ; beam 1 / 48 tokens |
+| 3 | Gemini 2.5 Flash | [^6] | ~34 | *utterance* | API `gemini-2.5-flash` ; pas d’entraînement local ; *température* 0 ; max 256 tokens |
+| 4 | Cascade ASR→MT | [^8] | ~37 | *utterance* | Whisper large-v3 → Marian opus-mt-fr-en ; inférence seule |
+| 5 | Speech_Text + ST | [^9] | ~8 | *sentence_like* | Encodeur Speech_Text B-1k ; décodeur 6 couches + SPM ; 80k updates ; greedy |
+
+Sur *utterance*, la cascade (~37) et Gemini (~34) devancent les modèles entraînés localement (~16,7 pour la baseline Transformer). Sur *sentence_like*, Gemini (~23) reste en tête, devant speechLLM dégelé (~19). Les scores *utterance* et *sentence_like* ne sont pas directement comparables entre eux (voir ci-dessous).
+
 ## Comment lire les chiffres
 
-Trois réglages ne doivent pas être mélangés quand on compare deux lignes du tableau :
-
-1. **La variante** (l’une des cinq ci-dessus).
-2. **Le découpage audio** (*utterance* vs *sentence_like*).
-3. **La taille de l’encodeur** (aujourd’hui surtout [1k h](vocabulaire.md#speech-base-1k-checkpoint-hf) ; l’article montre aussi 14k et 114k).
+Avant de comparer deux scores, reprendre la [liste des réglages](#les-réglages-quon-peut-faire-varier) : variante, découpage, taille d’encodeur, gel/dégel, décodage. Un BLEU n’a de sens que si ces axes (et la version du protocole SacreBLEU) sont identiques ou clairement indiqués.
 
 Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur — la qualité réelle se juge aussi en lisant des exemples (`eval/dev_predictions.txt` dans chaque run).
 
 Pour le détail des scores, protocoles et identifiants de runs : voir le [rapport de stage](../rapport.md) et le [glossaire](vocabulaire.md).
+
+---
+
+## Références des runs
+
+Syntaxe : notes de bas de page Markdown (`[^n]`), supportées par Pandoc, GitHub et la plupart des visualiseurs récents.
+
+[^1]: `run_004_transformer_baseline_utterance_v2`
+[^2]: `run_001_transformer_baseline_sentence_like`
+[^3]: `run_003_speechllm_b1_utterance_long`
+[^4]: `run_002_speechllm_b1_sentence_long`
+[^5]: `run_005_speechllm_b1_sentence_long_unfreeze_encoder`
+[^6]: `run_001_gemini_flash_utterance_full`
+[^7]: `run_001_gemini_flash_sentence_like_v2`
+[^8]: `run_001_cascade_utterance`
+[^9]: `run_001_pantagruel_multimodal`
