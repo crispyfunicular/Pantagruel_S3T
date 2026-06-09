@@ -761,7 +761,8 @@ Sections communes (`1_Transformer/configs/fr-en/base*.yaml`, analogues speechLLM
 | `run_001_cascade_sentence_like` | Cascade complète sentence_like |
 | `run_001_cascade_utterance` | Cascade utterance |
 | `run_003_speechllm_b1_utterance_long` | speechLLM utterance |
-| `run_010_transformer_baseline_utterance_large_14k` | ST, encodeur Large 14k h |
+| `run_010_transformer_baseline_utterance_large_14k` | ST L-14k — **échec** (collapse, tour, juin 2026) |
+| `run_014_transformer_baseline_utterance_large_14k_v2` | ST L-14k retry (gel 5k, early stop) |
 | `run_011_..._114k` | ST, encodeur Large 114k h |
 | `run_012_...` / `run_013_...` | speechLLM Large 14k / 114k |
 | `run_001_pantagruel_multimodal` | Variante Speech_Text multimodale |
