@@ -14,6 +14,8 @@
 #   ./scripts/tour.sh ssh 'nvidia-smi'       # commande distante
 #   ./scripts/tour.sh rsync-eval             # tous les eval/ locaux → tour
 #   ./scripts/tour.sh rsync-eval RUN_ID      # un seul run
+#   ./scripts/tour.sh rsync-checkpoints      # tous les checkpoints tour → local
+#   ./scripts/tour.sh rsync-checkpoints RUN_ID
 #   ./scripts/tour.sh check                  # test clé (échec rapide si pas de clé)
 
 set -euo pipefail
@@ -118,6 +120,57 @@ cmd_rsync_eval() {
   echo "Terminé (${count} run(s))."
 }
 
+cmd_rsync_checkpoints() {
+  local run_filter="${1:-}"
+
+  _rsync_one_checkpoint_run() {
+    local run_id="$1"
+    local remote_ckpt="${REMOTE_RUNS}/${run_id}/checkpoints/"
+    local local_ckpt="${LOCAL_RUNS}/${run_id}/checkpoints"
+    if ! remote "test -d '${remote_ckpt}'"; then
+      echo "  SKIP ${run_id} (pas de checkpoints sur la tour)" >&2
+      return 0
+    fi
+    mkdir -p "${local_ckpt}"
+    rsync -avz --progress -e "${RSYNC_SSH}" \
+      "${TOUR_USER}@${TOUR_HOST}:${remote_ckpt}" \
+      "${local_ckpt}/"
+    local remote_cfg="${REMOTE_RUNS}/${run_id}/config.yaml"
+    if remote "test -f '${remote_cfg}'"; then
+      rsync -avz -e "${RSYNC_SSH}" \
+        "${TOUR_USER}@${TOUR_HOST}:${remote_cfg}" \
+        "${LOCAL_RUNS}/${run_id}/"
+    fi
+    echo "  → ${run_id}"
+  }
+
+  if [[ -n "${run_filter}" ]]; then
+    echo "Rsync checkpoints ${TOUR_USER}@${TOUR_HOST}:${REMOTE_RUNS}/${run_filter}/checkpoints/ → local"
+    _rsync_one_checkpoint_run "${run_filter}"
+    return 0
+  fi
+
+  echo "Rsync de tous les checkpoints tour → ${LOCAL_RUNS}/"
+  local ckpt_dirs=()
+  # Process substitution + mapfile : évite les pièges ``set -e`` / ``read`` sur heredoc.
+  mapfile -t ckpt_dirs < <(
+    remote "find '${REMOTE_RUNS}' -maxdepth 2 -type d -name checkpoints 2>/dev/null" || true
+  )
+  if [[ ${#ckpt_dirs[@]} -eq 0 ]]; then
+    echo "Aucun dossier checkpoints trouvé sur la tour." >&2
+    return 1
+  fi
+  local count=0
+  local ckpt_dir run_id
+  for ckpt_dir in "${ckpt_dirs[@]}"; do
+    [[ -n "${ckpt_dir}" ]] || continue
+    run_id="$(basename "$(dirname "${ckpt_dir}")")"
+    _rsync_one_checkpoint_run "${run_id}"
+    count=$((count + 1))
+  done
+  echo "Terminé (${count} run(s))."
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
@@ -126,6 +179,7 @@ main() {
     ssh) cmd_ssh "$@" ;;
     mkdir-run) cmd_mkdir_run "$@" ;;
     rsync-eval) cmd_rsync_eval "$@" ;;
+    rsync-checkpoints) cmd_rsync_checkpoints "$@" ;;
     -h|--help|help|"") usage ;;
     *)
       echo "Commande inconnue: ${cmd}" >&2
