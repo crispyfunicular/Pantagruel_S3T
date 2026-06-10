@@ -26,10 +26,14 @@ python scripts_communs/pipeline.py prepare --langpair fr-en
 | Cascade | `run_001_cascade_utterance` | `4_cascade/configs/fr-en/cascade.yaml` | aucun | ~3–5 h GPU |
 | speechLLM B1 | `run_003_speechllm_b1_utterance_long` | `2_speechLLM/configs/fr-en/b1_utterance_long.yaml` | **20k updates** | **ok** — 10,00 / 7,47 (tour, 2026-06-05) |
 | ST **L-14k** | `run_010_transformer_baseline_utterance_large_14k` | `1_Transformer/configs/fr-en/base_utterance_large_14k.yaml` | **80k updates** | **échec** — 0,00 / 0,00 (tour, 2026-06-09, **~10 h 23** train + **~11 min** éval) |
-| ST **L-14k v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | `1_Transformer/configs/fr-en/base_utterance_large_14k_v2.yaml` | early stop (prévu) | **à lancer** — gel 5k, LR 1e-4 ; ~4–8 h GPU estimées |
+| ST **L-14k v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | `1_Transformer/configs/fr-en/base_utterance_large_14k_v2.yaml` | early stop | **ok** — 17,12 / 17,21 (Modyco, juin 2026) |
+| speechLLM **L-14k unfreeze** | `run_015_speechllm_b1_utterance_large_14k_unfreeze` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k_unfreeze.yaml` | **20k updates** (early stop) | **ok** — 3,90 / 3,65 (Modyco, juin 2026) — sous run_012 gelé |
 | ST **L-114k** | `run_011_transformer_baseline_utterance_large_114k` | `1_Transformer/configs/fr-en/base_utterance_large_114k.yaml` | **80k updates** | ~10–12 h GPU (ordre de grandeur, d’après run_010) |
 | speechLLM **L-14k** | `run_012_speechllm_b1_utterance_large_14k` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k.yaml` | **20k updates** | ~4–6 h GPU |
-| speechLLM **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | `2_speechLLM/configs/fr-en/b1_utterance_large_114k.yaml` | **20k updates** | ~4–6 h GPU |
+| speechLLM **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | `2_speechLLM/configs/fr-en/b1_utterance_large_114k.yaml` | **20k updates** | **ok** — 15,92 / 15,24 (OVH, juin 2026) |
+| ST **L-114k v2** | `run_016_transformer_baseline_utterance_large_114k_v2` | `1_Transformer/configs/fr-en/base_utterance_large_114k_v2.yaml` | early stop | **ok** — 20,30 / 19,63 (OVH, juin 2026, ~9,1 h GPU, early stop @~21k) |
+| speechLLM **L-114k v2** | `run_017_speechllm_b1_utterance_large_114k_v2` | `2_speechLLM/configs/fr-en/b1_utterance_large_114k_v2.yaml` | **20k updates** (early stop) | **en cours** (OVH) — retry run_013 ; max 128 tok |
+| speechLLM **L-14k + Qwen2.5-3B** | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k_qwen25_3b.yaml` | **20k updates** (early stop) | **à lancer** (Modyco) — ablation LLM vs run_012 Phi-2 ; ~5–8 h GPU |
 
 **14k / 114k** = heures de pré-entraînement Pantagruel (LeBenchmark / INA), pas un autre corpus m-TEDx : mêmes manifests `datasets/manifests/fr-en/`. Encodeurs HF : `PantagrueLLM/speech-large-14K`, `PantagrueLLM/speech-large-114K` (Table 8 : ~24,0 et ~25,2 BLEU test).
 
@@ -124,7 +128,15 @@ bash scripts/run_pantagruel_encoder_scale_utterance.sh smoke
 # ST L-114k (tour GPU, après run_014 v2) :
 nohup bash 1_Transformer/scripts/run_011_baseline_utterance_114k_nohup.sh \
   > logs/run_011_wrapper.log 2>&1 &
-# speechLLM (OVH ou tour selon planning) :
+# speechLLM L-14k + Qwen2.5-3B (Modyco, run_018) :
+nohup bash scripts/run_modyco_speechllm_14k_qwen.sh \
+  > logs/run_018_speechllm_qwen_chain_wrapper.log 2>&1 &
+tail -f logs/run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b_train_eval.log
+# speechLLM L-114k v2 (OVH, après run_016) :
+nohup bash scripts/run_ovh_speechllm_114k_v2.sh \
+  > logs/run_017_ovh_chain_wrapper.log 2>&1 &
+tail -f logs/run_017_speechllm_b1_utterance_large_114k_v2_train_eval.log
+# speechLLM legacy (run_012/013 déjà terminés sur OVH) :
 bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-14k
 bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-114k
 # Ré-évaluer si checkpoints déjà présents :

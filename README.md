@@ -48,6 +48,8 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | Variante | Run | BLEU dev | BLEU test | Décodage (v1) |
 |----------|-----|----------|-----------|---------------|
 | Gemini 2.5 Flash | `run_001_gemini_flash_sentence_like_v2` | 21.44 | 23.15 | temp 0 |
+| Gemini 3.5 Flash **v2** | `run_004_gemini_35_flash_sentence_like_v2` | **38.69** | **36.76** | ok (local, 38 min, **1,27 $**) |
+| Gemini 3.5 Flash v1 | `run_003_gemini_35_flash_sentence_like` | 1.62 | 1.45 | ok — **non conclusif** (troncature) |
 | speechLLM B1 (encodeur gelé) | `run_002_speechllm_b1_sentence_long` | 19.99 | 15.89 | beam 1 |
 | speechLLM B1 (encodeur dégelé) | `run_005_speechllm_b1_sentence_long_unfreeze_encoder` | 19.25 | 18.83 | beam 1 |
 | ST E2E Transformer | `run_001_transformer_baseline_sentence_like` | 16.12 | 14.97 | greedy |
@@ -57,18 +59,19 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 
 | Variante | Run | BLEU dev | BLEU test | Statut |
 |----------|-----|----------|-----------|--------|
+| Gemini 3.5 Flash **v2** | `run_005_gemini_35_flash_utterance_v2` | **41.42** | **41.09** | ok (local, 66 min, **0,94 $** ; garde-fous anti-boucles) |
 | Cascade ASR→MT | `run_001_cascade_utterance` | **38.17** | **37.41** | ok (tour) |
-| Gemini 2.5 Flash | `run_001_gemini_flash_utterance_full` | **33.76** | **33.72** | ok |
-| Gemini 3.5 Flash | `run_003_gemini_35_flash_utterance` | 11.66 | 13.39 | ok (local, 99 min, **0,60 $** API) — troncature probable |
-| Gemini 3.5 Flash | `run_003_gemini_35_flash_sentence_like` | 1.62 | 1.45 | ok (local, 42 min, **0,52 $**) — troncature probable |
-| Gemini 3.5 Flash **v2** | `run_004_gemini_35_flash_utterance_v2` | 50.64* | 55.39* | smoke `--limit 5` ok ; run complet **à lancer**
+| Gemini 2.5 Flash | `run_001_gemini_flash_utterance_full` | 33.76 | 33.72 | ok |
+| Gemini 3.5 Flash v1 | `run_003_gemini_35_flash_utterance` | 11.66 | 13.39 | ok — **non conclusif** (troncature `max_output_tokens=256`) |
 | ST B-1k Table 8 | `run_002_transformer_baseline_utterance` | 3.90 | 3.79 | **échec** (collapse) |
 | ST B-1k Table 8 **v2** | `run_004_transformer_baseline_utterance_v2` | **16.84** | **16.68** | ok (tour, gel 5k + early stop @20k) |
 | speechLLM B1 | `run_003_speechllm_b1_utterance_long` | **10.00** | **7.47** | ok (tour, 2026-06-05) |
 | speechLLM B1 **L-14k** | `run_012_speechllm_b1_utterance_large_14k` | **15.49** | **15.03** | ok (OVH, ~1,4 h GPU) |
-| speechLLM B1 **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | — | — | **en cours** (OVH) |
+| speechLLM B1 **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | 15.92 | 15.24 | ok (OVH) |
+| ST L-114k Table 8 **v2** | `run_016_transformer_baseline_utterance_large_114k_v2` | **20.30** | **19.63** | ok (OVH, ~9,1 h GPU, early stop @~21k upd.) |
 | ST L-14k Table 8 | `run_010_transformer_baseline_utterance_large_14k` | 0.00 | 0.00 | **échec** (collapse, tour, ~10 h 23 train + ~11 min éval, 2026-06-09) |
-| ST L-14k Table 8 **v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | — | — | **en cours** (Modyco, retry gel 5k + LR 1e-4 + early stop) |
+| ST L-14k Table 8 **v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | 17.12 | 17.21 | ok (Modyco, early stop ~21k upd.) |
+| speechLLM L-14k **unfreeze** | `run_015_speechllm_b1_utterance_large_14k_unfreeze` | 3.90 | 3.65 | ok (Modyco) — **sous** run_012 gelé (15,03) |
 
 Ne pas comparer les colonnes utterance et sentence_like entre elles ni directement à la Table 8 sans le même `segment_mode`.
 
@@ -91,8 +94,8 @@ Trois axes **indépendants** (ne pas les confondre) :
 - **Baseline ST Table 8** : terminée en `sentence_like` — **16.12** dev / **14.97** test (`run_001_transformer_baseline_sentence_like`).
 - Protocole d'évaluation **figé** : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
 - **Bench utterance** — [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
-- **Encodeur 14k / 114k** (priorité encadrant) : ST L-14k `run_010` **terminé** (collapse 0,00 / 0,00, tour) — **`run_014` v2 en cours** sur Modyco ; speechLLM L-14k **`run_012` terminé** (15,49 / 15,03, OVH) ; L-114k **`run_013` en cours** sur OVH — voir [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md).
-- **Gemini 3.5 Flash** : runs `run_003_*` **terminés** mais **non conclusifs** (troncature sous `max_output_tokens=256` + thinking API default) — utterance **11,66 / 13,39**, sentence_like **1,62 / 1,45**. Relance **`run_004_*_v2`** préparée (`gemini_flash_35_*_v2.yaml` : budget 1024 + `thinking_level: minimal`). Conserver les scores **2.5** pour l’historique.
+- **Encodeur 14k / 114k** (priorité encadrant) : ST L-14k **`run_014` v2 terminé** (17,12 / 17,21, Modyco) ; ST L-114k **`run_016` v2 terminé** (20,30 / 19,63, OVH — sous papier ~25,2) ; speechLLM L-14k **`run_012` / `run_013` terminés** (15,03 / 15,24 test, OVH) ; **`run_015` unfreeze terminé** (3,65 test — sous run_012) — voir [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md).
+- **Gemini 3.5 Flash** : **`run_005` utterance v2 terminé** — **41,42 / 41,09** ; **`run_004` sentence_like v2 terminé** — **38,69 / 36,76** (garde-fous, `max_output_tokens=8192`, `thinking_level: minimal`) ; devant Gemini 2.5 sur les deux découpages. Runs `run_003_*` v1 **non conclusifs** (troncature).
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.
 - **Relecture qualitative** :
