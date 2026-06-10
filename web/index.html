@@ -206,11 +206,6 @@
     }
 
     .chart { margin-top: 1rem; }
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      font-weight: 600;
-      text-align: right;
-    }
 
     .table-wrap { overflow-x: auto; margin-top: 1rem; }
 
@@ -582,7 +577,7 @@
         <button type="button" class="phrases-nav phrases-nav--next" aria-label="Exemple suivant">→</button>
       </div>
       <p class="phrases-footnote">
-        Runs : Transformer <code>run_004</code> · speechLLM L-14k <code>run_012</code> · Gemini <code>run_001</code> · Cascade <code>run_001</code>.
+        Runs : Transformer L-14k <code>run_014</code> · speechLLM L-14k <code>run_012</code> · Gemini 2.5 <code>run_001</code> · Cascade <code>run_001</code>.
         La variante <span class="model-name model-name--v5">5 · Speech_Text</span> est sur des segments fusionnés —
         voir <a href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/web/phrases.md" target="_blank" rel="noopener noreferrer">phrases.md ↗</a>.
       </p>
@@ -613,7 +608,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, la cascade et Gemini devancent les modèles entraînés localement ; l’article Pantagruel atteint 25,2 BLEU test avec l’encodeur L-114k. Notre baseline Transformer (~16,7, encodeur B-1k) est en cours de réplication vers les encodeurs Large.",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, la cascade et Gemini 2.5 devancent les modèles entraînés localement ; l’article Pantagruel atteint 25,2 BLEU test avec l’encodeur L-114k. Meilleur ST local : ~17,2 (L-14k, <code>run_014</code>) ; meilleur speechLLM : ~15,2 (L-114k, <code>run_013</code>). ST L-114k (<code>run_016</code>) et speechLLM L-14k dégelé (<code>run_015</code>) en cours. Gemini 3.5 : runs préliminaires sous le 2.5 (troncatures / outliers).",
         rows: [
           {
             id: 4,
@@ -626,7 +621,7 @@
           {
             id: 3,
             color: 'v3',
-            chartLabel: '3 · Gemini',
+            chartLabel: '3 · Gemini 2.5',
             tableLabel: 'Gemini 2.5 Flash',
             score: 34,
             params: "API ; pas d’entraînement local ; température 0"
@@ -645,16 +640,16 @@
             color: 'v1',
             chartLabel: '1 · Transformer',
             tableLabel: 'Transformer ST',
-            score: 16.7,
-            params: 'Encodeur B-1k ; gel encodeur 5k updates puis dégel ; greedy'
+            score: 17.2,
+            params: 'Meilleur : L-14k gelé 5k + early stop (~17,2) ; B-1k : ~16,7 ; greedy'
           },
           {
             id: 2,
             color: 'v2',
             chartLabel: '2 · speechLLM',
             tableLabel: 'speechLLM B1',
-            score: 7.5,
-            params: 'Encodeur B-1k gelé ; Phi-2 gelé ; projecteur seul entraîné'
+            score: 15.2,
+            params: 'Meilleur utterance : L-114k gelé (~15,2) ; B-1k : ~7,5 ; Phi-2 gelé'
           }
         ]
       },
