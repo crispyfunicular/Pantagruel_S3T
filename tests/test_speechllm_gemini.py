@@ -8,7 +8,10 @@ from Gemini.gemini_common import (
     ENV_GEMINI_API_KEY,
     GeminiRequest,
     MissingGeminiApiKeyError,
+    _extract_text_from_response,
+    _part_is_thought,
     get_gemini_api_key,
+    sanitize_gemini_translation,
 )
 
 
@@ -28,6 +31,58 @@ def test_gemini_request_defaults() -> None:
     assert req.temperature == 0.0
     assert req.max_output_tokens == 256
     assert req.thinking_level is None
+
+
+def test_part_is_thought() -> None:
+    class Part:
+        def __init__(self, thought: object = None, text: str = "") -> None:
+            self.thought = thought
+            self.text = text
+
+    assert _part_is_thought(Part(thought=True, text="hidden")) is True
+    assert _part_is_thought(Part(thought="reasoning", text="hidden")) is True
+    assert _part_is_thought(Part(thought=False, text="visible")) is False
+    assert _part_is_thought(Part(text="visible")) is False
+
+
+def test_sanitize_gemini_translation_trims_repetition_loop() -> None:
+    loop = " and" * 40
+    noisy = f"I advise you to go and see the work of{loop}"
+    assert sanitize_gemini_translation(noisy) == "I advise you to go and see the work of"
+    assert sanitize_gemini_translation("Nothing has changed.") == "Nothing has changed."
+
+
+def test_extract_text_from_response_skips_thought_parts() -> None:
+    class Part:
+        def __init__(self, *, thought: object = None, text: str = "") -> None:
+            self.thought = thought
+            self.text = text
+
+    class Content:
+        def __init__(self, parts: list[Part]) -> None:
+            self.parts = parts
+
+    class Candidate:
+        def __init__(self, content: Content) -> None:
+            self.content = content
+
+    class Response:
+        def __init__(self) -> None:
+            self.candidates = [
+                Candidate(
+                    Content(
+                        [
+                            Part(thought=True, text="Let me translate this carefully."),
+                            Part(text="She looked at me with her big blue eyes."),
+                        ]
+                    )
+                )
+            ]
+
+    assert (
+        _extract_text_from_response(Response())
+        == "She looked at me with her big blue eyes."
+    )
 
 
 def test_gemini_request_thinking_level_optional() -> None:

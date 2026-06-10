@@ -86,7 +86,8 @@ Principes :
 - **Prompt** : instruction textuelle (champ `prompt.template`) conçue pour être réutilisable par la partie LLM de `speechLLM`.
 - **Sorties** : même contrat d’artefacts d’évaluation (`runs/.../eval/` + signature SacreBLEU) avec `pipeline = gemini_st`.
 - **Tracking coût/temps** : `eval/metrics.json` inclut `runtime.elapsed_minutes` et `gemini_cost_estimate_usd` (estimé via `pricing.*` dans la config Gemini).
-- **Décodage Gemini 3.x** : champ optionnel `decode.thinking_level` (`minimal`, `low`, `medium`, `high`) — configs `gemini_flash_35_*_v2.yaml` (relance : `max_output_tokens: 8192`, `thinking_level: minimal`).
+- **Décodage Gemini 3.x** : champ optionnel `decode.thinking_level` (`minimal`, `low`, `medium`, `high`) — configs `gemini_flash_35_*_v2.yaml` (`max_output_tokens: 8192`, `thinking_level: minimal`).
+- **Post-traitement réponse** (`gemini_common.sanitize_gemini_translation`) : exclusion des parts `thought` à l’extraction ; troncature des boucles de répétition (artefact `MAX_TOKENS`) avant SacreBLEU. Run de référence utterance v2 : `run_005_gemini_35_flash_utterance_v2` (41,42 / 41,09 BLEU).
 - **Authentification** : variable d’environnement `GEMINI_API_KEY` (aucun secret versionné).
 
 CLI (routeur `3_Gemini/pipeline.py`) :
