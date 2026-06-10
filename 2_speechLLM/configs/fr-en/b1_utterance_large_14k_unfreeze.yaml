@@ -1,0 +1,54 @@
+# speechLLM B1 — fr-en, utterance, Pantagruel-L-14k, encodeur dégelé.
+#
+# Pistes variantes.md §2 (après run_012 @ 15,03 test et ST run_014 @ 17,21) :
+#   - encodeur L-14k dégelé (comme run_005 sentence_like +2 BLEU vs gelé)
+#   - max_new_tokens : 128 (vs 48 sur run_012 — traductions moins tronquées)
+#   - early_stopping_patience : 3
+#   - LR 5e-5 (stabilité quand l'encodeur apprend, calqué run_005 unfreeze)
+#
+# Budget GPU visé : ≤ 4 h (run_012 gelé ≈ 1,4 h ; dégel +128 tok ≈ 2–3,5 h).
+# Run cible : run_015_speechllm_b1_utterance_large_14k_unfreeze
+
+experiment:
+  name: "fr-en_speechllm_b1_utterance_large_14k_unfreeze"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_015_speechllm_b1_utterance_large_14k_unfreeze"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  llm_name: "microsoft/phi-2"
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: false
+  freeze_llm: true
+
+prompt:
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 1000
+  learning_rate_peak: 0.00005
+  weight_decay: 0.01
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 128
