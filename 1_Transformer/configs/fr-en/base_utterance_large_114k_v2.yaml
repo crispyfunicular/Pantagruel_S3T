@@ -1,0 +1,52 @@
+# Baseline ST utterance Large 114k v2 — après run_010/011 non lancés ou à risque collapse.
+#
+# Correctifs calqués sur base_utterance_large_14k_v2.yaml (run_014 @ 17,21 test) :
+#   - freeze_encoder_updates: 5000
+#   - early_stopping_patience: 2
+#   - learning_rate_peak: 1e-4
+#
+# Encodeur : PantagrueLLM/speech-large-114K — cible papier Table 8 ~25,2 BLEU test.
+# Run cible : run_016_transformer_baseline_utterance_large_114k_v2 (OVH)
+
+experiment:
+  name: "fr-en_baseline_utterance_large_114k_v2"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_016_transformer_baseline_utterance_large_114k_v2"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  spm_model: "datasets/processed/spm/fr-en_1000.model"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-114K"
+  trust_remote_code: true
+  decoder_layers: 6
+  decoder_heads: 8
+  hidden_dim: 1024
+  dropout: 0.1
+
+train:
+  max_updates: 80000
+  warmup_updates: 4000
+  freeze_encoder_updates: 5000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.01
+  label_smoothing: 0.1
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 2000
+  max_eval_batches: 20
+  max_target_tokens: 256
+  early_stopping_patience: 2
+
+decode:
+  beam_size: 5
+  max_len_b: 128
