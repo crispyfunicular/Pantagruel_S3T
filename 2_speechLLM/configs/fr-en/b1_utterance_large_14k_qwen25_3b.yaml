@@ -1,0 +1,54 @@
+# speechLLM B2bis — fr-en, utterance, Pantagruel-L-14k gelé + Qwen2.5-3B-Instruct gelé.
+#
+# Ablation LLM (P3 roadmap) : même protocole que run_012 (Phi-2 @ 15,03 test) ;
+# seul le LLM gelé change. Bench utterance Table 8.
+#
+# Run cible : run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b (Modyco)
+
+experiment:
+  name: "fr-en_speechllm_b2bis_utterance_large_14k_qwen25_3b"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  llm_name: "Qwen/Qwen2.5-3B-Instruct"
+  llm_trust_remote_code: true
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+  load_in_4bit: false
+  load_in_8bit: false
+
+prompt:
+  format: "qwen_chatml"
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48
