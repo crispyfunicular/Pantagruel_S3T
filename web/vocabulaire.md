@@ -94,7 +94,7 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 | **S2T** | Synonyme courant en anglais pour la même tâche (*speech-to-text translation*). | Parfois dans la littérature ; S3T utilise surtout **ST** |
 | **E2E** | Bout en bout : un seul modèle (ou une seule chaîne entraînée) de l’audio à la traduction. | Opposé à **cascade** |
 | **SSL** | Apprentissage auto-supervisé sur de grandes quantités de parole/texte sans transcriptions alignées pour le pré-entraînement. | Encodeurs Pantagruel, LeBenchmark |
-| **JEPA** | Prédiction dans l’espace latent (pas de reconstruction du signal brut) ; cadre théorique derrière data2vec et Pantagruel. | [Entrée détaillée §6](#jepa-joint-embedding-predictive-architecture) |
+| **JEPA** | Prédiction dans l’espace latent (pas de reconstruction du signal brut) ; cadre théorique (LeCun, 2022) derrière data2vec et Pantagruel. | [Entrée détaillée §6](#jepa-joint-embedding-predictive-architecture) |
 | **ASR** | Reconnaissance vocale : audio → transcription dans la même langue (ici français). | Étape 1 de la cascade (`4_cascade`) |
 | **MT** | Traduction automatique texte→texte (ici fr→en via Marian). | Étape 2 de la cascade |
 | **SPM** | SentencePiece : découpe le texte anglais en sous-mots (tokens) pour le décodeur Transformer. | Étape `3_spm`, variantes 1 et 5 |
@@ -267,6 +267,7 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 |---|---|
 | **En clair** | Famille d’approches d’[apprentissage auto-supervisé](#2-abréviations-et-acronymes) où le modèle **ne reconstruit pas** l’entrée brute (audio, image, texte) : il **prédit des représentations internes** (vecteurs continus) dans un espace latent. L’idée, formalisée par LeCun (2022), est d’apprendre la **structure** du signal plutôt que sa surface. |
 | **Identifiant** | *Joint Embedding Predictive Architecture* ; implémentation Pantagruel : **data2vec 2.0** (Baevski et al., 2023) |
+| **Référence** | LeCun, Y. (2022). *A path towards autonomous machine intelligence* (version 0.9.2, 2022-06-27). *Open Review*, 62(1), 1–62. |
 | **Où** | Article Pantagruel §3 ; encodeurs `PantagrueLLM/speech-*` utilisés en variantes 1, 2 et 5 |
 
 **Mécanisme (article Pantagruel, figure 1) :**

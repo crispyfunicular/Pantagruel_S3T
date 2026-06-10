@@ -114,7 +114,7 @@ C’est la piste de référence de l’article [Pantagruel](vocabulaire.md#panta
 | 2 | **[Décodeur](vocabulaire.md#décodeur-transformer-6-couches) Transformer (6 couches)** | Génère le texte anglais, mot par mot (en unités SPM) | Oui |
 | 3 | **[SentencePiece](vocabulaire.md#2-abréviations-et-acronymes) (SPM)** | Découpe et recompose le texte anglais en petites unités (sous-mots) | Entraîné une fois sur les textes anglais du corpus |
 
-**Comment l’encodeur Pantagruel a-t-il appris ?** Avant notre fine-tuning sur m-TEDx, l’encodeur a été pré-entraîné sur de grandes quantités de parole française (1k, 14k ou 114k h) avec une approche [**JEPA**](vocabulaire.md#jepa-joint-embedding-predictive-architecture) (*Joint Embedding Predictive Architecture*) : au lieu de reconstruire l’audio brut ou de prédire des unités acoustiques discrètes (comme wav2vec ou HuBERT), le modèle apprend à **prédire des représentations internes** dans un espace latent. Concrètement, un encodeur « étudiant » voit l’audio partiellement masqué et doit retrouver les vecteurs qu’un encodeur « professeur » (qui voit tout l’audio) aurait produits sur les parties cachées — implémentation **data2vec 2.0** dans l’article Pantagruel. Ce pré-entraînement donne à l’encodeur une « compréhension acoustique » riche ; notre travail consiste ensuite à brancher un décodeur de traduction dessus. Détail : [glossaire JEPA](vocabulaire.md#jepa-joint-embedding-predictive-architecture).
+**Comment l’encodeur Pantagruel a-t-il appris ?** Avant notre fine-tuning sur m-TEDx, l’encodeur a été pré-entraîné sur de grandes quantités de parole française (1k, 14k ou 114k h) avec une approche [**JEPA**](vocabulaire.md#jepa-joint-embedding-predictive-architecture) [^18] (*Joint Embedding Predictive Architecture*) : au lieu de reconstruire l’audio brut ou de prédire des unités acoustiques discrètes (comme wav2vec ou HuBERT), le modèle apprend à **prédire des représentations internes** dans un espace latent. Concrètement, un encodeur « étudiant » voit l’audio partiellement masqué et doit retrouver les vecteurs qu’un encodeur « professeur » (qui voit tout l’audio) aurait produits sur les parties cachées — implémentation **data2vec 2.0** dans l’article Pantagruel. Ce pré-entraînement donne à l’encodeur une « compréhension acoustique » riche ; notre travail consiste ensuite à brancher un décodeur de traduction dessus. Détail : [glossaire JEPA](vocabulaire.md#jepa-joint-embedding-predictive-architecture).
 
 **Pourquoi SentencePiece ?** Le décodeur ne manipule pas des mots entiers : il prédit une suite de petites unités issues d’un vocabulaire fixe (ici ~1000, comme dans l’article Pantagruel). SentencePiece apprend ce vocabulaire sur les traductions anglaises du corpus. Intérêt : un mot rare ou absent à l’entraînement peut quand même être produit en le recomposant morceau par morceau ; le modèle reste plus compact qu’avec un dictionnaire « un mot = une entrée ». À l’entraînement, les phrases de référence sont découpées en unités SPM ; à la génération, le décodeur en émet une à une, puis SPM les rassemble en phrase lisible.
 
@@ -124,11 +124,13 @@ C’est la piste de référence de l’article [Pantagruel](vocabulaire.md#panta
 
 | Caractéristiques | BLEU test | Durée |
 |------------------|----------:|-------|
-| *utterance* [^1] | **~16,7** | ~1 h 15 |
+| *utterance* B-1k [^1] | **~16,7** | ~1 h 15 |
+| *utterance* L-14k [^16] | **~17,2** | early stop ~21k upd. |
+| *utterance* L-114k [^15] | **~19,6** | ~9 h GPU (OVH, early stop ~21k) |
 | *sentence_like* [^2] | ~15 | ~8 h |
 
 **Pistes d’amélioration :**
-- Passer à un encodeur pré-entraîné sur plus de données ([14k ou 114k h](vocabulaire.md#b-1k--l-14k--l-114k-échelle-de-pré-entraînement) de parole française) — priorité actuelle après un premier essai 14k non concluant.
+- Encodeur **L-14k** mesuré [^16] : gain marginal vs B-1k (~+0,5 BLEU), loin du papier (~24) ; **L-114k** [^15] mesuré (~19,6) — gain vs L-14k mais encore ~5,6 pts sous le papier (~25,2).
 - Implémenter le [décodage par faisceau](vocabulaire.md#beam-search-beam-5) (beam 5, comme dans l’article) à la place du greedy utilisé aujourd’hui.
 - Affiner l’entraînement : durée, [gel de l’encodeur](vocabulaire.md#freeze_encoder_updates), taux d’apprentissage, taille des lots.
 - Poursuivre l’alignement sur le protocole *utterance* de l’article (Table 8) tout en documentant clairement les runs *sentence_like*.
@@ -157,7 +159,10 @@ Le modèle apprend avec un format de type dialogue : une consigne du côté [USE
 
 | Caractéristiques | BLEU test | Durée |
 |------------------|----------:|-------|
-| *utterance* [^3] | ~7,5 | ~2 h |
+| *utterance* B-1k [^3] | ~7,5 | ~2 h |
+| *utterance* L-14k gelé [^12] | **~15,0** | ~1,4 h GPU (OVH) |
+| *utterance* L-114k gelé [^14] | **~15,2** | ~4–6 h GPU (OVH) |
+| *utterance* L-14k dégelé [^13] | ~3,7 | ~2–3 h GPU (Modyco) — sous run_012 gelé |
 | *sentence_like*, encodeur gelé [^4] | ~16 | ~2 h |
 | *sentence_like*, encodeur dégelé [^5] | **~19** | ~2 h |
 
@@ -193,15 +198,18 @@ Coût : facturation à l’appel ; suivie dans les logs de run.
 | **2.5 Flash** | *utterance* | [^6] | **~34** | ~1–2 h | voir `eval/metrics.json` (runs historiques) |
 | **2.5 Flash** | *sentence_like* | [^7] | ~23 | ~1–2 h | idem |
 | **3.5 Flash** | *utterance* | [^10] | **~13** | ~99 min | **~0,60 $** |
-| **3.5 Flash** | *sentence_like* | [^11] | — | — | **en cours** (juin 2026) |
+| **3.5 Flash** | *sentence_like* | [^11] | **~1,5** | ~42 min | **~0,52 $** |
+| **3.5 Flash v2** | *utterance* | [^19] | **~41** | ~66 min | **~0,94 $** |
+| **3.5 Flash v2** | *sentence_like* | [^20] | **~36,8** | ~38 min | **~1,27 $** |
 
-**Comparaison 2.5 vs 3.5 (*utterance*, même prompt, *température* 0, max 256 tokens) :** le 3.5 affiche un BLEU test **~20 points sous le 2.5** (13,4 vs 33,7). Les hypothèses 3.5 sont en moyenne **~2× plus courtes** que la référence (~48 % de la longueur) et souvent **coupées en plein milieu de phrase** — vraisemblablement parce que le plafond `max_output_tokens=256` est largement consommé par les tokens *thinking* internes du modèle, laissant peu de tokens pour la traduction visible. **Ce run ne tranche pas encore sur la qualité intrinsèque du 3.5** : une relance avec budget sortie plus élevé et thinking minimal est prévue avant conclusion.
+**Comparaison 2.5 vs 3.5 (*utterance*) :** sous `max_output_tokens=256` (run [^10]), le 3.5 est **~20 points sous le 2.5** (13,4 vs 33,7) — hypothèses **tronquées**. Relance v2 [^19] (`8192` tokens, `thinking_level: minimal`, garde-fous anti-boucles) : BLEU test **41,1** — **devant** le 2.5 (33,7) et la cascade (37,4). Run [^17] (sans garde-fous) avait un test biaisé (20,3, 2 outliers).
 
 **Point de vigilance :**  
 Les extraits m-TEDx sont librement accessibles sur Internet (vidéos, transcriptions, sous-titres) et le corpus complet est librement téléchargeable en ligne. On ne peut pas exclure que Gemini ait rencontré des contenus proches lors de son pré-entraînement. Les scores de cette baseline se comparent donc avec prudence aux systèmes entraînés uniquement sur nos jeux train/dev/test : une partie de la performance peut refléter une familiarité avec le corpus plutôt qu’une vraie généralisation.
 
 **Pistes d’amélioration :**
-- Relancer Gemini 3.5 avec **`max_output_tokens` plus élevé** (ex. 1024) et **thinking minimal** (`thinking_level: minimal`) avant de conclure sur le 3.5.
+- Gemini 3.5 v2 *sentence_like* [^20] terminé (~36,8 test) — comparer au 2.5 (~23) et à l’utterance v2 (~41).
+- Affiner le prompt (traduction complète, anglais seul).
 - Affiner la consigne (prompt) : traduction **complète**, anglais uniquement, sans commentaire ni markdown.
 - Documenter le coût par run ([API](vocabulaire.md#2-abréviations-et-acronymes) facturée à l’usage) — champs `gemini_cost_estimate_usd` et `runtime` dans `eval/metrics.json`.
 
@@ -302,14 +310,17 @@ Meilleur BLEU test SacreBLEU observé par variante. Les paramètres listés sont
 
 | # | Variante | Réf. | BLEU test | Découpage | Paramètres du run |
 |---|----------|:----:|----------:|-----------|-------------------|
-| 1 | Transformer ST | [^1] | ~16,7 | *utterance* | Encodeur B-1k ; gel encodeur 5k updates puis dégel ; early stop @20k ; décodage greedy |
-| 2 | speechLLM B1 | [^5] | ~19 | *sentence_like* | Encodeur B-1k dégelé ; Phi-2 gelé ; projecteur seul entraîné ; 20k updates ; beam 1 / 48 tokens |
-| 3 | Gemini 2.5 Flash | [^6] | ~34 | *utterance* | API `gemini-2.5-flash` ; pas d’entraînement local ; *température* 0 ; max 256 tokens |
-| 3 | Gemini 3.5 Flash | [^10] | ~13 | *utterance* | API `gemini-3.5-flash` ; même protocole ; troncatures observées (voir §3) |
+| 1 | Transformer ST | [^15] | ~19,6 | *utterance* | Encodeur **L-114k** v2 ; gel 5k ; early stop ~21k ; beam 5 (L-14k [^16] : ~17,2) |
+| 2 | speechLLM B1 | [^5] | ~19 | *sentence_like* | Encodeur B-1k dégelé ; Phi-2 gelé ; projecteur seul ; 20k upd. ; beam 1 / 48 tok. |
+| 2 | speechLLM B1 | [^14] | ~15,2 | *utterance* | Encodeur **L-114k** gelé ; Phi-2 gelé ; beam 1 / 48 tok. (L-14k [^12] : ~15,0) |
+| 3 | Gemini 2.5 Flash | [^6] | ~34 | *utterance* | API `gemini-2.5-flash` ; *température* 0 ; max 256 tokens |
+| 3 | Gemini 3.5 Flash | [^10] | ~13 | *utterance* | `gemini-3.5-flash` ; max 256 ; troncatures (voir §3) |
+| 3 | Gemini 3.5 Flash v2 | [^19] | ~41 | *utterance* | max 8192 + thinking minimal + garde-fous (`run_005`) |
+| 3 | Gemini 3.5 Flash v2 | [^20] | ~36,8 | *sentence_like* | max 8192 + thinking minimal + garde-fous (`run_004`) |
 | 4 | Cascade ASR→MT | [^8] | ~37 | *utterance* | Whisper large-v3 → Marian opus-mt-fr-en ; inférence seule |
 | 5 | Speech_Text + ST | [^9] | ~8 | *sentence_like* | Encodeur Speech_Text B-1k ; décodeur 6 couches + SPM ; 80k updates ; greedy |
 
-Sur *utterance*, la cascade (~37) et **Gemini 2.5** (~34) devancent les modèles entraînés localement (~16,7 pour la baseline Transformer B-1k ; ~15 pour speechLLM L-14k [^12]). **Gemini 3.5** (~13, run préliminaire) est pour l’instant **sous le 2.5** — interprétation prudente tant que le budget de sortie n’est pas recalibré. Sur *sentence_like*, Gemini 2.5 (~23) reste en tête, devant speechLLM dégelé (~19). Les scores *utterance* et *sentence_like* ne sont pas directement comparables entre eux (voir ci-dessous).
+Sur *utterance*, **Gemini 3.5 v2** (~41 [^19]) devance la cascade (~37) et Gemini 2.5 (~34), loin devant les modèles entraînés localement (meilleur ST : **~19,6** L-114k [^15] ; meilleur speechLLM : **~15,2** L-114k [^14]). Les runs 3.5 v1 [^10] restent non conclusifs (troncature). Sur *sentence_like*, Gemini 3.5 v2 (~36,8 [^20]) devance Gemini 2.5 (~23). Les scores *utterance* et *sentence_like* ne sont pas directement comparables entre eux (voir ci-dessous).
 
 ## Comment lire les chiffres
 
@@ -335,5 +346,13 @@ Syntaxe : notes de bas de page Markdown (`[^n]`), supportées par Pandoc, GitHub
 [^8]: `run_001_cascade_utterance`
 [^9]: `run_001_pantagruel_multimodal`
 [^10]: `run_003_gemini_35_flash_utterance`
-[^11]: `run_003_gemini_35_flash_sentence_like`
-[^12]: `run_012_speechllm_b1_utterance_large_14k`
+[^11]: `run_003_gemini_35_flash_sentence_like` — 1,62 / **1,45** test (troncature)
+[^12]: `run_012_speechllm_b1_utterance_large_14k` — 15,49 / **15,03** test (OVH)
+[^13]: `run_015_speechllm_b1_utterance_large_14k_unfreeze` — 3,90 / **3,65** test (Modyco)
+[^14]: `run_013_speechllm_b1_utterance_large_114k` — 15,92 / **15,24** test (OVH)
+[^15]: `run_016_transformer_baseline_utterance_large_114k_v2` — 20,30 / **19,63** test (OVH, early stop ~21k upd.)
+[^16]: `run_014_transformer_baseline_utterance_large_14k_v2` — 17,12 / **17,21** test (Modyco)
+[^17]: `run_004_gemini_35_flash_utterance_v2` — 41,42 / **20,32** test (2 outliers, sans garde-fous)
+[^19]: `run_005_gemini_35_flash_utterance_v2` — 41,42 / **41,09** test (garde-fous anti-boucles)
+[^20]: `run_004_gemini_35_flash_sentence_like_v2` — 38,69 / **36,76** test (garde-fous anti-boucles)
+[^18]: LeCun, Y. (2022). *A path towards autonomous machine intelligence* (version 0.9.2, 2022-06-27). *Open Review*, 62(1), 1–62.

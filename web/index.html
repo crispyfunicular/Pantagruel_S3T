@@ -324,7 +324,7 @@
     }
 
     .about-card h2 {
-      font-size: 0.72rem;
+      font-size: 0.76rem;
       text-transform: uppercase;
       letter-spacing: 0.07em;
       color: var(--muted);
@@ -336,7 +336,7 @@
       color: var(--muted);
       line-height: 1.55;
       margin-bottom: 0.75rem;
-      font-size: 0.78rem;
+      font-size: 0.84rem;
     }
 
     .about-links {
@@ -348,7 +348,7 @@
 
     .page-end .btn-small {
       padding: 0.3rem 0.65rem;
-      font-size: 0.72rem;
+      font-size: 0.76rem;
       border-radius: 8px;
     }
 
@@ -608,8 +608,16 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, la cascade et Gemini 2.5 devancent les modèles entraînés localement ; l’article Pantagruel atteint 25,2 BLEU test avec l’encodeur L-114k. Meilleur ST local : ~17,2 (L-14k, <code>run_014</code>) ; meilleur speechLLM : ~15,2 (L-114k, <code>run_013</code>). ST L-114k (<code>run_016</code>) et speechLLM L-14k dégelé (<code>run_015</code>) en cours. Gemini 3.5 : runs préliminaires sous le 2.5 (troncatures / outliers).",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (~37) et Gemini 2.5 (~34) ; l’article Pantagruel atteint 25,2 BLEU test avec l’encodeur L-114k. Meilleur ST local : ~19,6 (L-114k, <code>run_016</code>) ; meilleur speechLLM : ~15,2 (L-114k, <code>run_013</code>). ST L-114k reste ~5,6 pts sous le papier. Les runs 3.5 v1 (<code>run_003</code>, troncature) ne sont pas comparables.",
         rows: [
+          {
+            id: 3,
+            color: 'v3',
+            chartLabel: '3 · Gemini 3.5',
+            tableLabel: 'Gemini 3.5 Flash v2',
+            score: 41,
+            params: "API <code>gemini-3.5-flash</code> ; max 8192 tok, thinking minimal, garde-fous anti-boucles (<code>run_005</code>) ; 2.5 : ~34"
+          },
           {
             id: 4,
             color: 'v4',
@@ -617,14 +625,6 @@
             tableLabel: 'Cascade ASR→MT',
             score: 37,
             params: 'Whisper large-v3 → Marian opus-mt-fr-en'
-          },
-          {
-            id: 3,
-            color: 'v3',
-            chartLabel: '3 · Gemini 2.5',
-            tableLabel: 'Gemini 2.5 Flash',
-            score: 34,
-            params: "API ; pas d’entraînement local ; température 0"
           },
           {
             id: '—',
@@ -640,8 +640,8 @@
             color: 'v1',
             chartLabel: '1 · Transformer',
             tableLabel: 'Transformer ST',
-            score: 17.2,
-            params: 'Meilleur : L-14k gelé 5k + early stop (~17,2) ; B-1k : ~16,7 ; greedy'
+            score: 19.6,
+            params: 'Meilleur : L-114k v2 gelé 5k + early stop (~19,6, <code>run_016</code>) ; L-14k : ~17,2 ; beam 5'
           },
           {
             id: 2,
@@ -658,15 +658,15 @@
         intro:
           "SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>sentence_like</em> (fusion de segments voisins). Ces scores ne sont pas directement comparables au protocole <em>utterance</em> de l’article.",
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>sentence_like</em>, Gemini (~23) reste en tête, devant speechLLM dégelé (~19) puis la baseline Transformer (~15). La cascade et Speech_Text n’ont pas encore de run sur ce découpage.",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>sentence_like</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_004</code>, 36,8 BLEU test) devance Gemini 2.5 (~23) ; puis speechLLM dégelé (~19) et la baseline Transformer (~15). La cascade et Speech_Text n’ont pas encore de run sur ce découpage.",
         rows: [
           {
             id: 3,
             color: 'v3',
-            chartLabel: '3 · Gemini',
-            tableLabel: 'Gemini 2.5 Flash',
-            score: 23,
-            params: "API ; pas d’entraînement local ; température 0"
+            chartLabel: '3 · Gemini 3.5',
+            tableLabel: 'Gemini 3.5 Flash v2',
+            score: 36.8,
+            params: "API <code>gemini-3.5-flash</code> ; max 8192 tok, thinking minimal (<code>run_004</code>) ; 2.5 : ~23"
           },
           {
             id: 2,
