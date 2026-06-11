@@ -1,0 +1,23 @@
+# Éval corpus perso — cascade Whisper → Marian (run_001 sur m-TEDx).
+
+experiment:
+  name: "fr-en_cascade_corpus_perso_utterance"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/eval_corpus_perso_cascade_utterance"
+
+data:
+  segment_mode: "utterance"
+  valid_manifest: "corpus_perso/corpus_perso_test.tsv"
+  test_manifest: "corpus_perso/corpus_perso_test.tsv"
+
+asr:
+  backend: "whisper"
+  model_id: "openai/whisper-large-v3"
+
+mt:
+  backend: "marian"
+  model_id: "Helsinki-NLP/opus-mt-fr-en"
+
+decode:
+  asr_language: "fr"
+  mt_max_length: 256

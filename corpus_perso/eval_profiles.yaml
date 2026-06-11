@@ -1,0 +1,58 @@
+# Profils d'évaluation — corpus personnel (hors m-TEDx).
+#
+# Adapter les champs ``checkpoint``, ``beam_size``, ``max_new_tokens``, etc.
+# une fois les meilleurs hyperparamètres fixés pour chaque variante.
+#
+# Usage :
+#   python scripts/build_corpus_perso_manifest.py
+#   python scripts/run_corpus_perso_eval.py --dry-run
+#   python scripts/run_corpus_perso_eval.py --only gemini_35_v2
+#   python scripts/run_corpus_perso_eval.py --all
+
+manifest: corpus_perso/corpus_perso_test.tsv
+output_root: runs/fr-en
+
+models:
+  - id: st_14k_v3
+    enabled: false
+    pipeline: transformer
+  # Référence m-TEDx : run_020 @ 21,22 test
+    config: corpus_perso/configs/st_large_14k_v3.yaml
+    run_id: eval_corpus_perso_st_14k_v3
+    checkpoint: runs/fr-en/run_020_transformer_baseline_utterance_large_14k_v3/checkpoints/best.pt
+    extra_args: []
+  # Exemple override décodage : extra_args: ["--beam-size", "5"]
+
+  - id: st_114k_v2
+    enabled: false
+    pipeline: transformer
+  # Référence m-TEDx : run_016 @ 19,63 test
+    config: corpus_perso/configs/st_large_114k_v2.yaml
+    run_id: eval_corpus_perso_st_114k_v2
+    checkpoint: runs/fr-en/run_016_transformer_baseline_utterance_large_114k_v2/checkpoints/best.pt
+    extra_args: []
+
+  - id: speechllm_14k
+    enabled: false
+    pipeline: speechllm
+  # Référence m-TEDx : run_012 @ 15,03 test
+    config: corpus_perso/configs/speechllm_large_14k.yaml
+    run_id: eval_corpus_perso_speechllm_14k
+    checkpoint: runs/fr-en/run_012_speechllm_b1_utterance_large_14k/checkpoints/best.pt
+    extra_args: []
+
+  - id: gemini_35_v2
+    enabled: false
+    pipeline: gemini
+  # Référence m-TEDx : run_005 @ 41,09 test — pas de checkpoint (API)
+    config: corpus_perso/configs/gemini_35_flash_v2.yaml
+    run_id: eval_corpus_perso_gemini_35_v2
+    extra_args: []
+
+  - id: cascade_utterance
+    enabled: false
+    pipeline: cascade
+  # Référence m-TEDx : run_001_cascade_utterance @ 37,41 test
+    config: corpus_perso/configs/cascade_utterance.yaml
+    run_id: eval_corpus_perso_cascade_utterance
+    extra_args: []

@@ -1,0 +1,45 @@
+# Éval corpus perso — speechLLM B1 L-14k Phi-2 gelé (run_012 sur m-TEDx).
+# Adapter decode.max_new_tokens dans eval_profiles ou ici.
+
+experiment:
+  name: "fr-en_speechllm_corpus_perso_large_14k"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/eval_corpus_perso_speechllm_14k"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "corpus_perso/corpus_perso_test.tsv"
+  test_manifest: "corpus_perso/corpus_perso_test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  llm_name: "microsoft/phi-2"
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+
+prompt:
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48
