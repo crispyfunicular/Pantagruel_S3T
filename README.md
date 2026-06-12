@@ -1,6 +1,7 @@
 # S3T — Speech Translation (Pantagruel replication)
 
-> **Page web** — [crispyfunicular.github.io/Pantagruel_S3T](https://crispyfunicular.github.io/Pantagruel_S3T/) · [bona-pellissier.net](https://bona-pellissier.net/) · source unique [`web/`](web/) (déployée via GitHub Actions [`.github/workflows/static.yml`](.github/workflows/static.yml) et FTP OVH). **Pages** : Settings → Source **GitHub Actions** (pas `/docs`).
+> **Page web** — [crispyfunicular.github.io/Pantagruel_S3T](https://crispyfunicular.github.io/Pantagruel_S3T/) · [bona-pellissier.net](https://bona-pellissier.net/)  
+> **Source à éditer** : [`web/`](web/) uniquement. GitHub Pages lit le dossier [`docs/`](docs/) (miroir auto : `bash scripts/sync_web_pages.sh` ou workflow [`.github/workflows/static.yml`](.github/workflows/static.yml)). FTP OVH : copier `web/*.html` vers `www/`.
 
 Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`, `fr-es`), évaluée avec **SacreBLEU**. Le dépôt expose **cinq variantes** partageant la même préparation des données (étapes 0–2), avec un choix de **découpage audio** au moment de `prepare` :
 

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3 · Gemini — Pantagruel S3T</title>
+  <meta name="description" content="Baseline API cloud : envoyer l'audio à Google Gemini et récupérer la traduction anglaise sans entraînement local.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --muted: #5c5c7a;
+      --accent: #b45309;
+      --accent-mid: #d97706;
+      --accent-soft: #fffbeb;
+      --border: rgba(0,0,0,0.08);
+      --radius: 16px;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --sans: "Inter", system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .nav { position: sticky; top: 0; z-index: 10; background: rgba(245,245,247,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+    .nav-inner { max-width: 960px; margin: 0 auto; padding: 0.9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .nav-logo { font-weight: 700; color: var(--text); }
+    .nav-links { display: flex; gap: 1.25rem; flex-wrap: wrap; font-size: 0.9rem; }
+    .nav-links a { color: var(--muted); font-weight: 500; }
+    .nav-links a:hover { color: var(--accent); text-decoration: none; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+    .breadcrumb { max-width: 960px; margin: 0 auto; padding: 1rem 1.5rem 0; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+    .breadcrumb a { color: var(--muted); }
+    .breadcrumb a:hover { color: var(--accent); }
+    .hero { padding: 1.5rem 1.5rem 1.25rem; max-width: 960px; margin: 0 auto; }
+    .variant-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.85rem; border-radius: 999px; background: var(--accent-soft); border: 1px solid rgba(217,119,6,0.35); font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.85rem; font-family: var(--mono); }
+    .hero h1 { font-size: clamp(1.5rem,3.5vw,2.2rem); line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 0.5rem; color: var(--accent); }
+    .hero .lead { font-size: 1rem; color: var(--muted); max-width: 44rem; margin-bottom: 0.75rem; }
+    .hero .tagline { font-size: 0.95rem; color: var(--text); font-style: italic; padding: 0.65rem 1rem; border-left: 3px solid var(--accent-mid); background: var(--accent-soft); border-radius: 0 8px 8px 0; max-width: 40rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 1rem; }
+    h2 { font-size: 1.1rem; margin-bottom: 0.75rem; letter-spacing: -0.01em; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+    .icon { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 8px; background: var(--accent-soft); color: var(--accent-mid); font-size: 0.9rem; flex-shrink: 0; }
+    .section-intro { color: var(--muted); margin-bottom: 1.25rem; font-size: 0.93rem; }
+    .arch-container { background: #0f172a; border-radius: 12px; padding: 1.25rem 1.25rem 0.75rem; overflow-x: auto; margin: 0.75rem 0 1rem; }
+    .arch-container svg { display: block; min-width: 400px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+    th, td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; background: #f8fafc; }
+    tr:last-child td { border-bottom: none; }
+    code { font-family: var(--mono); font-size: 0.81em; background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .result-best { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-family: var(--mono); font-size: 0.85rem; font-weight: 600; }
+    .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 5px; font-size: 0.74rem; font-weight: 600; }
+    .tag-green { background: #dcfce7; color: #166534; }
+    .tag-orange { background: #fed7aa; color: #9a3412; }
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    .tag-blue { background: #dbeafe; color: #1e40af; }
+    .tag-gray { background: #f1f5f9; color: #475569; }
+    .improvement-list { list-style: none; padding: 0; }
+    .improvement-list li { padding: 0.65rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; display: flex; gap: 0.75rem; align-items: flex-start; }
+    .improvement-list li:last-child { border-bottom: none; }
+    .imp-num { flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 0.15rem; }
+    .note { margin-top: 1rem; padding: 0.9rem 1rem; border-radius: 12px; background: #fffbeb; border: 1px solid #fde68a; font-size: 0.87rem; color: #78350f; }
+    .note-warn { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+    .prose p { margin-bottom: 0.7rem; font-size: 0.92rem; line-height: 1.65; }
+    .prose p:last-child { margin-bottom: 0; }
+    .btn { display: inline-block; padding: 0.5rem 0.9rem; border-radius: 10px; font-size: 0.86rem; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+    .btn:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
+    .links { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+    .variant-nav { background: var(--surface); border-top: 1px solid var(--border); padding: 1rem 0; margin-top: 0.5rem; }
+    .variant-nav-inner { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .variant-nav-label { font-size: 0.82rem; color: var(--muted); font-weight: 500; margin-right: 0.25rem; }
+    .vchip { padding: 0.3rem 0.8rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+    .vchip:hover { opacity: 0.85; text-decoration: none; }
+    .vchip-v1 { border: 1px solid rgba(99,102,241,0.3); background: #eef2ff; color: #4338ca; }
+    .vchip-v2 { border: 1px solid rgba(124,58,237,0.3); background: #ede9fe; color: #6d28d9; }
+    .vchip-v4 { border: 1px solid rgba(5,150,105,0.3); background: #ecfdf5; color: #047857; }
+    .vchip-v5 { border: 1px solid rgba(8,145,178,0.3); background: #ecfeff; color: #0e7490; }
+    .page-end { margin-top: 1.5rem; padding: 1.5rem 0 1.25rem; background: #e8eaef; border-top: 1px solid rgba(0,0,0,0.1); }
+    .page-end footer { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; color: var(--muted); font-size: 0.72rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-logo" href="index.html">Pantagruel S3T</a>
+      <div class="nav-links">
+        <a href="index.html#pipeline">Vue d'ensemble</a>
+        <a href="index.html#resultats">Résultats</a>
+        <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="breadcrumb">
+    <a href="index.html">Accueil</a>
+    <span>›</span>
+    <span>Variante 3 · Gemini</span>
+  </div>
+
+  <header class="hero">
+    <div class="variant-badge">Variante 3 / 5</div>
+    <h1>Gemini (API cloud)</h1>
+    <p class="lead">Envoyer l'audio à Google Gemini et récupérer la traduction anglaise. Zéro entraînement local — la ligne de référence « prêt à l'emploi ».</p>
+    <p class="tagline">« On envoie l'audio à Google Gemini et on récupère la traduction anglaise, sans entraînement local. »</p>
+  </header>
+
+  <main class="container">
+
+    <!-- Architecture -->
+    <div class="card">
+      <h2><span class="icon">⚙</span> Architecture</h2>
+      <p class="section-intro">Le système le plus simple : un appel API. Pas de pipeline local, pas de GPU d'entraînement. La traduction est entièrement déléguée au modèle multimodal de Google.</p>
+      <div class="arch-container">
+        <svg viewBox="0 0 660 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Inter',sans-serif">
+          <defs>
+            <marker id="arr3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0,8 3,0 6" fill="#475569"/>
+            </marker>
+          </defs>
+          <!-- Audio FR -->
+          <rect x="8" y="42" width="130" height="66" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+          <text x="73" y="68" text-anchor="middle" font-size="12" font-weight="600" fill="#e2e8f0">Audio FR</text>
+          <text x="73" y="84" text-anchor="middle" font-size="10" fill="#94a3b8">m-TEDx</text>
+          <text x="73" y="99" text-anchor="middle" font-size="9" fill="#64748b">fichier .wav</text>
+          <!-- Arrow 1 -->
+          <line x1="139" y1="75" x2="165" y2="75" stroke="#475569" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <!-- API Gemini -->
+          <rect x="167" y="15" width="305" height="120" rx="8" fill="#1c1200" stroke="#d97706" stroke-width="2.5"/>
+          <text x="319" y="50" text-anchor="middle" font-size="13" font-weight="700" fill="#fbbf24">API Google Gemini</text>
+          <text x="319" y="70" text-anchor="middle" font-size="10" fill="#fcd34d">gemini-2.5-flash · gemini-3.5-flash</text>
+          <text x="319" y="88" text-anchor="middle" font-size="9.5" fill="#f59e0b">modèle multimodal (audio + texte)</text>
+          <text x="319" y="104" text-anchor="middle" font-size="9.5" fill="#d97706">sans entraînement local</text>
+          <text x="319" y="120" text-anchor="middle" font-size="9" fill="#78350f">~0,50–1,30 $ / run complet</text>
+          <!-- Arrow 2 -->
+          <line x1="473" y1="75" x2="499" y2="75" stroke="#475569" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <!-- Texte EN -->
+          <rect x="501" y="42" width="150" height="66" rx="8" fill="#0c1a10" stroke="#10b981" stroke-width="1.5"/>
+          <text x="576" y="68" text-anchor="middle" font-size="12" font-weight="600" fill="#6ee7b7">Texte EN</text>
+          <text x="576" y="84" text-anchor="middle" font-size="10" fill="#34d399">traduction</text>
+          <text x="576" y="99" text-anchor="middle" font-size="9" fill="#059669">max 8192 tokens</text>
+        </svg>
+      </div>
+      <div class="prose">
+        <p><strong>Comment ça marche :</strong> l'audio est encodé en base64 et envoyé à l'API Gemini avec une consigne textuelle demandant la traduction en anglais. Le modèle multimodal traite directement l'audio et retourne le texte traduit. Aucun entraînement, aucun checkpoint local.</p>
+        <p><strong>Garde-fous anti-boucles :</strong> les meilleurs runs (3.5 Flash v2) incluent des instructions explicites pour éviter les répétitions et limiter la longueur. Sans ces garde-fous (<code>run_004</code> v2 initial), 2 extraits producent des boucles de répétition qui biaisent le score test (20,3 au lieu de 41,1).</p>
+        <p><strong>Point de vigilance :</strong> le corpus m-TEDx est librement accessible sur Internet (vidéos, transcriptions, sous-titres). On ne peut pas exclure que Gemini l'ait rencontré pendant son pré-entraînement. Les scores se comparent donc avec prudence aux modèles entraînés uniquement sur m-TEDx train/dev/test.</p>
+      </div>
+    </div>
+
+    <!-- Hyperparamètres -->
+    <div class="card">
+      <h2><span class="icon">⚡</span> Hyperparamètres (paramètres API)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Paramètre</th><th>Valeurs</th><th>Impact</th><th>État</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Modèle</strong></td>
+              <td><code>gemini-2.5-flash</code> · <code>gemini-3.5-flash</code></td>
+              <td>3.5 Flash v2 (~41) > 2.5 Flash (~34) en utterance avec bons réglages</td>
+              <td><span class="tag tag-green">ok</span></td>
+            </tr>
+            <tr>
+              <td><strong>max_output_tokens</strong></td>
+              <td><code>256</code> (trop bas !) → <code>8192</code> (recommandé)</td>
+              <td>256 tok → troncature → BLEU ~13 au lieu de ~41</td>
+              <td><span class="tag tag-orange">corrigé en v2</span></td>
+            </tr>
+            <tr>
+              <td><strong>thinking_level</strong></td>
+              <td><code>minimal</code> (v2)</td>
+              <td>Réduit le coût API tout en gardant de bonnes performances</td>
+              <td><span class="tag tag-green">ok en v2</span></td>
+            </tr>
+            <tr>
+              <td><strong>Consigne (prompt)</strong></td>
+              <td>Texte libre — inclure « anglais uniquement, sans commentaire »</td>
+              <td>Important pour éviter que le modèle réponde en français ou ajoute du markdown</td>
+              <td><span class="tag tag-blue">à affiner</span></td>
+            </tr>
+            <tr>
+              <td><strong>Garde-fous anti-boucles</strong></td>
+              <td>Instructions explicites dans le prompt</td>
+              <td>Évite les répétitions qui biaisent le BLEU (2 outliers en v2 initial)</td>
+              <td><span class="tag tag-green">ok en run_005</span></td>
+            </tr>
+            <tr>
+              <td><strong>Mode de segmentation</strong></td>
+              <td><code>utterance</code> (~41 BLEU) · <code>sentence_like</code> (~36,8)</td>
+              <td>utterance donne un meilleur BLEU en 3.5 v2</td>
+              <td><span class="tag tag-green">ok</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Résultats -->
+    <div class="card">
+      <h2><span class="icon">📊</span> Résultats</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Run</th><th>Modèle</th><th>Segmentation</th><th>BLEU test</th><th>Durée</th><th>Coût API</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>run_005</code></td>
+              <td>3.5 Flash</td>
+              <td><em>utterance</em></td>
+              <td><span class="result-best">~41,1</span></td>
+              <td>~66 min</td>
+              <td>~0,94 $</td>
+              <td>v2 ; max 8192 ; thinking minimal ; <strong>garde-fous</strong></td>
+            </tr>
+            <tr>
+              <td><code>run_004</code></td>
+              <td>3.5 Flash</td>
+              <td><em>sentence_like</em></td>
+              <td><span class="result-best">~36,8</span></td>
+              <td>~38 min</td>
+              <td>~1,27 $</td>
+              <td>v2 ; max 8192 ; garde-fous anti-boucles</td>
+            </tr>
+            <tr>
+              <td><code>run_001</code></td>
+              <td>2.5 Flash</td>
+              <td><em>utterance</em></td>
+              <td>~33,7</td>
+              <td>~1–2 h</td>
+              <td>voir metrics.json</td>
+              <td>temp 0 ; max 256 tok</td>
+            </tr>
+            <tr>
+              <td><code>run_001</code></td>
+              <td>2.5 Flash</td>
+              <td><em>sentence_like</em></td>
+              <td>~23</td>
+              <td>~1–2 h</td>
+              <td>voir metrics.json</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code>run_003</code></td>
+              <td>3.5 Flash</td>
+              <td><em>utterance</em></td>
+              <td>~13,4</td>
+              <td>~99 min</td>
+              <td>~0,60 $</td>
+              <td><span class="tag tag-red">non conclusif</span> — troncature (max 256 tok)</td>
+            </tr>
+            <tr>
+              <td><code>run_003</code></td>
+              <td>3.5 Flash</td>
+              <td><em>sentence_like</em></td>
+              <td>~1,5</td>
+              <td>~42 min</td>
+              <td>~0,52 $</td>
+              <td><span class="tag tag-red">non conclusif</span> — troncature sévère</td>
+            </tr>
+            <tr>
+              <td><code>run_004 (v2 initial)</code></td>
+              <td>3.5 Flash</td>
+              <td><em>utterance</em></td>
+              <td>~20,3</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="tag tag-red">biaisé</span> — 2 outliers boucles sans garde-fous</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <strong>Interprétation :</strong> Gemini 3.5 Flash v2 (<code>run_005</code>, ~41,1 BLEU) est le meilleur score global du projet. Mais les extraits m-TEDx étant accessibles en ligne, une partie de la performance peut refléter une familiarité avec le corpus. Comparer avec prudence aux systèmes entraînés uniquement sur m-TEDx.
+      </div>
+    </div>
+
+    <!-- Pistes d'amélioration -->
+    <div class="card">
+      <h2><span class="icon">🔧</span> Pistes d'amélioration</h2>
+      <ul class="improvement-list">
+        <li>
+          <span class="imp-num">1</span>
+          <div><strong>Affiner la consigne (prompt)</strong> : instruction explicite « anglais uniquement, sans commentaire, sans markdown, traduction complète de l'audio ». Tester plusieurs variantes de prompt et mesurer l'impact sur le BLEU.</div>
+        </li>
+        <li>
+          <span class="imp-num">2</span>
+          <div><strong>Toujours inclure les garde-fous anti-boucles</strong> dans le prompt — sans eux, des répétitions peuvent biaiser fortement le score BLEU (écart 20 pts entre <code>run_004</code> initial et final).</div>
+        </li>
+        <li>
+          <span class="imp-num">3</span>
+          <div><strong>Documenter systématiquement le coût par run</strong> — champs <code>gemini_cost_estimate_usd</code> et <code>runtime</code> dans <code>eval/metrics.json</code>. Facilite la comparaison coût/performance entre modèles.</div>
+        </li>
+        <li>
+          <span class="imp-num">4</span>
+          <div><strong>Tester un modèle Gemini plus récent</strong> si disponible (ex. gemini-2.0-flash, Gemini Ultra) — et noter la version exacte pour la reproductibilité.</div>
+        </li>
+        <li>
+          <span class="imp-num">5</span>
+          <div><strong>Analyser la contamination potentielle</strong> : comparer les scores Gemini sur un sous-ensemble d'extraits non disponibles publiquement pour estimer si la performance reflète une vraie généralisation.</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Liens -->
+    <div class="card">
+      <h2><span class="icon">🔗</span> Liens</h2>
+      <div class="links">
+        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/tree/main/3_Gemini" target="_blank" rel="noopener noreferrer">Code <code>3_Gemini/</code> ↗</a>
+        <a class="btn" href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer">Google AI Studio ↗</a>
+        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/docs/PRD.md" target="_blank" rel="noopener noreferrer">PRD ↗</a>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="variant-nav">
+    <div class="variant-nav-inner">
+      <span class="variant-nav-label">Autres variantes :</span>
+      <a href="variante-1.html" class="vchip vchip-v1">1 · Transformer</a>
+      <a href="variante-2.html" class="vchip vchip-v2">2 · speechLLM</a>
+      <a href="variante-4.html" class="vchip vchip-v4">4 · Cascade</a>
+      <a href="variante-5.html" class="vchip vchip-v5">5 · Speech_Text</a>
+    </div>
+  </div>
+
+  <div class="page-end">
+    <footer class="container">
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l'accueil</a></p>
+    </footer>
+  </div>
+
+</body>
+</html>
