@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>5 · Speech_Text — Pantagruel S3T</title>
+  <meta name="description" content="Encodeur multimodal Pantagruel pré-entraîné sur parole et texte : même architecture que la variante 1, hypothèse sur la représentation bimodale.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --muted: #5c5c7a;
+      --accent: #0e7490;
+      --accent-mid: #0891b2;
+      --accent-soft: #ecfeff;
+      --border: rgba(0,0,0,0.08);
+      --radius: 16px;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --sans: "Inter", system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .nav { position: sticky; top: 0; z-index: 10; background: rgba(245,245,247,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+    .nav-inner { max-width: 960px; margin: 0 auto; padding: 0.9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .nav-logo { font-weight: 700; color: var(--text); }
+    .nav-links { display: flex; gap: 1.25rem; flex-wrap: wrap; font-size: 0.9rem; }
+    .nav-links a { color: var(--muted); font-weight: 500; }
+    .nav-links a:hover { color: var(--accent); text-decoration: none; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+    .breadcrumb { max-width: 960px; margin: 0 auto; padding: 1rem 1.5rem 0; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+    .breadcrumb a { color: var(--muted); }
+    .breadcrumb a:hover { color: var(--accent); }
+    .hero { padding: 1.5rem 1.5rem 1.25rem; max-width: 960px; margin: 0 auto; }
+    .variant-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.85rem; border-radius: 999px; background: var(--accent-soft); border: 1px solid rgba(8,145,178,0.3); font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.85rem; font-family: var(--mono); }
+    .hero h1 { font-size: clamp(1.5rem,3.5vw,2.2rem); line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 0.5rem; color: var(--accent); }
+    .hero .lead { font-size: 1rem; color: var(--muted); max-width: 44rem; margin-bottom: 0.75rem; }
+    .hero .tagline { font-size: 0.95rem; color: var(--text); font-style: italic; padding: 0.65rem 1rem; border-left: 3px solid var(--accent-mid); background: var(--accent-soft); border-radius: 0 8px 8px 0; max-width: 40rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 1rem; }
+    h2 { font-size: 1.1rem; margin-bottom: 0.75rem; letter-spacing: -0.01em; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+    .icon { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 8px; background: var(--accent-soft); color: var(--accent-mid); font-size: 0.9rem; flex-shrink: 0; }
+    .section-intro { color: var(--muted); margin-bottom: 1.25rem; font-size: 0.93rem; }
+    .arch-container { background: #0f172a; border-radius: 12px; padding: 1.25rem 1.25rem 0.75rem; overflow-x: auto; margin: 0.75rem 0 1rem; }
+    .arch-container svg { display: block; min-width: 580px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+    th, td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; background: #f8fafc; }
+    tr:last-child td { border-bottom: none; }
+    code { font-family: var(--mono); font-size: 0.81em; background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .result-best { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-family: var(--mono); font-size: 0.85rem; font-weight: 600; }
+    .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 5px; font-size: 0.74rem; font-weight: 600; }
+    .tag-green { background: #dcfce7; color: #166534; }
+    .tag-orange { background: #fed7aa; color: #9a3412; }
+    .tag-blue { background: var(--accent-soft); color: #0e7490; }
+    .tag-gray { background: #f1f5f9; color: #475569; }
+    .improvement-list { list-style: none; padding: 0; }
+    .improvement-list li { padding: 0.65rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; display: flex; gap: 0.75rem; align-items: flex-start; }
+    .improvement-list li:last-child { border-bottom: none; }
+    .imp-num { flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 0.15rem; }
+    .note { margin-top: 1rem; padding: 0.9rem 1rem; border-radius: 12px; background: var(--accent-soft); border: 1px solid rgba(8,145,178,0.25); font-size: 0.87rem; color: #164e63; }
+    .note-warn { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+    .prose p { margin-bottom: 0.7rem; font-size: 0.92rem; line-height: 1.65; }
+    .prose p:last-child { margin-bottom: 0; }
+    .btn { display: inline-block; padding: 0.5rem 0.9rem; border-radius: 10px; font-size: 0.86rem; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+    .btn:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
+    .links { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+    .variant-nav { background: var(--surface); border-top: 1px solid var(--border); padding: 1rem 0; margin-top: 0.5rem; }
+    .variant-nav-inner { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .variant-nav-label { font-size: 0.82rem; color: var(--muted); font-weight: 500; margin-right: 0.25rem; }
+    .vchip { padding: 0.3rem 0.8rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+    .vchip:hover { opacity: 0.85; text-decoration: none; }
+    .vchip-v1 { border: 1px solid rgba(99,102,241,0.3); background: #eef2ff; color: #4338ca; }
+    .vchip-v2 { border: 1px solid rgba(124,58,237,0.3); background: #ede9fe; color: #6d28d9; }
+    .vchip-v3 { border: 1px solid rgba(217,119,6,0.3); background: #fffbeb; color: #b45309; }
+    .vchip-v4 { border: 1px solid rgba(5,150,105,0.3); background: #ecfdf5; color: #047857; }
+    .page-end { margin-top: 1.5rem; padding: 1.5rem 0 1.25rem; background: #e8eaef; border-top: 1px solid rgba(0,0,0,0.1); }
+    .page-end footer { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; color: var(--muted); font-size: 0.72rem; text-align: center; }
+    /* Comparison row */
+    .vs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.75rem; }
+    .vs-cell { padding: 0.9rem; border-radius: 10px; border: 1px solid var(--border); }
+    .vs-cell h3 { font-size: 0.88rem; margin-bottom: 0.4rem; }
+    .vs-cell p { font-size: 0.83rem; color: var(--muted); margin: 0; }
+    @media (max-width: 560px) { .vs-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-logo" href="index.html">Pantagruel S3T</a>
+      <div class="nav-links">
+        <a href="index.html#pipeline">Vue d'ensemble</a>
+        <a href="index.html#resultats">Résultats</a>
+        <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="breadcrumb">
+    <a href="index.html">Accueil</a>
+    <span>›</span>
+    <span>Variante 5 · Speech_Text</span>
+  </div>
+
+  <header class="hero">
+    <div class="variant-badge">Variante 5 / 5 · Expérimentale</div>
+    <h1>Speech_Text (encodeur multimodal)</h1>
+    <p class="lead">Même architecture que la variante 1, mais avec un encodeur Pantagruel pré-entraîné sur parole <em>et</em> texte. Hypothèse : les représentations bimodales aident-elles la traduction ?</p>
+    <p class="tagline">« Même architecture que la variante 1, mais avec un encodeur Pantagruel entraîné sur parole et texte ensemble, pas sur la parole seule. »</p>
+  </header>
+
+  <main class="container">
+
+    <!-- Architecture -->
+    <div class="card">
+      <h2><span class="icon">⚙</span> Architecture</h2>
+      <p class="section-intro">Structure identique à la variante 1, seul l'encodeur change. Le décodeur Transformer (6 couches) et SentencePiece restent les mêmes.</p>
+      <div class="arch-container">
+        <svg viewBox="0 0 720 165" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Inter',sans-serif">
+          <defs>
+            <marker id="arr5" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0,8 3,0 6" fill="#475569"/>
+            </marker>
+          </defs>
+          <!-- Audio FR -->
+          <rect x="8" y="47" width="115" height="65" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+          <text x="65" y="73" text-anchor="middle" font-size="12" font-weight="600" fill="#e2e8f0">Audio FR</text>
+          <text x="65" y="89" text-anchor="middle" font-size="9.5" fill="#94a3b8">m-TEDx</text>
+          <text x="65" y="104" text-anchor="middle" font-size="9" fill="#64748b">16 kHz mono</text>
+          <!-- Arrow 1 -->
+          <line x1="124" y1="79" x2="152" y2="79" stroke="#475569" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <!-- Encodeur Speech_Text -->
+          <rect x="154" y="15" width="185" height="128" rx="8" fill="#0b2030" stroke="#0891b2" stroke-width="2.5"/>
+          <text x="246" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#7dd3fc">Encodeur</text>
+          <text x="246" y="64" text-anchor="middle" font-size="12" font-weight="700" fill="#7dd3fc">Speech_Text</text>
+          <!-- Bimodal badge -->
+          <rect x="182" y="73" width="128" height="20" rx="5" fill="#0e7490" opacity="0.35"/>
+          <text x="246" y="87" text-anchor="middle" font-size="9" font-weight="700" fill="#7dd3fc">parole + texte</text>
+          <text x="246" y="105" text-anchor="middle" font-size="9.5" fill="#38bdf8">pré-entraîné bimodal</text>
+          <text x="246" y="121" text-anchor="middle" font-size="9" fill="#0ea5e9">B-1k (checkpoint actuel)</text>
+          <text x="246" y="135" text-anchor="middle" font-size="9" fill="#0369a1">gelé → parfois dégelé</text>
+          <!-- VS marker vs V1 -->
+          <text x="246" y="7" text-anchor="middle" font-size="8" fill="#64748b">≠ V1 : encodeur parole seule</text>
+          <!-- Arrow 2 -->
+          <line x1="340" y1="79" x2="368" y2="79" stroke="#475569" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <!-- Décodeur Transformer + SPM -->
+          <rect x="370" y="15" width="185" height="128" rx="8" fill="#180f30" stroke="#8b5cf6" stroke-width="1.5"/>
+          <text x="462" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#c4b5fd">Décodeur</text>
+          <text x="462" y="64" text-anchor="middle" font-size="12" font-weight="700" fill="#c4b5fd">Transformer</text>
+          <text x="462" y="82" text-anchor="middle" font-size="9.5" fill="#a78bfa">6 couches · 8 têtes</text>
+          <text x="462" y="98" text-anchor="middle" font-size="9.5" fill="#a78bfa">+ SentencePiece ~1 000</text>
+          <text x="462" y="114" text-anchor="middle" font-size="9" fill="#10b981">entraîné sur m-TEDx</text>
+          <text x="462" y="130" text-anchor="middle" font-size="8" fill="#64748b">= identique variante 1</text>
+          <!-- Arrow 3 -->
+          <line x1="556" y1="79" x2="584" y2="79" stroke="#475569" stroke-width="1.5" marker-end="url(#arr5)"/>
+          <!-- Texte EN -->
+          <rect x="586" y="47" width="125" height="65" rx="8" fill="#0c1a10" stroke="#10b981" stroke-width="1.5"/>
+          <text x="648" y="73" text-anchor="middle" font-size="12" font-weight="600" fill="#6ee7b7">Texte EN</text>
+          <text x="648" y="89" text-anchor="middle" font-size="10" fill="#34d399">traduction</text>
+          <text x="648" y="104" text-anchor="middle" font-size="9" fill="#059669">greedy</text>
+        </svg>
+      </div>
+      <div class="prose">
+        <p><strong>Encodeur Speech_Text :</strong> variante de l'encodeur Pantagruel pré-entraînée simultanément sur de la parole française et du texte français. L'hypothèse est que ces représentations bimodales (parole + texte) pourraient mieux capturer le contenu linguistique et ainsi améliorer la traduction de la parole.</p>
+        <p><strong>Décodeur et SPM :</strong> strictement identiques à la variante 1 — Transformer 6 couches avec SentencePiece ~1 000 unités. Cela permet d'isoler l'effet de l'encodeur : toute différence de performance par rapport à la variante 1 est attribuable à l'encodeur multimodal.</p>
+        <p><strong>État expérimental :</strong> un seul run disponible (<code>run_001</code>, <em>sentence_like</em>, ~8 BLEU). Ce score est nettement inférieur à la variante 1 (~15 BLEU sur le même découpage), mais les hyperparamètres n'ont pas été optimisés pour cette variante. Il serait prématuré de conclure sur la valeur de l'encodeur multimodal sans avoir d'abord aligné les réglages.</p>
+      </div>
+    </div>
+
+    <!-- Comparaison V1 vs V5 -->
+    <div class="card">
+      <h2><span class="icon">🔀</span> Variante 5 vs Variante 1</h2>
+      <p class="section-intro">L'unique différence est l'encodeur. Tout le reste est identique — ce qui en fait une ablation propre sur l'effet du pré-entraînement bimodal.</p>
+      <div class="vs-row">
+        <div class="vs-cell" style="border-left: 3px solid #6366f1;">
+          <h3 style="color:#4338ca;">Variante 1 — Encodeur parole seule</h3>
+          <p>Pantagruel B-1k/L-14k/L-114k pré-entraîné uniquement sur de la parole française (JEPA/data2vec 2.0). BLEU <em>sentence_like</em> B-1k : ~15.</p>
+        </div>
+        <div class="vs-cell" style="border-left: 3px solid #0891b2;">
+          <h3 style="color:#0e7490;">Variante 5 — Encodeur parole + texte</h3>
+          <p>Speech_Text B-1k pré-entraîné sur parole <em>et</em> texte français. BLEU <em>sentence_like</em> B-1k : ~8 (réglages non optimisés — 1 seul run).</p>
+        </div>
+      </div>
+      <div class="note" style="margin-top:1rem;">
+        Écart actuel : ~7 pts BLEU en faveur de la V1, mais avec des hyperparamètres non optimisés pour V5. Un run sur <em>utterance</em> avec les mêmes réglages que V1 (gel 5k, LR 1e-4) permettrait une comparaison juste.
+      </div>
+    </div>
+
+    <!-- Hyperparamètres -->
+    <div class="card">
+      <h2><span class="icon">⚡</span> Hyperparamètres</h2>
+      <p class="section-intro">Mêmes paramètres que la variante 1, avec en plus le choix du checkpoint Speech_Text.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Paramètre</th><th>Valeurs / options</th><th>Impact</th><th>État</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Checkpoint Speech_Text</strong></td>
+              <td>B-1k (actuel) · autres tailles si disponibles</td>
+              <td>À explorer si d'autres checkpoints Speech_Text existent</td>
+              <td><span class="tag tag-blue">B-1k seulement</span></td>
+            </tr>
+            <tr>
+              <td><strong>Mode de segmentation</strong></td>
+              <td><code>utterance</code> (manquant !) / <code>sentence_like</code></td>
+              <td>Run <em>utterance</em> nécessaire pour comparer au protocole article</td>
+              <td><span class="tag tag-orange">sentence_like seulement</span></td>
+            </tr>
+            <tr>
+              <td><strong>Gel de l'encodeur</strong></td>
+              <td><code>freeze_encoder_updates: 5000</code></td>
+              <td>Même impact qu'en V1 — à aligner avant de conclure</td>
+              <td><span class="tag tag-orange">non vérifié run_001</span></td>
+            </tr>
+            <tr>
+              <td><strong>Taux d'apprentissage</strong></td>
+              <td><code>1e-4</code></td>
+              <td>Doit être aligné sur V1 pour une comparaison propre</td>
+              <td><span class="tag tag-orange">à vérifier</span></td>
+            </tr>
+            <tr>
+              <td><strong>Décodage</strong></td>
+              <td><code>greedy</code> (actuel)</td>
+              <td>Même que V1 ; beam search à implémenter ensuite</td>
+              <td><span class="tag tag-gray">greedy</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Résultats -->
+    <div class="card">
+      <h2><span class="icon">📊</span> Résultats</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Run</th><th>Encodeur</th><th>Segmentation</th><th>BLEU test</th><th>Durée GPU</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>run_001</code></td>
+              <td>Speech_Text B-1k</td>
+              <td><em>sentence_like</em></td>
+              <td><span class="result-best">~7,9</span></td>
+              <td>~8 h</td>
+              <td>Seul run disponible ; réglages non optimisés</td>
+            </tr>
+            <tr style="color:var(--muted)">
+              <td colspan="3"><em>utterance</em></td>
+              <td>—</td>
+              <td>—</td>
+              <td>Non lancé</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note note-warn">
+        <strong>Interprétation prudente :</strong> un seul run, sur <em>sentence_like</em>, avec des hyperparamètres non ajustés. Ce score (~7,9) ne permet pas encore de conclure sur la valeur de l'encodeur multimodal. Les runs <em>utterance</em> avec les mêmes réglages que V1 sont nécessaires avant tout jugement.
+      </div>
+    </div>
+
+    <!-- Pistes d'amélioration -->
+    <div class="card">
+      <h2><span class="icon">🔧</span> Pistes d'amélioration</h2>
+      <ul class="improvement-list">
+        <li>
+          <span class="imp-num">1</span>
+          <div><strong>Aligner les hyperparamètres sur la variante 1</strong> : gel 5k updates, LR 1e-4, même durée d'entraînement — avant de comparer les deux encodeurs. L'écart actuel peut être dû aux réglages, pas à l'encodeur.</div>
+        </li>
+        <li>
+          <span class="imp-num">2</span>
+          <div><strong>Lancer un run en <em>utterance</em></strong> — indispensable pour comparer au protocole article et à la variante 1 sur le même découpage.</div>
+        </li>
+        <li>
+          <span class="imp-num">3</span>
+          <div><strong>Tester un checkpoint Speech_Text plus récent ou plus grand</strong> si disponible dans la famille Pantagruel — le checkpoints B-1k actuel est peut-être sous-optimal.</div>
+        </li>
+        <li>
+          <span class="imp-num">4</span>
+          <div><strong>Trancher sur la priorité de cette variante</strong> : si après les runs alignés le score reste sous V1, concentrer l'effort sur les variantes 1 et 2 ; sinon creuser l'hypothèse multimodale.</div>
+        </li>
+        <li>
+          <span class="imp-num">5</span>
+          <div><strong>Analyser les représentations latentes</strong> : comparer les vecteurs produits par l'encodeur Speech_Text et par l'encodeur parole seule (V1) — visualisation t-SNE ou similarité cosine — pour comprendre en quoi ils diffèrent.</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Liens -->
+    <div class="card">
+      <h2><span class="icon">🔗</span> Liens</h2>
+      <div class="links">
+        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/tree/main/5_Pantagruel_multimodal" target="_blank" rel="noopener noreferrer">Code <code>5_Pantagruel_multimodal/</code> ↗</a>
+        <a class="btn" href="variante-1.html">Variante 1 (référence) →</a>
+        <a class="btn" href="https://huggingface.co/PantagrueLLM" target="_blank" rel="noopener noreferrer">Modèles Pantagruel (HF) ↗</a>
+        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/docs/PRD.md" target="_blank" rel="noopener noreferrer">PRD ↗</a>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="variant-nav">
+    <div class="variant-nav-inner">
+      <span class="variant-nav-label">Autres variantes :</span>
+      <a href="variante-1.html" class="vchip vchip-v1">1 · Transformer</a>
+      <a href="variante-2.html" class="vchip vchip-v2">2 · speechLLM</a>
+      <a href="variante-3.html" class="vchip vchip-v3">3 · Gemini</a>
+      <a href="variante-4.html" class="vchip vchip-v4">4 · Cascade</a>
+    </div>
+  </div>
+
+  <div class="page-end">
+    <footer class="container">
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l'accueil</a></p>
+    </footer>
+  </div>
+
+</body>
+</html>
