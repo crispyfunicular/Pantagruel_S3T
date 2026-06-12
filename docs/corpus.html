@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corpus — Pantagruel S3T</title>
+  <meta name="description" content="Les deux corpus du projet S3T : INA / LeBenchmark 2.0 pour le pré-entraînement Pantagruel, et m-TEDx pour le fine-tuning de la traduction de la parole FR→EN.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --muted: #5c5c7a;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --border: rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --sans: "Inter", system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(245, 245, 247, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-logo { font-weight: 700; color: var(--text); }
+    .nav-links { display: flex; gap: 1.25rem; flex-wrap: wrap; font-size: 0.9rem; }
+    .nav-links a { color: var(--muted); font-weight: 500; }
+    .nav-links a:hover { color: var(--accent); text-decoration: none; }
+    .nav-links a[aria-current="page"] { color: var(--accent); }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+
+    .hero {
+      padding: 2rem 3rem 1.5rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero .lead {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 44rem;
+    }
+
+    section { padding: 1.25rem 0; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Bande colorée latérale distincte par corpus */
+    .card--ina  { border-left: 4px solid #6366f1; }
+    .card--mtedx { border-left: 4px solid #0891b2; }
+
+    h2 {
+      font-size: 1.35rem;
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.01em;
+    }
+
+    .corpus-eyebrow {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .corpus-eyebrow--ina   { color: #6366f1; }
+    .corpus-eyebrow--mtedx { color: #0891b2; }
+
+    .section-intro {
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+      font-size: 0.95rem;
+      max-width: 50rem;
+    }
+
+    /* Statistiques en tuiles */
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+    }
+
+    .stat-chip {
+      padding: 0.7rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      min-width: 9rem;
+    }
+
+    .stat-chip .stat-value {
+      font-family: var(--mono);
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.2;
+      display: block;
+    }
+
+    .stat-chip .stat-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: block;
+      margin-top: 0.15rem;
+    }
+
+    .stat-chip--ina   .stat-value { color: #4338ca; }
+    .stat-chip--mtedx .stat-value { color: #0e7490; }
+
+    /* Tableau de détails */
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 1.25rem;
+    }
+
+    .detail-table th, .detail-table td {
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .detail-table th {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .detail-table tr:last-child td { border-bottom: none; }
+
+    /* Rôle dans le pipeline */
+    .role-block {
+      margin-top: 1.25rem;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .role-block strong { color: var(--text); }
+
+    /* Boutons / liens externes */
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.55rem 1rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .btn:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: #1d4ed8; color: #fff; }
+
+    /* Séparateur relationnel entre les deux corpus */
+    .pipeline-bridge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0.25rem 0 0.25rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .pipeline-bridge::before,
+    .pipeline-bridge::after {
+      content: "";
+      flex: 1;
+      border-top: 1px dashed var(--border);
+    }
+
+    .pipeline-bridge-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    /* Pied de page */
+    .page-end {
+      margin-top: 2.5rem;
+      padding: 1.75rem 0 1.5rem;
+      background: #e8eaef;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .about-card {
+      max-width: 34rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .about-card h2 {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .about-card p {
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 0.75rem;
+      font-size: 0.84rem;
+    }
+
+    .about-links {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .page-end .btn-small {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.76rem;
+      border-radius: 8px;
+    }
+
+    .page-end .btn-outline {
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .page-end footer {
+      padding: 1rem 0 0;
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-align: center;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.82em;
+      background: #f1f5f9;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    h3.subheading {
+      font-size: 1rem;
+      margin: 1.5rem 0 0.65rem;
+      letter-spacing: -0.01em;
+    }
+
+    .seg-tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      padding: 0.12rem 0.45rem;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .seg-tag--utterance { background: #eef2ff; color: #4338ca; }
+    .seg-tag--sentence { background: #ecfeff; color: #0e7490; }
+
+    .compare-note {
+      margin-top: 0.85rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      font-size: 0.82rem;
+      color: #78350f;
+      line-height: 1.5;
+    }
+
+    .bleu-compare {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .bleu-compare th, .bleu-compare td {
+      padding: 0.55rem 0.65rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .bleu-compare th {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .bleu-compare tr:last-child td { border-bottom: none; }
+
+    .bleu-compare .row-paper { color: var(--muted); }
+    .bleu-compare .row-paper strong { color: var(--text); }
+
+    .bleu-compare .bleu-val {
+      font-family: var(--mono);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .fn-ref {
+      font-size: 0.7em;
+      vertical-align: super;
+      line-height: 0;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      padding-left: 0.1em;
+    }
+
+    .fn-ref:hover { text-decoration: underline; }
+
+    .footnotes {
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      border-top: 1px dashed var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .footnotes ol {
+      margin: 0;
+      padding-left: 1.35rem;
+    }
+
+    .footnotes li { margin-bottom: 0.35rem; }
+    .footnotes li:last-child { margin-bottom: 0; }
+
+    .footnotes a { color: var(--muted); }
+    .footnotes a:hover { color: var(--accent); }
+
+    .footnotes code {
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-logo" href="index.html">Pantagruel S3T</a>
+      <div class="nav-links">
+        <a href="index.html#pipeline">Pipeline</a>
+        <a href="index.html#resultats">Résultats</a>
+        <a href="corpus.html" aria-current="page">Corpus</a>
+        <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero container">
+    <h1>Les corpus du projet</h1>
+    <p class="lead">
+      Deux corpus articulent le pipeline S3T : l'un fournit la base acoustique de l'encodeur Pantagruel,
+      l'autre sert de terrain d'entraînement et d'évaluation pour la traduction de la parole français&nbsp;→&nbsp;anglais.
+    </p>
+  </header>
+
+  <!-- ── Corpus 1 : INA / LeBenchmark ─────────────────────────────────── -->
+  <section id="ina" class="container">
+    <div class="card card--ina">
+      <p class="corpus-eyebrow corpus-eyebrow--ina">Corpus 1 · Pré-entraînement de l'encodeur</p>
+      <h2>INA — LeBenchmark 2.0</h2>
+      <p class="section-intro">
+        Enregistrements radio et télévisés français collectés par l'<strong>Institut National de l'Audiovisuel (INA)</strong>,
+        constituant la base de données audio du projet <strong>LeBenchmark 2.0</strong>.
+        Ces données ont servi à pré-entraîner les modèles Pantagruel en auto-supervision
+        (cadre JEPA / data2vec 2.0) : l'encodeur acoustique apprend des représentations de la parole française
+        <em>sans aucune transcription ni supervision externe</em>.
+      </p>
+
+      <div class="stats-row">
+        <div class="stat-chip stat-chip--ina">
+          <span class="stat-value">14 000 h</span>
+          <span class="stat-label">Pantagruel-Base / Large (14K)</span>
+        </div>
+        <div class="stat-chip stat-chip--ina">
+          <span class="stat-value">114 000 h</span>
+          <span class="stat-label">Pantagruel-Large (114K)</span>
+        </div>
+        <div class="stat-chip stat-chip--ina">
+          <span class="stat-value">16 kHz</span>
+          <span class="stat-label">Fréquence d'échantillonnage</span>
+        </div>
+        <div class="stat-chip stat-chip--ina">
+          <span class="stat-value">Français</span>
+          <span class="stat-label">Langue unique</span>
+        </div>
+      </div>
+
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>Propriété</th>
+            <th>Détail</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Source</strong></td>
+            <td>Émissions radio et télévisées françaises — archives INA</td>
+          </tr>
+          <tr>
+            <td><strong>Paradigme</strong></td>
+            <td>Auto-supervision (SSL) — pas de transcription requise</td>
+          </tr>
+          <tr>
+            <td><strong>Méthode</strong></td>
+            <td>JEPA / data2vec 2.0 (prédiction en espace latent, schéma teacher-student)</td>
+          </tr>
+          <tr>
+            <td><strong>Modèles produits</strong></td>
+            <td>
+              <code>PantagrueLLM/speech-base-1K</code>,
+              <code>PantagrueLLM/speech-large-14K</code>,
+              <code>PantagrueLLM/speech-large-114K</code>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="subheading">Impact sur le BLEU (fr→en, segments <em>utterance</em>)</h3>
+      <p class="section-intro" style="margin-bottom: 0.75rem;">
+        Même corpus m-TEDx et même décodeur Transformer 6 couches ; seule la taille du pré-entraînement INA change.
+        Les lignes <em>Article</em> viennent de la Table 8 de l'article Pantagruel (fairseq, beam 5) ; les lignes <em>S3T</em> sont nos runs locaux (stack PyTorch/HF, greedy sauf mention contraire).
+      </p>
+      <div class="table-wrap">
+        <table class="bleu-compare">
+          <thead>
+            <tr>
+              <th>Encodeur</th>
+              <th>Heures INA</th>
+              <th>Source</th>
+              <th>BLEU test</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row-paper">
+              <td>Pantagruel-L-14k</td>
+              <td>14 000 h</td>
+              <td>Article Pantagruel 2026, Table 8<a href="#fn-t8" class="fn-ref" id="fn-t8-ref">1</a></td>
+              <td class="bleu-val">24,0 ± 0,4</td>
+            </tr>
+            <tr class="row-paper">
+              <td>Pantagruel-L-114k</td>
+              <td>114 000 h</td>
+              <td>Article Pantagruel 2026, Table 8<a href="#fn-t8" class="fn-ref">1</a></td>
+              <td class="bleu-val">25,2 ± 0,4</td>
+            </tr>
+            <tr>
+              <td>L-14k</td>
+              <td>14 000 h</td>
+              <td>S3T — <code>run_020</code> v3<a href="#fn-run020" class="fn-ref" id="fn-run020-ref">2</a></td>
+              <td class="bleu-val">~21,2</td>
+            </tr>
+            <tr>
+              <td>L-14k</td>
+              <td>14 000 h</td>
+              <td>S3T — <code>run_014</code> v2<a href="#fn-run014" class="fn-ref" id="fn-run014-ref">3</a></td>
+              <td class="bleu-val">~17,2</td>
+            </tr>
+            <tr>
+              <td>L-114k</td>
+              <td>114 000 h</td>
+              <td>S3T — <code>run_019</code> v3<a href="#fn-run019" class="fn-ref" id="fn-run019-ref">4</a></td>
+              <td class="bleu-val">~20,2</td>
+            </tr>
+            <tr>
+              <td>L-114k</td>
+              <td>114 000 h</td>
+              <td>S3T — <code>run_016</code> v2<a href="#fn-run016" class="fn-ref" id="fn-run016-ref">5</a></td>
+              <td class="bleu-val">~19,6</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footnotes" role="doc-footnotes">
+        <ol>
+          <li id="fn-t8">
+            <strong>Table 8</strong> — Pantagruel (2026), ST end-to-end fr→en, segments <em>utterance</em> m-TEDx, SacreBLEU, protocole LeBenchmark / fairseq, décodage beam 5.
+            <a href="https://arxiv.org/abs/2601.05911" target="_blank" rel="noopener noreferrer">arXiv:2601.05911 ↗</a>
+            · <a href="#fn-t8-ref">↑</a>
+          </li>
+          <li id="fn-run020">
+            <code>run_020_transformer_baseline_utterance_large_14k_v3</code> — 22,05 / <strong>21,22</strong> test (Modyco, gel encodeur 5k updates, early stop, greedy).
+            Meilleur run S3T L-14k à ce jour. <a href="#fn-run020-ref">↑</a>
+          </li>
+          <li id="fn-run014">
+            <code>run_014_transformer_baseline_utterance_large_14k_v2</code> — 17,12 / <strong>17,21</strong> test (Modyco, early stop ~21k updates, greedy).
+            <a href="#fn-run014-ref">↑</a>
+          </li>
+          <li id="fn-run019">
+            <code>run_019_transformer_baseline_utterance_large_114k_v3</code> — 21,09 / <strong>20,19</strong> test (OVH, eval dev complet, greedy).
+            Meilleur run S3T L-114k à ce jour. <a href="#fn-run019-ref">↑</a>
+          </li>
+          <li id="fn-run016">
+            <code>run_016_transformer_baseline_utterance_large_114k_v2</code> — 20,30 / <strong>19,63</strong> test (OVH, early stop ~21k updates, greedy).
+            Précédé <code>run_019</code> v3. <a href="#fn-run016-ref">↑</a>
+          </li>
+        </ol>
+      </div>
+
+      <div class="role-block">
+        <strong>Rôle dans le pipeline S3T :</strong>
+        l'encodeur Pantagruel pré-entraîné sur INA est chargé en début de pipeline (étape 0) et utilisé comme
+        extracteur de caractéristiques acoustiques figé (ou partiellement dégelé) pour toutes les variantes du projet.
+        Le corpus INA n'est jamais re-téléchargé : seuls les poids publiés sur Hugging Face sont utilisés.
+      </div>
+
+      <div class="links">
+        <a class="btn btn-primary" href="https://arxiv.org/abs/2601.05911" target="_blank" rel="noopener noreferrer">Article Pantagruel 2026 (arXiv) ↗</a>
+        <a class="btn" href="https://huggingface.co/PantagrueLLM" target="_blank" rel="noopener noreferrer">Modèles sur Hugging Face ↗</a>
+        <a class="btn" href="http://lig-getalp.imag.fr/fr/accueil/" target="_blank" rel="noopener noreferrer">LIG-GETALP (UGA) ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pont visuel entre les deux corpus -->
+  <div class="container">
+    <div class="pipeline-bridge">
+      <span class="pipeline-bridge-icon">↓</span>
+      L'encodeur Pantagruel (INA) est branché à un décodeur Transformer fine-tuné sur m-TEDx
+      <span class="pipeline-bridge-icon">↓</span>
+    </div>
+  </div>
+
+  <!-- ── Corpus 2 : m-TEDx ──────────────────────────────────────────────── -->
+  <section id="mtedx" class="container">
+    <div class="card card--mtedx">
+      <p class="corpus-eyebrow corpus-eyebrow--mtedx">Corpus 2 · Fine-tuning et évaluation ST</p>
+      <h2>m-TEDx — Multilingual TEDx</h2>
+      <p class="section-intro">
+        Corpus de traduction de la parole construit à partir de conférences <strong>TEDx</strong> multilingues
+        avec leurs sous-titres alignés. Il couvre plusieurs directions de traduction depuis le français ;
+        le projet S3T se concentre sur la direction <strong>français → anglais</strong> (~50 heures d'entraînement),
+        avec le même protocole de découpage et d'évaluation que l'article Pantagruel.
+      </p>
+
+      <div class="stats-row">
+        <div class="stat-chip stat-chip--mtedx">
+          <span class="stat-value">~50 h</span>
+          <span class="stat-label">Train fr→en</span>
+        </div>
+        <div class="stat-chip stat-chip--mtedx">
+          <span class="stat-value">~38 h</span>
+          <span class="stat-label">Train fr→pt</span>
+        </div>
+        <div class="stat-chip stat-chip--mtedx">
+          <span class="stat-value">~25 h</span>
+          <span class="stat-label">Train fr→es</span>
+        </div>
+        <div class="stat-chip stat-chip--mtedx">
+          <span class="stat-value">OpenSLR</span>
+          <span class="stat-label">Ressource n° 100</span>
+        </div>
+      </div>
+
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>Propriété</th>
+            <th>Détail</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Source</strong></td>
+            <td>Conférences TEDx sous licence Creative Commons, sous-titres humains alignés</td>
+          </tr>
+          <tr>
+            <td><strong>Format</strong></td>
+            <td>Audio WAV 16 kHz mono + manifests TSV (id, audio, n_frames, src_text, tgt_text, speaker)</td>
+          </tr>
+          <tr>
+            <td><strong>Téléchargement (pipeline S3T)</strong></td>
+            <td><code>python scripts_communs/pipeline.py download --lang-pair fr-en</code></td>
+          </tr>
+          <tr>
+            <td><strong>Référence</strong></td>
+            <td>Salesky et al., <em>The Multilingual TEDx Corpus for Speech Recognition and Translation</em>, INTERSPEECH 2021</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="subheading">Résultats BLEU sur m-TEDx (fr→en)</h3>
+      <p class="section-intro" style="margin-bottom: 0.75rem;">
+        Deux découpages audio coexistent dans S3T. Seul <span class="seg-tag seg-tag--utterance">utterance</span>
+        est comparable à la Table 8 de l'article Pantagruel (segments natifs m-TEDx).
+        <span class="seg-tag seg-tag--sentence">sentence_like</span> fusionne des segments voisins pour viser des phrases plus longues —
+        hors protocole article, utile pour certains runs historiques et la variante Speech_Text.
+      </p>
+      <div class="table-wrap">
+        <table class="bleu-compare">
+          <thead>
+            <tr>
+              <th>Découpage</th>
+              <th>Variante</th>
+              <th>Source</th>
+              <th>BLEU test</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row-paper">
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>Transformer ST (L-114k)</td>
+              <td>Article Pantagruel 2026, Table 8<a href="#fn-mt8" class="fn-ref" id="fn-mt8-ref">1</a></td>
+              <td class="bleu-val">25,2 ± 0,4</td>
+            </tr>
+            <tr class="row-paper">
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>Transformer ST (L-14k)</td>
+              <td>Article Pantagruel 2026, Table 8<a href="#fn-mt8" class="fn-ref">1</a></td>
+              <td class="bleu-val">24,0 ± 0,4</td>
+            </tr>
+            <tr class="row-paper">
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>Transformer ST (B-1k)</td>
+              <td>Article Pantagruel 2026, Table 8<a href="#fn-mt8" class="fn-ref">1</a></td>
+              <td class="bleu-val">17,5 ± 0,4</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>Gemini 3.5 Flash v2</td>
+              <td>S3T — <code>run_005</code><a href="#fn-m005" class="fn-ref" id="fn-m005-ref">2</a></td>
+              <td class="bleu-val">41,09</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>Cascade ASR→MT</td>
+              <td>S3T — <code>run_001</code> cascade<a href="#fn-m001c" class="fn-ref" id="fn-m001c-ref">3</a></td>
+              <td class="bleu-val">37,41</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>Gemini 2.5 Flash</td>
+              <td>S3T — <code>run_001</code> Gemini<a href="#fn-m001g" class="fn-ref" id="fn-m001g-ref">4</a></td>
+              <td class="bleu-val">33,72</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>Transformer ST</td>
+              <td>S3T — <code>run_020</code> (L-14k)<a href="#fn-m020" class="fn-ref" id="fn-m020-ref">5</a></td>
+              <td class="bleu-val">21,22</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>Transformer ST</td>
+              <td>S3T — <code>run_019</code> (L-114k)<a href="#fn-m019" class="fn-ref" id="fn-m019-ref">6</a></td>
+              <td class="bleu-val">20,19</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--utterance">utterance</span></td>
+              <td>speechLLM B1</td>
+              <td>S3T — <code>run_013</code> (L-114k)<a href="#fn-m013" class="fn-ref" id="fn-m013-ref">7</a></td>
+              <td class="bleu-val">15,24</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--sentence">sentence_like</span></td>
+              <td>Gemini 3.5 Flash v2</td>
+              <td>S3T — <code>run_004</code><a href="#fn-m004" class="fn-ref" id="fn-m004-ref">8</a></td>
+              <td class="bleu-val">36,76</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--sentence">sentence_like</span></td>
+              <td>Gemini 2.5 Flash</td>
+              <td>S3T — <code>run_001</code> Gemini<a href="#fn-m001gs" class="fn-ref" id="fn-m001gs-ref">9</a></td>
+              <td class="bleu-val">23,15</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--sentence">sentence_like</span></td>
+              <td>speechLLM B1</td>
+              <td>S3T — <code>run_005</code> (encodeur dégelé)<a href="#fn-m005s" class="fn-ref" id="fn-m005s-ref">10</a></td>
+              <td class="bleu-val">18,83</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--sentence">sentence_like</span></td>
+              <td>Transformer ST</td>
+              <td>S3T — <code>run_001</code> baseline<a href="#fn-m001st" class="fn-ref" id="fn-m001st-ref">11</a></td>
+              <td class="bleu-val">14,97</td>
+            </tr>
+            <tr>
+              <td><span class="seg-tag seg-tag--sentence">sentence_like</span></td>
+              <td>Speech_Text + ST</td>
+              <td>S3T — <code>run_001</code> multimodal<a href="#fn-m001pm" class="fn-ref" id="fn-m001pm-ref">12</a></td>
+              <td class="bleu-val">7,95</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="compare-note">
+        Ne pas comparer <em>utterance</em> et <em>sentence_like</em> entre eux : les segments n’ont pas la même longueur ni le même nombre d’exemples.
+        La cascade n’a pas encore de run <em>sentence_like</em> documenté.
+      </p>
+
+      <div class="footnotes" role="doc-footnotes">
+        <ol>
+          <li id="fn-mt8">
+            <strong>Table 8</strong> — Pantagruel (2026), ST E2E fr→en, segments <em>utterance</em> m-TEDx, SacreBLEU, fairseq, beam 5.
+            Aucune ligne <em>sentence_like</em> dans l’article.
+            <a href="https://arxiv.org/abs/2601.05911" target="_blank" rel="noopener noreferrer">arXiv:2601.05911 ↗</a>
+            · <a href="#fn-mt8-ref">↑</a>
+          </li>
+          <li id="fn-m005">
+            <code>run_005_gemini_35_flash_utterance_v2</code> — 41,42 / <strong>41,09</strong> test (API <code>gemini-3.5-flash</code>, max 8192 tok, garde-fous anti-boucles).
+            <a href="#fn-m005-ref">↑</a>
+          </li>
+          <li id="fn-m001c">
+            <code>run_001_cascade_utterance</code> — 38,17 / <strong>37,41</strong> test (Whisper large-v3 → Marian opus-mt-fr-en).
+            <a href="#fn-m001c-ref">↑</a>
+          </li>
+          <li id="fn-m001g">
+            <code>run_001_gemini_flash_utterance_full</code> — 33,76 / <strong>33,72</strong> test (Gemini 2.5 Flash, temp 0).
+            <a href="#fn-m001g-ref">↑</a>
+          </li>
+          <li id="fn-m020">
+            <code>run_020_transformer_baseline_utterance_large_14k_v3</code> — 22,05 / <strong>21,22</strong> test (Modyco, greedy).
+            Meilleur Transformer ST local en <em>utterance</em>. <a href="#fn-m020-ref">↑</a>
+          </li>
+          <li id="fn-m019">
+            <code>run_019_transformer_baseline_utterance_large_114k_v3</code> — 21,09 / <strong>20,19</strong> test (OVH, greedy).
+            <a href="#fn-m019-ref">↑</a>
+          </li>
+          <li id="fn-m013">
+            <code>run_013_speechllm_b1_utterance_large_114k</code> — 15,92 / <strong>15,24</strong> test (Phi-2 gelé, encodeur L-114k gelé, 48 tok).
+            <a href="#fn-m013-ref">↑</a>
+          </li>
+          <li id="fn-m004">
+            <code>run_004_gemini_35_flash_sentence_like_v2</code> — 38,69 / <strong>36,76</strong> test (garde-fous, max 8192 tok).
+            <a href="#fn-m004-ref">↑</a>
+          </li>
+          <li id="fn-m001gs">
+            <code>run_001_gemini_flash_sentence_like_v2</code> — 21,44 / <strong>23,15</strong> test (Gemini 2.5 Flash).
+            <a href="#fn-m001gs-ref">↑</a>
+          </li>
+          <li id="fn-m005s">
+            <code>run_005_speechllm_b1_sentence_long_unfreeze_encoder</code> — 19,25 / <strong>18,83</strong> test (encodeur B-1k dégelé, Phi-2 gelé, beam 1).
+            Meilleur speechLLM en <em>sentence_like</em>. <a href="#fn-m005s-ref">↑</a>
+          </li>
+          <li id="fn-m001st">
+            <code>run_001_transformer_baseline_sentence_like</code> — 16,12 / <strong>14,97</strong> test (encodeur B-1k, greedy).
+            Premier run S3T sur m-TEDx. <a href="#fn-m001st-ref">↑</a>
+          </li>
+          <li id="fn-m001pm">
+            <code>run_001_pantagruel_multimodal</code> — 8,39 / <strong>7,95</strong> test (encodeur Speech_Text B-1k, greedy).
+            <a href="#fn-m001pm-ref">↑</a>
+          </li>
+        </ol>
+      </div>
+
+      <div class="role-block">
+        <strong>Rôle dans le pipeline S3T :</strong>
+        m-TEDx fournit les paires (audio français, texte anglais) utilisées aux étapes 1–5 :
+        préparation des manifests (<code>2_prepare.py</code>), entraînement du tokenizer SentencePiece (<code>3_spm.py</code>),
+        entraînement du décodeur (<code>4_train.py</code>) et évaluation SacreBLEU (<code>5_evaluate.py</code>).
+        C'est le seul corpus de fine-tuning ST du projet ; toutes les variantes (Transformer, speechLLM, Cascade, Speech_Text)
+        partagent les mêmes manifests normalisés.
+      </div>
+
+      <div class="links">
+        <a class="btn btn-primary" href="https://www.openslr.org/100" target="_blank" rel="noopener noreferrer">Télécharger m-TEDx (OpenSLR 100) ↗</a>
+        <a class="btn" href="https://arxiv.org/abs/2102.01757" target="_blank" rel="noopener noreferrer">Article Salesky et al. 2021 ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="page-end">
+    <section id="about" class="container">
+      <div class="about-card">
+        <h2>À propos</h2>
+        <p><strong>Morgane Bona-Pellissier</strong> est étudiante en master de traitement automatique des langues à l'Université Paris Nanterre après un doctorat en traductologie (Université de Genève, 2023). Ses recherches portent sur la traduction automatique neuronale et les langues peu dotées et minorisées ; elle parle notamment catalan et étudie le breton.</p>
+        <div class="about-links">
+          <a href="https://www.linkedin.com/in/morgane-bona-pellissier-0648aa112/" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-primary">LinkedIn ↗</a>
+          <a href="https://bona-pellissier.net/" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-outline">Site personnel ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="container">
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN</p>
+    </footer>
+  </div>
+</body>
+</html>
