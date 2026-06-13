@@ -319,21 +319,21 @@
   <header class="hero container">
     <h1>Les corpus du projet</h1>
     <p class="lead">
-      Deux corpus articulent le pipeline S3T : l'un fournit la base acoustique de l'encodeur Pantagruel,
-      l'autre sert de terrain d'entraînement et d'évaluation pour la traduction de la parole français&nbsp;→&nbsp;anglais.
+      Deux corpus articulent le pipeline S3T : l’un fournit la base acoustique de l’encodeur Pantagruel,
+      l’autre sert de terrain d’entraînement et d’évaluation pour la traduction de la parole français&nbsp;→&nbsp;anglais.
     </p>
   </header>
 
   <!-- ── Corpus 1 : INA / LeBenchmark ─────────────────────────────────── -->
   <section id="ina" class="container">
     <div class="card card--ina">
-      <p class="corpus-eyebrow corpus-eyebrow--ina">Corpus 1 · Pré-entraînement de l'encodeur</p>
+      <p class="corpus-eyebrow corpus-eyebrow--ina">Corpus 1 · Pré-entraînement de l’encodeur</p>
       <h2>INA — LeBenchmark 2.0</h2>
       <p class="section-intro">
-        Enregistrements radio et télévisés français collectés par l'<strong>Institut National de l'Audiovisuel (INA)</strong>,
+        Enregistrements radio et télévisés français collectés par l’<strong>Institut National de l’Audiovisuel (INA)</strong>,
         constituant la base de données audio du projet <strong>LeBenchmark 2.0</strong>.
         Ces données ont servi à pré-entraîner les modèles Pantagruel en auto-supervision
-        (cadre JEPA / data2vec 2.0) : l'encodeur acoustique apprend des représentations de la parole française
+        (cadre JEPA / data2vec 2.0) : l’encodeur acoustique apprend des représentations de la parole française
         <em>sans aucune transcription ni supervision externe</em>.
       </p>
 
@@ -348,7 +348,7 @@
         </div>
         <div class="stat-chip stat-chip--ina">
           <span class="stat-value">16 kHz</span>
-          <span class="stat-label">Fréquence d'échantillonnage</span>
+          <span class="stat-label">Fréquence d’échantillonnage</span>
         </div>
         <div class="stat-chip stat-chip--ina">
           <span class="stat-value">Français</span>
@@ -389,9 +389,9 @@
 
       <div class="role-block">
         <strong>Rôle dans le pipeline S3T :</strong>
-        l'encodeur Pantagruel pré-entraîné sur INA est chargé en début de pipeline (étape 0) et utilisé comme
+        l’encodeur Pantagruel pré-entraîné sur INA est chargé en début de pipeline (étape 0) et utilisé comme
         extracteur de caractéristiques acoustiques figé (ou partiellement dégelé) pour toutes les variantes du projet.
-        Le corpus INA n'est jamais re-téléchargé : seuls les poids publiés sur Hugging Face sont utilisés.
+        Le corpus INA n’est jamais re-téléchargé : seuls les poids publiés sur Hugging Face sont utilisés.
       </div>
 
       <div class="links">
@@ -406,7 +406,7 @@
   <div class="container">
     <div class="pipeline-bridge">
       <span class="pipeline-bridge-icon">↓</span>
-      L'encodeur Pantagruel (INA) est branché à un décodeur Transformer fine-tuné sur m-TEDx
+      L’encodeur Pantagruel (INA) est branché à un décodeur Transformer fine-tuné sur m-TEDx
       <span class="pipeline-bridge-icon">↓</span>
     </div>
   </div>
@@ -419,8 +419,8 @@
       <p class="section-intro">
         Corpus de traduction de la parole construit à partir de conférences <strong>TEDx</strong> multilingues
         avec leurs sous-titres alignés. Il couvre plusieurs directions de traduction depuis le français ;
-        le projet S3T se concentre sur la direction <strong>français → anglais</strong> (~50 heures d'entraînement),
-        avec le même protocole de découpage et d'évaluation que l'article Pantagruel.
+        le projet S3T se concentre sur la direction <strong>français → anglais</strong> (~50 heures d’entraînement),
+        avec le même protocole de découpage et d’évaluation que l’article Pantagruel.
       </p>
 
       <div class="stats-row">
@@ -481,7 +481,7 @@
         m-TEDx fournit les paires (audio français, texte anglais) utilisées aux étapes 1–5 :
         préparation des manifests (<code>2_prepare.py</code>), entraînement du tokenizer SentencePiece (<code>3_spm.py</code>),
         entraînement du décodeur (<code>4_train.py</code>) et évaluation SacreBLEU (<code>5_evaluate.py</code>).
-        C'est le seul corpus de fine-tuning ST du projet ; toutes les variantes (Transformer, speechLLM, Cascade, Speech_Text)
+        C’est le seul corpus de fine-tuning ST du projet ; toutes les variantes (Transformer, speechLLM, Cascade, Speech_Text)
         partagent les mêmes manifests normalisés.
       </div>
 
@@ -496,7 +496,7 @@
     <section id="about" class="container">
       <div class="about-card">
         <h2>À propos</h2>
-        <p><strong>Morgane Bona-Pellissier</strong> est étudiante en master de traitement automatique des langues à l'Université Paris Nanterre après un doctorat en traductologie (Université de Genève, 2023). Ses recherches portent sur la traduction automatique neuronale et les langues peu dotées et minorisées ; elle parle notamment catalan et étudie le breton.</p>
+        <p><strong>Morgane Bona-Pellissier</strong> est étudiante en master de traitement automatique des langues à l’Université Paris Nanterre après un doctorat en traductologie (Université de Genève, 2023). Ses recherches portent sur la traduction automatique neuronale et les langues peu dotées et minorisées ; elle parle notamment catalan et étudie le breton.</p>
         <div class="about-links">
           <a href="https://www.linkedin.com/in/morgane-bona-pellissier-0648aa112/" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-primary">LinkedIn ↗</a>
           <a href="https://bona-pellissier.net/" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-outline">Site personnel ↗</a>

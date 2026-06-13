@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3 · Gemini — Pantagruel S3T</title>
-  <meta name="description" content="Baseline API cloud : envoyer l'audio à Google Gemini et récupérer la traduction anglaise sans entraînement local.">
+  <meta name="description" content="Baseline API cloud : envoyer l’audio à Google Gemini et récupérer la traduction anglaise sans entraînement local.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -89,7 +89,7 @@
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
       <div class="nav-links">
-        <a href="index.html#pipeline">Vue d'ensemble</a>
+        <a href="index.html#pipeline">Vue d’ensemble</a>
         <a href="index.html#resultats">Résultats</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
@@ -105,8 +105,8 @@
   <header class="hero">
     <div class="variant-badge">Variante 3 / 5</div>
     <h1>Gemini (API cloud)</h1>
-    <p class="lead">Envoyer l'audio à Google Gemini et récupérer la traduction anglaise. Zéro entraînement local — la ligne de référence « prêt à l'emploi ».</p>
-    <p class="tagline">« On envoie l'audio à Google Gemini et on récupère la traduction anglaise, sans entraînement local. »</p>
+    <p class="lead">Envoyer l’audio à Google Gemini et récupérer la traduction anglaise. Zéro entraînement local — la ligne de référence « prêt à l’emploi ».</p>
+    <p class="tagline">« On envoie l’audio à Google Gemini et on récupère la traduction anglaise, sans entraînement local. »</p>
   </header>
 
   <main class="container">
@@ -114,7 +114,7 @@
     <!-- Architecture -->
     <div class="card">
       <h2><span class="icon">⚙</span> Architecture</h2>
-      <p class="section-intro">Le système le plus simple : un appel API. Pas de pipeline local, pas de GPU d'entraînement. La traduction est entièrement déléguée au modèle multimodal de Google.</p>
+      <p class="section-intro">Le système le plus simple : un appel API. Pas de pipeline local, pas de GPU d’entraînement. La traduction est entièrement déléguée au modèle multimodal de Google.</p>
       <div class="arch-container">
         <svg viewBox="0 0 660 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Inter',sans-serif">
           <defs>
@@ -146,9 +146,9 @@
         </svg>
       </div>
       <div class="prose">
-        <p><strong>Comment ça marche :</strong> l'audio est encodé en base64 et envoyé à l'API Gemini avec une consigne textuelle demandant la traduction en anglais. Le modèle multimodal traite directement l'audio et retourne le texte traduit. Aucun entraînement, aucun checkpoint local.</p>
+        <p><strong>Comment ça marche :</strong> l’audio est encodé en base64 et envoyé à l’API Gemini avec une consigne textuelle demandant la traduction en anglais. Le modèle multimodal traite directement l’audio et retourne le texte traduit. Aucun entraînement, aucun checkpoint local.</p>
         <p><strong>Garde-fous anti-boucles :</strong> les meilleurs runs (3.5 Flash v2) incluent des instructions explicites pour éviter les répétitions et limiter la longueur. Sans ces garde-fous (<code>run_004</code> v2 initial), 2 extraits producent des boucles de répétition qui biaisent le score test (20,3 au lieu de 41,1).</p>
-        <p><strong>Point de vigilance :</strong> le corpus m-TEDx est librement accessible sur Internet (vidéos, transcriptions, sous-titres). On ne peut pas exclure que Gemini l'ait rencontré pendant son pré-entraînement. Les scores se comparent donc avec prudence aux modèles entraînés uniquement sur m-TEDx train/dev/test.</p>
+        <p><strong>Point de vigilance :</strong> le corpus m-TEDx est librement accessible sur Internet (vidéos, transcriptions, sous-titres). On ne peut pas exclure que Gemini l’ait rencontré pendant son pré-entraînement. Les scores se comparent donc avec prudence aux modèles entraînés uniquement sur m-TEDx train/dev/test.</p>
       </div>
     </div>
 
@@ -282,13 +282,13 @@
       </div>
     </div>
 
-    <!-- Pistes d'amélioration -->
+    <!-- Pistes d’amélioration -->
     <div class="card">
-      <h2><span class="icon">🔧</span> Pistes d'amélioration</h2>
+      <h2><span class="icon">🔧</span> Pistes d’amélioration</h2>
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
-          <div><strong>Affiner la consigne (prompt)</strong> : instruction explicite « anglais uniquement, sans commentaire, sans markdown, traduction complète de l'audio ». Tester plusieurs variantes de prompt et mesurer l'impact sur le BLEU.</div>
+          <div><strong>Affiner la consigne (prompt)</strong> : instruction explicite « anglais uniquement, sans commentaire, sans markdown, traduction complète de l’audio ». Tester plusieurs variantes de prompt et mesurer l’impact sur le BLEU.</div>
         </li>
         <li>
           <span class="imp-num">2</span>
@@ -304,7 +304,7 @@
         </li>
         <li>
           <span class="imp-num">5</span>
-          <div><strong>Analyser la contamination potentielle</strong> : comparer les scores Gemini sur un sous-ensemble d'extraits non disponibles publiquement pour estimer si la performance reflète une vraie généralisation.</div>
+          <div><strong>Analyser la contamination potentielle</strong> : comparer les scores Gemini sur un sous-ensemble d’extraits non disponibles publiquement pour estimer si la performance reflète une vraie généralisation.</div>
         </li>
       </ul>
     </div>
@@ -333,7 +333,7 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l'accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l’accueil</a></p>
     </footer>
   </div>
 

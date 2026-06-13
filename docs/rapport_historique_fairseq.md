@@ -1,6 +1,6 @@
 # Audit du dépôt `../fairseq` (focus `origin/main`)
 
-Date d'analyse: 2026-05-18  
+Date d’analyse: 2026-05-18  
 Référentiel analysé: `/home/morgane/git/GETALP/fairseq`  
 Remote principal: `origin = git@github.com:formiel/fairseq.git`
 
@@ -12,7 +12,7 @@ Remote principal: `origin = git@github.com:formiel/fairseq.git`
 - Point critique pour la reproductibilité:
   - Dans ce clone, `origin/main` est **en retard** par rapport à `origin/master`.
   - `git rev-list --left-right --count origin/master...origin/main` retourne `132 0`, donc **132 commits présents sur `origin/master` et absents de `origin/main`**.
-  - Cet écart inclut des ajouts substantiels (siamese/dual-decoder/speech-text), très susceptibles d'expliquer des divergences de résultats.
+  - Cet écart inclut des ajouts substantiels (siamese/dual-decoder/speech-text), très susceptibles d’expliquer des divergences de résultats.
 
 ## 2) État du dépôt inspecté
 
@@ -48,7 +48,7 @@ Remote principal: `origin = git@github.com:formiel/fairseq.git`
 - Yuqing Tang: 36 commits
 - Alex Xiao: 34 commits
 
-Remarque: l'historique est majoritairement celui de fairseq OSS/upstream.
+Remarque: l’historique est majoritairement celui de fairseq OSS/upstream.
 
 ## 4) Zones du code les plus touchées sur `origin/main`
 
@@ -117,7 +117,7 @@ Même si la demande cible `origin/main`, ce point est central pour expliquer une
 ## Données de divergence
 
 - `origin/master` contient **132 commits** absents de `origin/main`.
-- `origin/main` n'a **aucun commit** absent de `origin/master` (dans ce clone).
+- `origin/main` n’a **aucun commit** absent de `origin/master` (dans ce clone).
 - Diff HEAD `origin/main..origin/master`:
   - **59 fichiers modifiés**
   - **10193 insertions**, **530 suppressions**
@@ -160,7 +160,7 @@ Si vous comparez vos expériences à "ses résultats" et que cette personne a tr
 
 Pour une comparaison juste:
 
-1. figer le commit exact de référence de l'autre personne (`git rev-parse HEAD` chez elle/lui),
+1. figer le commit exact de référence de l’autre personne (`git rev-parse HEAD` chez elle/lui),
 2. checkout ce commit dans votre environnement,
 3. comparer ensuite uniquement:
    - données/manifests
@@ -172,9 +172,9 @@ Pour une comparaison juste:
 
 ## 9) Inventaire complet des branches distantes (hors `origin/main`)
 
-Date d'analyse complémentaire : 2026-05-19
+Date d’analyse complémentaire : 2026-05-19
 
-### 9.1 Vue d'ensemble
+### 9.1 Vue d’ensemble
 
 | Branche | Commits totaux | Commits absents de `origin/main` | Auteurs principaux | Période |
 |---------|:--------------:|:---------------------------------:|-------------------|---------|
@@ -194,7 +194,7 @@ Date d'analyse complémentaire : 2026-05-19
 
 ### 9.2 `origin/pantagruel_uni` — branche centrale pour les expériences actuelles
 
-C'est de loin la branche la plus active et la plus pertinente : **822 commits uniques** par rapport à `origin/main`, couvrant la période **2024-02 à 2026-05** (derniers commits : 2026-05-13).
+C’est de loin la branche la plus active et la plus pertinente : **822 commits uniques** par rapport à `origin/main`, couvrant la période **2024-02 à 2026-05** (derniers commits : 2026-05-13).
 
 #### Fichiers et dossiers clés absents de `origin/main`
 
@@ -269,7 +269,7 @@ Le serveur de calcul de référence est Jean-Zay / Adastra (chemin `/lustre/fsn1
 
 ---
 
-### 9.3 `origin/master` — branche d'intégration (complément section 6)
+### 9.3 `origin/master` — branche d’intégration (complément section 6)
 
 Rappel : 132 commits uniques vs `origin/main`. Les commits de Hang Le se répartissent en deux périodes :
 
@@ -278,7 +278,7 @@ Rappel : 132 commits uniques vs `origin/main`. Les commits de Hang Le se répart
 - `2021-04-14` : `First commit for dual beam search`
 - `2021-04-27` : `Add wait-k in training for dual-decoder transf.`
 - `2021-05-06` : `Add wer_bleu scorer`
-- Série de corrections du dual-beam decoding jusqu'en 2021-05-25.
+- Série de corrections du dual-beam decoding jusqu’en 2021-05-25.
 
 **2023 — intégration siamese + nettoyage** :
 - `2023-06-12` : `Merge siamese_pt code with master`
@@ -296,7 +296,7 @@ Branche de **travail en cours** pour le pré-entraînement Siamese CTC+OT (Ch. 5
 - **2021-11 à 2023-02** : développement progressif du modèle `siamese_st2t` (CTC, OT loss, RoBERTa text encoder, mBART decoder, adversarial regularizer). Commits fonctionnels.
 - **2023-05** : nettoyage et ajout de figures/README (12 commits, purement documentaires).
 
-Le code correspondant est aujourd'hui intégré dans `origin/master` (via merge de juin 2023).
+Le code correspondant est aujourd’hui intégré dans `origin/master` (via merge de juin 2023).
 
 ---
 
@@ -324,7 +324,7 @@ Dernier commit : `2021-09-17`. Branche archivée.
 
 ### 9.7 Branches externes / mortes (à ignorer pour les expériences)
 
-| Branche | Raison d'ignorer |
+| Branche | Raison d’ignorer |
 |---------|-----------------|
 | `origin/naive_beamsearch` | Branche 2019 fairseq amont, divergée avant tous les travaux de Hang Le |
 | `origin/bi_trans_lm` | Idem, 2019, pas de contribution GETALP |
@@ -365,7 +365,7 @@ git -C /home/morgane/git/GETALP/fairseq diff --name-only origin/main..origin/mas
 git -C /home/morgane/git/GETALP/fairseq log --date=short --pretty='%h | %ad | %an | %s' origin/main..origin/master
 ```
 
-## Annexe B — Commandes ajoutées pour l'audit des branches non-`main` (2026-05-19)
+## Annexe B — Commandes ajoutées pour l’audit des branches non-`main` (2026-05-19)
 
 ```bash
 # Inventaire et comptage des commits uniques par branche

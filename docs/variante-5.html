@@ -94,7 +94,7 @@
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
       <div class="nav-links">
-        <a href="index.html#pipeline">Vue d'ensemble</a>
+        <a href="index.html#pipeline">Vue d’ensemble</a>
         <a href="index.html#resultats">Résultats</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
@@ -119,7 +119,7 @@
     <!-- Architecture -->
     <div class="card">
       <h2><span class="icon">⚙</span> Architecture</h2>
-      <p class="section-intro">Structure identique à la variante 1, seul l'encodeur change. Le décodeur Transformer (6 couches) et SentencePiece restent les mêmes.</p>
+      <p class="section-intro">Structure identique à la variante 1, seul l’encodeur change. Le décodeur Transformer (6 couches) et SentencePiece restent les mêmes.</p>
       <div class="arch-container">
         <svg viewBox="0 0 720 165" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Inter',sans-serif">
           <defs>
@@ -166,16 +166,16 @@
         </svg>
       </div>
       <div class="prose">
-        <p><strong>Encodeur Speech_Text :</strong> variante de l'encodeur Pantagruel pré-entraînée simultanément sur de la parole française et du texte français. L'hypothèse est que ces représentations bimodales (parole + texte) pourraient mieux capturer le contenu linguistique et ainsi améliorer la traduction de la parole.</p>
-        <p><strong>Décodeur et SPM :</strong> strictement identiques à la variante 1 — Transformer 6 couches avec SentencePiece ~1 000 unités. Cela permet d'isoler l'effet de l'encodeur : toute différence de performance par rapport à la variante 1 est attribuable à l'encodeur multimodal.</p>
-        <p><strong>État expérimental :</strong> un seul run disponible (<code>run_001</code>, <em>sentence_like</em>, ~8 BLEU). Ce score est nettement inférieur à la variante 1 (~15 BLEU sur le même découpage), mais les hyperparamètres n'ont pas été optimisés pour cette variante. Il serait prématuré de conclure sur la valeur de l'encodeur multimodal sans avoir d'abord aligné les réglages.</p>
+        <p><strong>Encodeur Speech_Text :</strong> variante de l’encodeur Pantagruel pré-entraînée simultanément sur de la parole française et du texte français. L’hypothèse est que ces représentations bimodales (parole + texte) pourraient mieux capturer le contenu linguistique et ainsi améliorer la traduction de la parole.</p>
+        <p><strong>Décodeur et SPM :</strong> strictement identiques à la variante 1 — Transformer 6 couches avec SentencePiece ~1 000 unités. Cela permet d’isoler l’effet de l’encodeur : toute différence de performance par rapport à la variante 1 est attribuable à l’encodeur multimodal.</p>
+        <p><strong>État expérimental :</strong> un seul run disponible (<code>run_001</code>, <em>sentence_like</em>, ~8 BLEU). Ce score est nettement inférieur à la variante 1 (~15 BLEU sur le même découpage), mais les hyperparamètres n’ont pas été optimisés pour cette variante. Il serait prématuré de conclure sur la valeur de l’encodeur multimodal sans avoir d’abord aligné les réglages.</p>
       </div>
     </div>
 
     <!-- Comparaison V1 vs V5 -->
     <div class="card">
       <h2><span class="icon">🔀</span> Variante 5 vs Variante 1</h2>
-      <p class="section-intro">L'unique différence est l'encodeur. Tout le reste est identique — ce qui en fait une ablation propre sur l'effet du pré-entraînement bimodal.</p>
+      <p class="section-intro">L’unique différence est l’encodeur. Tout le reste est identique — ce qui en fait une ablation propre sur l’effet du pré-entraînement bimodal.</p>
       <div class="vs-row">
         <div class="vs-cell" style="border-left: 3px solid #6366f1;">
           <h3 style="color:#4338ca;">Variante 1 — Encodeur parole seule</h3>
@@ -204,7 +204,7 @@
             <tr>
               <td><strong>Checkpoint Speech_Text</strong></td>
               <td>B-1k (actuel) · autres tailles si disponibles</td>
-              <td>À explorer si d'autres checkpoints Speech_Text existent</td>
+              <td>À explorer si d’autres checkpoints Speech_Text existent</td>
               <td><span class="tag tag-blue">B-1k seulement</span></td>
             </tr>
             <tr>
@@ -214,13 +214,13 @@
               <td><span class="tag tag-orange">sentence_like seulement</span></td>
             </tr>
             <tr>
-              <td><strong>Gel de l'encodeur</strong></td>
+              <td><strong>Gel de l’encodeur</strong></td>
               <td><code>freeze_encoder_updates: 5000</code></td>
-              <td>Même impact qu'en V1 — à aligner avant de conclure</td>
+              <td>Même impact qu’en V1 — à aligner avant de conclure</td>
               <td><span class="tag tag-orange">non vérifié run_001</span></td>
             </tr>
             <tr>
-              <td><strong>Taux d'apprentissage</strong></td>
+              <td><strong>Taux d’apprentissage</strong></td>
               <td><code>1e-4</code></td>
               <td>Doit être aligné sur V1 pour une comparaison propre</td>
               <td><span class="tag tag-orange">à vérifier</span></td>
@@ -263,17 +263,17 @@
         </table>
       </div>
       <div class="note note-warn">
-        <strong>Interprétation prudente :</strong> un seul run, sur <em>sentence_like</em>, avec des hyperparamètres non ajustés. Ce score (~7,9) ne permet pas encore de conclure sur la valeur de l'encodeur multimodal. Les runs <em>utterance</em> avec les mêmes réglages que V1 sont nécessaires avant tout jugement.
+        <strong>Interprétation prudente :</strong> un seul run, sur <em>sentence_like</em>, avec des hyperparamètres non ajustés. Ce score (~7,9) ne permet pas encore de conclure sur la valeur de l’encodeur multimodal. Les runs <em>utterance</em> avec les mêmes réglages que V1 sont nécessaires avant tout jugement.
       </div>
     </div>
 
-    <!-- Pistes d'amélioration -->
+    <!-- Pistes d’amélioration -->
     <div class="card">
-      <h2><span class="icon">🔧</span> Pistes d'amélioration</h2>
+      <h2><span class="icon">🔧</span> Pistes d’amélioration</h2>
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
-          <div><strong>Aligner les hyperparamètres sur la variante 1</strong> : gel 5k updates, LR 1e-4, même durée d'entraînement — avant de comparer les deux encodeurs. L'écart actuel peut être dû aux réglages, pas à l'encodeur.</div>
+          <div><strong>Aligner les hyperparamètres sur la variante 1</strong> : gel 5k updates, LR 1e-4, même durée d’entraînement — avant de comparer les deux encodeurs. L’écart actuel peut être dû aux réglages, pas à l’encodeur.</div>
         </li>
         <li>
           <span class="imp-num">2</span>
@@ -285,11 +285,11 @@
         </li>
         <li>
           <span class="imp-num">4</span>
-          <div><strong>Trancher sur la priorité de cette variante</strong> : si après les runs alignés le score reste sous V1, concentrer l'effort sur les variantes 1 et 2 ; sinon creuser l'hypothèse multimodale.</div>
+          <div><strong>Trancher sur la priorité de cette variante</strong> : si après les runs alignés le score reste sous V1, concentrer l’effort sur les variantes 1 et 2 ; sinon creuser l’hypothèse multimodale.</div>
         </li>
         <li>
           <span class="imp-num">5</span>
-          <div><strong>Analyser les représentations latentes</strong> : comparer les vecteurs produits par l'encodeur Speech_Text et par l'encodeur parole seule (V1) — visualisation t-SNE ou similarité cosine — pour comprendre en quoi ils diffèrent.</div>
+          <div><strong>Analyser les représentations latentes</strong> : comparer les vecteurs produits par l’encodeur Speech_Text et par l’encodeur parole seule (V1) — visualisation t-SNE ou similarité cosine — pour comprendre en quoi ils diffèrent.</div>
         </li>
       </ul>
     </div>
@@ -319,7 +319,7 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l'accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l’accueil</a></p>
     </footer>
   </div>
 

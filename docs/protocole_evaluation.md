@@ -1,4 +1,4 @@
-# Protocole d'évaluation S3T (figé)
+# Protocole d’évaluation S3T (figé)
 
 | Champ | Valeur |
 |-------|--------|

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>2 · speechLLM — Pantagruel S3T</title>
-  <meta name="description" content="Projecteur entre l'encodeur Pantagruel et un LLM gelé (Phi-2) : entraîner très peu de paramètres pour connecter la parole au texte.">
+  <meta name="description" content="Projecteur entre l’encodeur Pantagruel et un LLM gelé (Phi-2) : entraîner très peu de paramètres pour connecter la parole au texte.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -88,7 +88,7 @@
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
       <div class="nav-links">
-        <a href="index.html#pipeline">Vue d'ensemble</a>
+        <a href="index.html#pipeline">Vue d’ensemble</a>
         <a href="index.html#resultats">Résultats</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
@@ -104,8 +104,8 @@
   <header class="hero">
     <div class="variant-badge">Variante 2 / 5</div>
     <h1>speechLLM</h1>
-    <p class="lead">Connecter l'encodeur Pantagruel à un grand modèle de langue (LLM) via un projecteur minimal. Seul le projecteur est entraîné — le LLM reste gelé.</p>
-    <p class="tagline">« On ne réentraîne presque rien, seulement un petit adaptateur entre l'oreille et un modèle de texte déjà très capable. »</p>
+    <p class="lead">Connecter l’encodeur Pantagruel à un grand modèle de langue (LLM) via un projecteur minimal. Seul le projecteur est entraîné — le LLM reste gelé.</p>
+    <p class="tagline">« On ne réentraîne presque rien, seulement un petit adaptateur entre l’oreille et un modèle de texte déjà très capable. »</p>
   </header>
 
   <main class="container">
@@ -113,7 +113,7 @@
     <!-- Architecture -->
     <div class="card">
       <h2><span class="icon">⚙</span> Architecture</h2>
-      <p class="section-intro">Inspirée de SLAM-ASR (Ma et al., 2024) : l'encodeur acoustique et le LLM restent gelés ; seul le projecteur (quelques couches linéaires) est entraîné pour aligner les deux espaces.</p>
+      <p class="section-intro">Inspirée de SLAM-ASR (Ma et al., 2024) : l’encodeur acoustique et le LLM restent gelés ; seul le projecteur (quelques couches linéaires) est entraîné pour aligner les deux espaces.</p>
       <div class="arch-container">
         <svg viewBox="0 0 860 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Inter',sans-serif">
           <defs>
@@ -162,8 +162,8 @@
         </svg>
       </div>
       <div class="prose">
-        <p><strong>Projecteur :</strong> quelques couches linéaires qui projettent les vecteurs acoustiques de l'encodeur dans l'espace d'entrée du LLM. C'est le seul composant entraîné (mode B1). L'entraînement est rapide (20k updates, 1–6 h).</p>
-        <p><strong>Format dialogue :</strong> le modèle est entraîné avec un prompt côté USER et la traduction attendue côté ASSISTANT. Le LLM génère l'anglais comme dans une conversation. La consigne (prompt) est un hyperparamètre important.</p>
+        <p><strong>Projecteur :</strong> quelques couches linéaires qui projettent les vecteurs acoustiques de l’encodeur dans l’espace d’entrée du LLM. C’est le seul composant entraîné (mode B1). L’entraînement est rapide (20k updates, 1–6 h).</p>
+        <p><strong>Format dialogue :</strong> le modèle est entraîné avec un prompt côté USER et la traduction attendue côté ASSISTANT. Le LLM génère l’anglais comme dans une conversation. La consigne (prompt) est un hyperparamètre important.</p>
         <p><strong>Contrainte de longueur :</strong> <code>max_new_tokens: 48</code> est le réglage qui donne ~15 BLEU utterance (<code>run_012</code>, <code>run_013</code>). Les configs à 128 tokens produisent des hypothèses ~3× trop longues et chutent à ~5–6 BLEU (<code>run_017</code>, <code>run_021</code>).</p>
       </div>
     </div>
@@ -184,13 +184,13 @@
               <td><span class="tag tag-orange">configs v2/v3 à 128 tok — utiliser 48</span></td>
             </tr>
             <tr>
-              <td><strong>Taille de l'encodeur</strong></td>
+              <td><strong>Taille de l’encodeur</strong></td>
               <td><code>B-1k</code> / <code>L-14k</code> / <code>L-114k</code></td>
               <td>B-1k ~7,5 → L-14k/L-114k ~15 BLEU utterance</td>
               <td><span class="tag tag-green">ok</span></td>
             </tr>
             <tr>
-              <td><strong>Gel / dégel de l'encodeur</strong></td>
+              <td><strong>Gel / dégel de l’encodeur</strong></td>
               <td><code>frozen</code> (défaut) / <code>unfrozen</code></td>
               <td>Dégel risqué en utterance (~3,7 test) ; meilleur résultat gelé (~15)</td>
               <td><span class="tag tag-green">ok</span></td>
@@ -220,7 +220,7 @@
               <td><span class="tag tag-green">ok</span></td>
             </tr>
             <tr>
-              <td><strong>Durée d'entraînement</strong></td>
+              <td><strong>Durée d’entraînement</strong></td>
               <td>~20k updates</td>
               <td>Convergence rapide par rapport à la variante 1</td>
               <td><span class="tag tag-green">ok</span></td>
@@ -319,9 +319,9 @@
       </div>
     </div>
 
-    <!-- Pistes d'amélioration -->
+    <!-- Pistes d’amélioration -->
     <div class="card">
-      <h2><span class="icon">🔧</span> Pistes d'amélioration</h2>
+      <h2><span class="icon">🔧</span> Pistes d’amélioration</h2>
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
@@ -329,15 +329,15 @@
         </li>
         <li>
           <span class="imp-num">2</span>
-          <div><strong>Lire les hypothèses produites</strong> (<code>eval/dev_predictions.txt</code>) : répétitions, longueur des sorties, erreurs récurrentes — diagnostiquer avant d'ajuster les hyperparamètres.</div>
+          <div><strong>Lire les hypothèses produites</strong> (<code>eval/dev_predictions.txt</code>) : répétitions, longueur des sorties, erreurs récurrentes — diagnostiquer avant d’ajuster les hyperparamètres.</div>
         </li>
         <li>
           <span class="imp-num">3</span>
-          <div><strong>Tester d'autres LLM gelés</strong> (Llama-3, Mistral, Qwen2.5-7B) — <code>run_018</code> Qwen2.5-3B ~13 test, sous Phi-2 ; un modèle plus grand pourrait inverser la tendance.</div>
+          <div><strong>Tester d’autres LLM gelés</strong> (Llama-3, Mistral, Qwen2.5-7B) — <code>run_018</code> Qwen2.5-3B ~13 test, sous Phi-2 ; un modèle plus grand pourrait inverser la tendance.</div>
         </li>
         <li>
           <span class="imp-num">4</span>
-          <div><strong>Affiner la consigne (prompt)</strong> : instruction explicite pour produire de l'anglais uniquement, sans commentaire, longueur cible. Tester plusieurs variantes de prompt.</div>
+          <div><strong>Affiner la consigne (prompt)</strong> : instruction explicite pour produire de l’anglais uniquement, sans commentaire, longueur cible. Tester plusieurs variantes de prompt.</div>
         </li>
         <li>
           <span class="imp-num">5</span>
@@ -375,7 +375,7 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l'accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l’accueil</a></p>
     </footer>
   </div>
 

@@ -90,7 +90,7 @@
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
       <div class="nav-links">
-        <a href="index.html#pipeline">Vue d'ensemble</a>
+        <a href="index.html#pipeline">Vue d’ensemble</a>
         <a href="index.html#resultats">Résultats</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
@@ -106,8 +106,8 @@
   <header class="hero">
     <div class="variant-badge">Variante 4 / 5</div>
     <h1>Cascade ASR → MT</h1>
-    <p class="lead">D'abord transcrire le français (ASR avec Whisper), puis traduire ce texte en anglais (MT avec Marian). La baseline classique « deux modèles en série ».</p>
-    <p class="tagline">« D'abord transcrire le français à l'écrit, puis traduire ce texte en anglais, comme le ferait un humain avec deux outils séparés. »</p>
+    <p class="lead">D’abord transcrire le français (ASR avec Whisper), puis traduire ce texte en anglais (MT avec Marian). La baseline classique « deux modèles en série ».</p>
+    <p class="tagline">« D’abord transcrire le français à l’écrit, puis traduire ce texte en anglais, comme le ferait un humain avec deux outils séparés. »</p>
   </header>
 
   <main class="container">
@@ -167,9 +167,9 @@
         </svg>
       </div>
       <div class="prose">
-        <p><strong>Étape 1 — ASR (Whisper large-v3) :</strong> l'audio français est transcrit en texte français. Whisper est un modèle de reconnaissance vocale multilingue d'OpenAI, entraîné sur 680k heures d'audio. Il produit du texte français écrit avec une bonne qualité, mais peut commettre des erreurs sur des mots rares ou des segments bruités.</p>
-        <p><strong>Étape 2 — MT (Marian opus-mt-fr-en) :</strong> le texte français transcrit est traduit en anglais par un modèle de traduction automatique texte-texte de l'équipe Helsinki NLP. L'anglais produit dépend entièrement de la qualité de la transcription.</p>
-        <p><strong>Propagation d'erreurs :</strong> c'est la faiblesse principale de la cascade. Une erreur de transcription en étape 1 se propage et peut dégrader significativement la traduction en étape 2. Avantage : la transcription française intermédiaire est lisible et facilite le débogage.</p>
+        <p><strong>Étape 1 — ASR (Whisper large-v3) :</strong> l’audio français est transcrit en texte français. Whisper est un modèle de reconnaissance vocale multilingue d’OpenAI, entraîné sur 680k heures d’audio. Il produit du texte français écrit avec une bonne qualité, mais peut commettre des erreurs sur des mots rares ou des segments bruités.</p>
+        <p><strong>Étape 2 — MT (Marian opus-mt-fr-en) :</strong> le texte français transcrit est traduit en anglais par un modèle de traduction automatique texte-texte de l’équipe Helsinki NLP. L’anglais produit dépend entièrement de la qualité de la transcription.</p>
+        <p><strong>Propagation d’erreurs :</strong> c’est la faiblesse principale de la cascade. Une erreur de transcription en étape 1 se propage et peut dégrader significativement la traduction en étape 2. Avantage : la transcription française intermédiaire est lisible et facilite le débogage.</p>
       </div>
     </div>
 
@@ -243,7 +243,7 @@
         </table>
       </div>
       <div class="note">
-        <strong>Très bon BLEU utterance (~37,4)</strong> — deuxième meilleur score du projet, derrière Gemini 3.5 v2 (~41). La transcription française intermédiaire est un avantage pour l'interprétabilité : on peut lire les erreurs et comprendre pourquoi la traduction échoue.
+        <strong>Très bon BLEU utterance (~37,4)</strong> — deuxième meilleur score du projet, derrière Gemini 3.5 v2 (~41). La transcription française intermédiaire est un avantage pour l’interprétabilité : on peut lire les erreurs et comprendre pourquoi la traduction échoue.
       </div>
     </div>
 
@@ -256,15 +256,15 @@
           <tbody>
             <tr>
               <td><span class="tag tag-green">Forces</span></td>
-              <td>Très bon BLEU utterance (~37,4) ; transcription française lisible (interprétabilité) ; pas d'entraînement ; modèles ASR/MT SOTA disponibles librement</td>
+              <td>Très bon BLEU utterance (~37,4) ; transcription française lisible (interprétabilité) ; pas d’entraînement ; modèles ASR/MT SOTA disponibles librement</td>
             </tr>
             <tr>
               <td><span class="tag tag-orange">Faiblesses</span></td>
-              <td>Erreurs ASR propagées en cascade ; deux modèles = latence et VRAM cumulées ; hors du protocole Table 8 de l'article Pantagruel ; bench <em>sentence_like</em> incomplet</td>
+              <td>Erreurs ASR propagées en cascade ; deux modèles = latence et VRAM cumulées ; hors du protocole Table 8 de l’article Pantagruel ; bench <em>sentence_like</em> incomplet</td>
             </tr>
             <tr>
               <td><span class="tag tag-gray">Coût</span></td>
-              <td>~3–5 h GPU pour l'inférence (Whisper large-v3 seul peut prendre 2–3 h sur le test set)</td>
+              <td>~3–5 h GPU pour l’inférence (Whisper large-v3 seul peut prendre 2–3 h sur le test set)</td>
             </tr>
             <tr>
               <td><span class="tag tag-blue">Usage typique</span></td>
@@ -275,9 +275,9 @@
       </div>
     </div>
 
-    <!-- Pistes d'amélioration -->
+    <!-- Pistes d’amélioration -->
     <div class="card">
-      <h2><span class="icon">🔧</span> Pistes d'amélioration</h2>
+      <h2><span class="icon">🔧</span> Pistes d’amélioration</h2>
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
@@ -297,7 +297,7 @@
         </li>
         <li>
           <span class="imp-num">5</span>
-          <div><strong>Mesurer le WER (Word Error Rate)</strong> de l'ASR indépendamment du BLEU ST — permet de dissocier la qualité de la reconnaissance vocale de celle de la traduction.</div>
+          <div><strong>Mesurer le WER (Word Error Rate)</strong> de l’ASR indépendamment du BLEU ST — permet de dissocier la qualité de la reconnaissance vocale de celle de la traduction.</div>
         </li>
       </ul>
     </div>
@@ -327,7 +327,7 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l'accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l’accueil</a></p>
     </footer>
   </div>
 

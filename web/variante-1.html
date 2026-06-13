@@ -89,7 +89,7 @@
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
       <div class="nav-links">
-        <a href="index.html#pipeline">Vue d'ensemble</a>
+        <a href="index.html#pipeline">Vue d’ensemble</a>
         <a href="index.html#resultats">Résultats</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
@@ -105,8 +105,8 @@
   <header class="hero">
     <div class="variant-badge">Variante 1 / 5</div>
     <h1>Transformer ST</h1>
-    <p class="lead">Traduction directe de l'audio vers l'anglais — bout en bout (E2E). C'est la variante de référence, alignée sur l'article Pantagruel (2026).</p>
-    <p class="tagline">« Un seul modèle apprend à lire l'audio et à écrire l'anglais, de bout en bout. »</p>
+    <p class="lead">Traduction directe de l’audio vers l’anglais — bout en bout (E2E). C’est la variante de référence, alignée sur l’article Pantagruel (2026).</p>
+    <p class="tagline">« Un seul modèle apprend à lire l’audio et à écrire l’anglais, de bout en bout. »</p>
   </header>
 
   <main class="container">
@@ -155,8 +155,8 @@
         </svg>
       </div>
       <div class="prose">
-        <p><strong>Encodeur Pantagruel :</strong> pré-entraîné sur de grandes quantités de parole française (1k, 14k ou 114k heures) avec une approche <strong>JEPA</strong> (data2vec 2.0) — un encodeur « étudiant » voit l'audio partiellement masqué et doit retrouver les vecteurs qu'un encodeur « professeur » aurait produits sur les parties cachées. Il est d'abord gelé (ses poids ne changent pas), puis parfois affiné après plusieurs milliers de pas.</p>
-        <p><strong>Décodeur Transformer :</strong> 6 couches, 8 têtes d'attention. Il génère la traduction anglaise token par token, à partir des représentations produites par l'encodeur. Il est entièrement entraîné sur m-TEDx.</p>
+        <p><strong>Encodeur Pantagruel :</strong> pré-entraîné sur de grandes quantités de parole française (1k, 14k ou 114k heures) avec une approche <strong>JEPA</strong> (data2vec 2.0) — un encodeur « étudiant » voit l’audio partiellement masqué et doit retrouver les vecteurs qu’un encodeur « professeur » aurait produits sur les parties cachées. Il est d’abord gelé (ses poids ne changent pas), puis parfois affiné après plusieurs milliers de pas.</p>
+        <p><strong>Décodeur Transformer :</strong> 6 couches, 8 têtes d’attention. Il génère la traduction anglaise token par token, à partir des représentations produites par l’encodeur. Il est entièrement entraîné sur m-TEDx.</p>
         <p><strong>SentencePiece (SPM) :</strong> vocabulaire de ~1 000 sous-mots appris sur les traductions anglaises du corpus. Les mots rares sont recomposés morceau par morceau ; le modèle reste compact. À la génération, le décodeur émet des unités SPM qui sont ensuite réassemblées en phrase lisible.</p>
       </div>
     </div>
@@ -171,7 +171,7 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong>Taille de l'encodeur</strong></td>
+              <td><strong>Taille de l’encodeur</strong></td>
               <td><code>B-1k</code> / <code>L-14k</code> / <code>L-114k</code></td>
               <td>+4 pts BLEU entre B-1k (~16,7) et L-14k v3 (~21,2)</td>
               <td><span class="tag tag-green">ok</span></td>
@@ -179,23 +179,23 @@
             <tr>
               <td><strong>Segmentation audio</strong></td>
               <td><code>utterance</code> / <code>sentence_like</code></td>
-              <td>Protocoles non comparables — choisir selon l'objectif</td>
+              <td>Protocoles non comparables — choisir selon l’objectif</td>
               <td><span class="tag tag-green">ok</span></td>
             </tr>
             <tr>
-              <td><strong>Gel de l'encodeur</strong></td>
+              <td><strong>Gel de l’encodeur</strong></td>
               <td><code>freeze_encoder_updates: 5000</code></td>
-              <td>Stabilise l'entraînement, évite le collapse en début de run</td>
+              <td>Stabilise l’entraînement, évite le collapse en début de run</td>
               <td><span class="tag tag-green">ok depuis v2</span></td>
             </tr>
             <tr>
               <td><strong>Warmup LR</strong></td>
               <td><code>warmup_updates: 10 000</code> (cible papier)</td>
-              <td>Montée progressive du taux d'apprentissage</td>
+              <td>Montée progressive du taux d’apprentissage</td>
               <td><span class="tag tag-orange">champ YAML, non lu par le code</span></td>
             </tr>
             <tr>
-              <td><strong>Taux d'apprentissage</strong></td>
+              <td><strong>Taux d’apprentissage</strong></td>
               <td><code>1e-4</code> à <code>2e-4</code></td>
               <td>Valeur critique — trop élevé → collapse</td>
               <td><span class="tag tag-green">ok</span></td>
@@ -207,9 +207,9 @@
               <td><span class="tag tag-orange">8 seq. (contrainte VRAM)</span></td>
             </tr>
             <tr>
-              <td><strong>Durée d'entraînement</strong></td>
+              <td><strong>Durée d’entraînement</strong></td>
               <td><code>max_updates: 80 000</code></td>
-              <td>Le papier va jusqu'à 120k ; early stop souvent @~20–30k</td>
+              <td>Le papier va jusqu’à 120k ; early stop souvent @~20–30k</td>
               <td><span class="tag tag-orange">sous le papier</span></td>
             </tr>
             <tr>
@@ -320,14 +320,14 @@
         </table>
       </div>
       <div class="note">
-        <strong>Écarts documentés par rapport à l'article :</strong> décodage greedy (au lieu de beam 5), pas de warmup LR, pas de SpecAugment, batch effectif plus petit (8 vs 64–256 séquences), stack PyTorch/HF vs fairseq. Ces points expliquent l'écart ~3–5 pts sous le papier sur les grands encodeurs.
+        <strong>Écarts documentés par rapport à l’article :</strong> décodage greedy (au lieu de beam 5), pas de warmup LR, pas de SpecAugment, batch effectif plus petit (8 vs 64–256 séquences), stack PyTorch/HF vs fairseq. Ces points expliquent l’écart ~3–5 pts sous le papier sur les grands encodeurs.
       </div>
     </div>
 
     <!-- Réplication stricte -->
     <div class="card">
-      <h2><span class="icon">🔬</span> Réplication de l'article Pantagruel (Table 8)</h2>
-      <p class="section-intro">Les runs utterance visent la Table 8 de l'article, mais la réplication reste partielle. Voici la checklist pour s'en approcher davantage.</p>
+      <h2><span class="icon">🔬</span> Réplication de l’article Pantagruel (Table 8)</h2>
+      <p class="section-intro">Les runs utterance visent la Table 8 de l’article, mais la réplication reste partielle. Voici la checklist pour s’en approcher davantage.</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Élément</th><th>Cible papier</th><th>État actuel</th></tr></thead>
@@ -339,7 +339,7 @@
             <tr><td>Optimiseur AdamW</td><td>β₁=0,9 ; β₂=0,98</td><td><span class="tag tag-green">ok</span></td></tr>
             <tr><td>Label smoothing 0,1</td><td>0,1</td><td><span class="tag tag-green">ok</span></td></tr>
             <tr><td>Gel encodeur 5 000 premiers pas</td><td><code>freeze_encoder_updates: 5000</code></td><td><span class="tag tag-green">ok depuis v2</span></td></tr>
-            <tr><td>Beam search à l'évaluation</td><td>beam = 5</td><td><span class="tag tag-orange">YAML dit 5 ; code en greedy</span></td></tr>
+            <tr><td>Beam search à l’évaluation</td><td>beam = 5</td><td><span class="tag tag-orange">YAML dit 5 ; code en greedy</span></td></tr>
             <tr><td>Warmup LR (10 000 pas)</td><td>montée progressive</td><td><span class="tag tag-orange">champ YAML non lu par le code</span></td></tr>
             <tr><td>SpecAugment</td><td>masquage temps/fréquence</td><td><span class="tag tag-orange">absent du code</span></td></tr>
             <tr><td>Batch effectif 64–256</td><td>64–256 séquences</td><td><span class="tag tag-orange">8 seq. (contrainte VRAM)</span></td></tr>
@@ -348,9 +348,9 @@
       </div>
     </div>
 
-    <!-- Pistes d'amélioration -->
+    <!-- Pistes d’amélioration -->
     <div class="card">
-      <h2><span class="icon">🔧</span> Pistes d'amélioration</h2>
+      <h2><span class="icon">🔧</span> Pistes d’amélioration</h2>
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
@@ -358,7 +358,7 @@
         </li>
         <li>
           <span class="imp-num">2</span>
-          <div><strong>Ajouter le warmup LR</strong> (10 000 pas) dans <code>4_train.py</code> — le champ est déjà dans les templates YAML ; speechLLM l'a déjà implémenté dans son module d'entraînement.</div>
+          <div><strong>Ajouter le warmup LR</strong> (10 000 pas) dans <code>4_train.py</code> — le champ est déjà dans les templates YAML ; speechLLM l’a déjà implémenté dans son module d’entraînement.</div>
         </li>
         <li>
           <span class="imp-num">3</span>
@@ -370,11 +370,11 @@
         </li>
         <li>
           <span class="imp-num">5</span>
-          <div><strong>Lancer sur les trois tailles d'encodeur</strong> (B-1k, L-14k, L-114k) avec <strong>au moins 2 seeds</strong> — le papier rapporte ±0,4 BLEU ; nécessaire pour une comparaison robuste.</div>
+          <div><strong>Lancer sur les trois tailles d’encodeur</strong> (B-1k, L-14k, L-114k) avec <strong>au moins 2 seeds</strong> — le papier rapporte ±0,4 BLEU ; nécessaire pour une comparaison robuste.</div>
         </li>
         <li>
           <span class="imp-num">6</span>
-          <div><strong>Poursuivre L-114k v3</strong> (<code>run_019</code>, en cours @~38k/80k updates, best dev ~21,1 @ 30k) — potentiel de dépasser ou d'égaler L-14k si le run converge.</div>
+          <div><strong>Poursuivre L-114k v3</strong> (<code>run_019</code>, en cours @~38k/80k updates, best dev ~21,1 @ 30k) — potentiel de dépasser ou d’égaler L-14k si le run converge.</div>
         </li>
         <li>
           <span class="imp-num">7</span>
@@ -409,7 +409,7 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l'accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l’accueil</a></p>
     </footer>
   </div>
 

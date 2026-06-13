@@ -69,7 +69,7 @@ USER: <embedding_speech> <prompt court> ASSISTANT: <traduction anglais référen
 
 Mettre en œuvre une pipeline ST fr→en **speechLLM** reproductible sur m-TEDx, avec Pantagruel comme encodeur parole et un LLM pour la génération anglaise, puis valider la faisabilité (convergence, BLEU, coût GPU) avant toute optimisation secondaire.
 
-## État d'avancement (juin 2026)
+## État d’avancement (juin 2026)
 
 ### Résultats de référence (fr→en, `sentence_like`)
 
@@ -82,7 +82,7 @@ Mettre en œuvre une pipeline ST fr→en **speechLLM** reproductible sur m-TEDx,
 ### Tentative « encodeur dégelé » (juin 2026)
 
 - **run_004** (`run_004_speechllm_b1_sentence_long_unfreeze_encoder_v2`) : entraînement 20k updates terminé ; BLEU dev ~26 pendant le train (20 batches valid). **Éval corpus invalide** (BLEU dev 0.30) : `best.pt` ne persistait que le projecteur, pas `encoder.*`.
-- **Correctifs** : `trainable_parameters()` inclut l'encodeur si dégelé ; `save_projector_checkpoint` persiste `encoder.*` quand `freeze_encoder: false`.
+- **Correctifs** : `trainable_parameters()` inclut l’encodeur si dégelé ; `save_projector_checkpoint` persiste `encoder.*` quand `freeze_encoder: false`.
 - **run_005** (`run_005_speechllm_b1_sentence_long_unfreeze_encoder`) : retrain avec checkpoint corrigé (`encoder.*` persisté). **SacreBLEU corpus** : **dev 19.25**, **test 18.83** (vs run_002 gelé : 19.99 / 15.89). Légère baisse dev, gain test notable ; à confirmer sur ≥ 2 seeds.
 
 ## Périmètre
