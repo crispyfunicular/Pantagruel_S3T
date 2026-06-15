@@ -29,6 +29,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import sacrebleu
 import torch
@@ -144,6 +145,108 @@ def evaluate_bleu(
     return float(sacrebleu.corpus_bleu(predictions, [references]).score)
 
 
+def build_checkpoint_payload(
+    *,
+    run_id: str,
+    config: dict[str, Any],
+    model: S3TModel,
+    optimizer: torch.optim.Optimizer,
+    scaler: torch.cuda.amp.GradScaler,
+    pad_id: int,
+    bos_id: int,
+    eos_id: int,
+    vocab_size: int,
+    git_commit: str,
+    global_update: int,
+    best_bleu: float,
+    evals_without_improvement: int,
+    start_utc: str,
+) -> dict[str, Any]:
+    """Assembler le dict sérialisé pour ``best.pt`` / ``last.pt`` (reprise incluse)."""
+    return {
+        "run_id": run_id,
+        "config": config,
+        "model_state": model.state_dict(),
+        "optimizer_state": optimizer.state_dict(),
+        "scaler_state": scaler.state_dict() if scaler.is_enabled() else None,
+        "pad_id": pad_id,
+        "bos_id": bos_id,
+        "eos_id": eos_id,
+        "vocab_size": vocab_size,
+        "git_commit": git_commit,
+        "update": global_update,
+        "best_bleu_dev": best_bleu,
+        "evals_without_improvement": evals_without_improvement,
+        "start_timestamp_utc": start_utc,
+    }
+
+
+def save_checkpoint(path: Path, payload: dict[str, Any]) -> None:
+    """Écrire un checkpoint sur disque."""
+    torch.save(payload, path)
+
+
+def resolve_resume_checkpoint(
+    checkpoints_dir: Path,
+    resume_from: Path | None,
+) -> Path | None:
+    """
+    Choisir le checkpoint de reprise : explicite, sinon ``last.pt``, sinon ``best.pt``.
+
+    Retour :
+        Chemin existant, ou ``None`` si aucun checkpoint utilisable.
+    """
+    if resume_from is not None:
+        if not resume_from.is_file():
+            raise FileNotFoundError(f"Missing resume checkpoint: {resume_from}")
+        return resume_from
+    for candidate in (checkpoints_dir / "last.pt", checkpoints_dir / "best.pt"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def load_train_checkpoint(
+    path: Path,
+    *,
+    model: S3TModel,
+    optimizer: torch.optim.Optimizer,
+    scaler: torch.cuda.amp.GradScaler,
+    device: torch.device,
+) -> dict[str, Any]:
+    """
+    Restaurer poids (et optimiseur/scaler si présents) depuis un checkpoint étape 4.
+
+    Retour :
+        Métadonnées utiles à la boucle (update, best BLEU, early-stop counter, start UTC).
+    """
+    payload = torch.load(path, map_location=device, weights_only=False)
+    if not isinstance(payload, dict) or "model_state" not in payload:
+        raise ValueError(f"Invalid checkpoint payload: {path}")
+
+    model.load_state_dict(payload["model_state"], strict=False)
+    optimizer_state = payload.get("optimizer_state")
+    if isinstance(optimizer_state, dict):
+        optimizer.load_state_dict(optimizer_state)
+    scaler_state = payload.get("scaler_state")
+    if isinstance(scaler_state, dict) and scaler.is_enabled():
+        scaler.load_state_dict(scaler_state)
+
+    global_update = int(payload.get("update", 0))
+    best_bleu = float(payload.get("best_bleu_dev", -1.0))
+    evals_without_improvement = int(payload.get("evals_without_improvement", 0))
+    start_utc = str(
+        payload.get("start_timestamp_utc", datetime.now(timezone.utc).isoformat())
+    )
+    return {
+        "global_update": global_update,
+        "best_bleu": best_bleu,
+        "evals_without_improvement": evals_without_improvement,
+        "start_utc": start_utc,
+        "checkpoint_path": str(path.resolve()),
+    }
+
+
 def run_train(
     *,
     config_path: Path,
@@ -152,6 +255,9 @@ def run_train(
     dry_run: bool,
     verbose: bool,
     prefer_cpu: bool,
+    resume: bool = False,
+    resume_from: Path | None = None,
+    overwrite: bool = False,
 ) -> int:
     """
     Exécuter la boucle d'entraînement ST complète depuis une config YAML.
@@ -163,6 +269,9 @@ def run_train(
         dry_run : Afficher le plan sans entraîner.
         verbose : Journaliser perte et BLEU périodiques.
         prefer_cpu : Forcer le CPU même si CUDA est disponible.
+        resume : Reprendre depuis ``last.pt`` / ``best.pt`` (ou ``resume_from``).
+        resume_from : Checkpoint explicite pour la reprise.
+        overwrite : Autoriser un entraînement neuf alors qu'un checkpoint existe déjà.
 
     Retour :
         0 on success, 2 if manifests/SPM are missing.
@@ -222,6 +331,9 @@ def run_train(
         print(f"  max_updates: {max_updates}")
         print(f"  warmup_updates: {warmup_updates}")
         print(f"  early_stopping_patience: {early_stopping_patience}")
+        print(f"  resume:      {resume}")
+        if resume_from is not None:
+            print(f"  resume_from: {resume_from}")
         print(
             f"  spec_augment: enabled={spec_augment.enabled} "
             f"mask_time_prob={spec_augment.mask_time_prob} "
@@ -231,13 +343,27 @@ def run_train(
         )
         return 0
 
+    existing_checkpoint = resolve_resume_checkpoint(checkpoints_dir, None)
+    if existing_checkpoint is not None and not resume and not overwrite:
+        print(
+            "ERROR: checkpoint existant sans --resume ni --overwrite : "
+            f"{existing_checkpoint}",
+            file=sys.stderr,
+        )
+        print(
+            "  Utilisez --resume pour continuer, ou --overwrite pour repartir de zéro.",
+            file=sys.stderr,
+        )
+        return 2
+
     start_wall_s = time.time()
     start_utc = datetime.now(timezone.utc).isoformat()
 
     run_dir.mkdir(parents=True, exist_ok=True)
     checkpoints_dir.mkdir(parents=True, exist_ok=True)
     eval_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(config_path, run_dir / "config.yaml")
+    if not resume:
+        shutil.copy2(config_path, run_dir / "config.yaml")
 
     git_commit = "unknown"
     try:
@@ -317,6 +443,37 @@ def run_train(
     stop_training = False
     evals_without_improvement = 0
     early_stopped = False
+
+    if resume:
+        checkpoint_path = resolve_resume_checkpoint(checkpoints_dir, resume_from)
+        if checkpoint_path is None:
+            print(
+                "ERROR: --resume demandé mais aucun checkpoint trouvé", file=sys.stderr
+            )
+            return 2
+        restored = load_train_checkpoint(
+            checkpoint_path,
+            model=model,
+            optimizer=optimizer,
+            scaler=scaler,
+            device=device,
+        )
+        global_update = restored["global_update"]
+        best_bleu = restored["best_bleu"]
+        evals_without_improvement = restored["evals_without_improvement"]
+        start_utc = restored["start_utc"]
+        if verbose:
+            print(
+                f"Resume from {checkpoint_path} "
+                f"(update={global_update}, best_bleu_dev={best_bleu:.2f}, "
+                f"evals_without_improvement={evals_without_improvement})"
+            )
+    elif overwrite and existing_checkpoint is not None:
+        for stale in (checkpoints_dir / "best.pt", checkpoints_dir / "last.pt"):
+            if stale.is_file():
+                stale.unlink()
+        if verbose:
+            print(f"Overwrite: removed existing checkpoints in {checkpoints_dir}")
 
     amp_enabled = device.type == "cuda"
     amp_type = torch.bfloat16 if amp_dtype == "bf16" else torch.float16
@@ -410,20 +567,24 @@ def run_train(
                     if bleu_dev > best_bleu:
                         best_bleu = bleu_dev
                         evals_without_improvement = 0
-                        torch.save(
-                            {
-                                "run_id": run_id,
-                                "config": config,
-                                "model_state": model.state_dict(),
-                                "pad_id": pad_id,
-                                "bos_id": bos_id,
-                                "eos_id": eos_id,
-                                "vocab_size": vocab_size,
-                                "git_commit": git_commit,
-                                "update": global_update,
-                                "best_bleu_dev": best_bleu,
-                            },
+                        save_checkpoint(
                             checkpoints_dir / "best.pt",
+                            build_checkpoint_payload(
+                                run_id=run_id,
+                                config=config,
+                                model=model,
+                                optimizer=optimizer,
+                                scaler=scaler,
+                                pad_id=pad_id,
+                                bos_id=bos_id,
+                                eos_id=eos_id,
+                                vocab_size=vocab_size,
+                                git_commit=git_commit,
+                                global_update=global_update,
+                                best_bleu=best_bleu,
+                                evals_without_improvement=evals_without_improvement,
+                                start_utc=start_utc,
+                            ),
                         )
                     else:
                         evals_without_improvement += 1
@@ -439,6 +600,27 @@ def run_train(
                                     f"(patience={early_stopping_patience}, "
                                     f"best_bleu_dev={best_bleu:.2f})"
                                 )
+
+                    # Sauvegarde périodique pour reprise après interruption (PRD : runs longs).
+                    save_checkpoint(
+                        checkpoints_dir / "last.pt",
+                        build_checkpoint_payload(
+                            run_id=run_id,
+                            config=config,
+                            model=model,
+                            optimizer=optimizer,
+                            scaler=scaler,
+                            pad_id=pad_id,
+                            bos_id=bos_id,
+                            eos_id=eos_id,
+                            vocab_size=vocab_size,
+                            git_commit=git_commit,
+                            global_update=global_update,
+                            best_bleu=best_bleu,
+                            evals_without_improvement=evals_without_improvement,
+                            start_utc=start_utc,
+                        ),
+                    )
 
                 event = TrainLogEvent(
                     timestamp_utc=datetime.now(timezone.utc).isoformat(),
@@ -466,20 +648,24 @@ def run_train(
                         msg += f" bleu_dev={event.bleu_dev:.2f} best={event.best_bleu_dev:.2f}"
                     print(msg)
 
-    torch.save(
-        {
-            "run_id": run_id,
-            "config": config,
-            "model_state": model.state_dict(),
-            "pad_id": pad_id,
-            "bos_id": bos_id,
-            "eos_id": eos_id,
-            "vocab_size": vocab_size,
-            "git_commit": git_commit,
-            "update": global_update,
-            "best_bleu_dev": best_bleu if best_bleu >= 0 else 0.0,
-        },
+    save_checkpoint(
         checkpoints_dir / "last.pt",
+        build_checkpoint_payload(
+            run_id=run_id,
+            config=config,
+            model=model,
+            optimizer=optimizer,
+            scaler=scaler,
+            pad_id=pad_id,
+            bos_id=bos_id,
+            eos_id=eos_id,
+            vocab_size=vocab_size,
+            git_commit=git_commit,
+            global_update=global_update,
+            best_bleu=best_bleu if best_bleu >= 0 else 0.0,
+            evals_without_improvement=evals_without_improvement,
+            start_utc=start_utc,
+        ),
     )
 
     if not (checkpoints_dir / "best.pt").is_file():
@@ -513,6 +699,7 @@ def run_train(
             "best_bleu_dev": float(best_bleu if best_bleu >= 0 else 0.0),
             "early_stopped": early_stopped,
             "early_stopping_patience": early_stopping_patience,
+            "resumed": resume,
             "train_events": len(train_events),
             "checkpoints": {
                 "best": str((checkpoints_dir / "best.pt").resolve()),
@@ -535,6 +722,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--prefer-cpu", action="store_true", default=False)
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reprendre depuis checkpoints/last.pt ou best.pt",
+    )
+    parser.add_argument(
+        "--resume-from",
+        type=Path,
+        default=None,
+        help="Checkpoint explicite pour --resume",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Repartir de zéro en supprimant les checkpoints existants",
+    )
     return parser
 
 
@@ -555,6 +758,9 @@ def run_from_namespace(args: argparse.Namespace) -> int:
         dry_run=getattr(args, "dry_run", False),
         verbose=getattr(args, "verbose", False),
         prefer_cpu=getattr(args, "prefer_cpu", False),
+        resume=getattr(args, "resume", False),
+        resume_from=getattr(args, "resume_from", None),
+        overwrite=getattr(args, "overwrite", False),
     )
 
 

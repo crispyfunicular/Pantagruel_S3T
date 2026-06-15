@@ -489,6 +489,65 @@
       border-radius: 4px;
     }
 
+    .audio-player {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+      padding: 0.45rem 0.85rem 0.45rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      cursor: default;
+    }
+
+    .audio-play-btn {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.1s;
+      padding: 0;
+    }
+
+    .audio-play-btn:hover { background: #1d4ed8; }
+    .audio-play-btn:active { transform: scale(0.93); }
+
+    .audio-play-btn svg { display: block; }
+
+    .audio-progress-wrap {
+      width: 7rem;
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .audio-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.1s linear;
+    }
+
+    .audio-time {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      min-width: 2.2rem;
+      text-align: right;
+    }
+
   </style>
 </head>
 <body>
@@ -620,7 +679,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (~37) et Gemini 2.5 (~34). Meilleur ST local : <strong>~26,1</strong> (L-14k v5 SpecAugment, vocab 1k, <code>run_026</code>) ; L-114k <strong>~23,5</strong> (<code>run_028</code> OVH). Ablations <code>run_036</code>–<code>run_040</code> en cours / en file. Meilleur speechLLM : ~15,2 (<code>run_013</code>) ; <code>run_032</code> replicate en cours ; <code>run_039</code> SpecAugment en file.",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (~37) et Gemini 2.5 (~34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>) ; L-114k <strong>23,5</strong> (<code>run_028</code> OVH). <code>run_032</code> speechLLM **en cours** sur OVH ; file <code>run_033</code> → <code>run_038</code>. Meilleur speechLLM : 15,2 (<code>run_013</code>).",
         rows: [
           {
             id: 3,
@@ -775,6 +834,7 @@
     const PHRASES = [
       {
         title: 'Phrase 1 — Le coup de foudre',
+        audio: 'audio/9fxo9YJhnG8_5.wav',
         fr: "Il m’a regardée avec ses grands yeux bleus et on s’est aimés au premier regard.",
         lines: [
           { color: 'ref', label: 'Référence', text: 'His huge blue eyes watched me back, and we fell in love at first sight.' },
@@ -786,6 +846,7 @@
       },
       {
         title: 'Phrase 2 — L’émerveillement au réveil',
+        audio: 'audio/9fxo9YJhnG8_6.wav',
         fr: "Aujourd’hui encore, quand je me lève le matin, je regarde mon homme à côté de moi et je suis toujours émerveillée.",
         lines: [
           { color: 'ref', label: 'Référence', text: 'Still today, when I wake up in the morning, I watch my man lying next to me and I am still amazed.' },
@@ -797,6 +858,7 @@
       },
       {
         title: 'Phrase 3 — Papillons dans le ventre',
+        audio: 'audio/9fxo9YJhnG8_7.wav',
         fr: "J’ai mon cœur qui palpite et encore les papillons dans le ventre, presque 24 heures sur 24.",
         lines: [
           { color: 'ref', label: 'Référence', text: 'My heart rate rises and I am still head over heals, almost 24 hours a day.' },
@@ -808,6 +870,7 @@
       },
       {
         title: 'Phrase 4 — Rien n’a changé',
+        audio: 'audio/9fxo9YJhnG8_8.wav',
         subtitle: 'segment court',
         fr: "Rien n’a changé.",
         lines: [
@@ -820,6 +883,7 @@
       },
       {
         title: 'Phrase 5 — Comme au premier jour',
+        audio: 'audio/9fxo9YJhnG8_9.wav',
         fr: "Rien n’a changé : je l’aime comme au premier jour.",
         lines: [
           { color: 'ref', label: 'Référence', text: 'Nothing has changed: I love him as much I did the first day.' },
@@ -832,11 +896,35 @@
     ];
 
     let phraseIndex = 0;
+    let currentAudio = null;
+
+    function formatDuration(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return m + ':' + String(s).padStart(2, '0');
+    }
+
+    const ICON_PLAY = '<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" aria-hidden="true"><path d="M1 1l10 6-10 6V1z"/></svg>';
+    const ICON_PAUSE = '<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="4" height="12" rx="1"/><rect x="7" y="1" width="4" height="12" rx="1"/></svg>';
 
     function renderPhraseBlock(phrase) {
       const subtitle = phrase.subtitle
         ? ' <span style="font-weight:400;color:var(--muted);font-size:0.85rem">(' + phrase.subtitle + ')</span>'
         : '';
+
+      const audioHtml = phrase.audio
+        ? '<div class="audio-player">' +
+            '<button type="button" class="audio-play-btn" aria-label="Lire le segment audio" data-src="' + phrase.audio + '">' +
+              ICON_PLAY +
+            '</button>' +
+            '<div class="audio-progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">' +
+              '<div class="audio-progress-bar"></div>' +
+            '</div>' +
+            '<span class="audio-time">0:00</span>' +
+          '</div>'
+        : '';
+
       const lines = phrase.lines.map((line) => {
         const body = line.html ? line.text : escapeHtml(line.text);
         return (
@@ -851,15 +939,89 @@
       return (
         '<article class="phrase-block">' +
           '<h3>' + phrase.title + subtitle + '</h3>' +
+          audioHtml +
           '<p class="phrase-fr"><em>FR</em> — ' + escapeHtml(phrase.fr) + '</p>' +
           '<div class="tr-lines">' + lines + '</div>' +
         '</article>'
       );
     }
 
+    function bindAudioPlayer(container) {
+      const btn = container.querySelector('.audio-play-btn');
+      if (!btn) return;
+
+      const progressWrap = container.querySelector('.audio-progress-wrap');
+      const progressBar = container.querySelector('.audio-progress-bar');
+      const timeLabel = container.querySelector('.audio-time');
+      const src = btn.dataset.src;
+      const audio = new Audio(src);
+
+      function updateProgress() {
+        if (!audio.duration) return;
+        const pct = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = pct.toFixed(1) + '%';
+        progressWrap.setAttribute('aria-valuenow', Math.round(pct));
+        timeLabel.textContent = formatDuration(audio.currentTime);
+      }
+
+      audio.addEventListener('timeupdate', updateProgress);
+
+      audio.addEventListener('ended', () => {
+        btn.innerHTML = ICON_PLAY;
+        btn.setAttribute('aria-label', 'Lire le segment audio');
+        progressBar.style.width = '0%';
+        timeLabel.textContent = formatDuration(audio.duration);
+        currentAudio = null;
+      });
+
+      audio.addEventListener('loadedmetadata', () => {
+        timeLabel.textContent = formatDuration(audio.duration);
+      });
+
+      btn.addEventListener('click', () => {
+        if (currentAudio && currentAudio !== audio) {
+          currentAudio.pause();
+          const prevBtn = document.querySelector('.audio-play-btn[data-playing="true"]');
+          if (prevBtn) {
+            prevBtn.innerHTML = ICON_PLAY;
+            prevBtn.setAttribute('aria-label', 'Lire le segment audio');
+            prevBtn.removeAttribute('data-playing');
+          }
+        }
+        if (audio.paused) {
+          audio.play();
+          btn.innerHTML = ICON_PAUSE;
+          btn.setAttribute('aria-label', 'Mettre en pause');
+          btn.setAttribute('data-playing', 'true');
+          currentAudio = audio;
+        } else {
+          audio.pause();
+          btn.innerHTML = ICON_PLAY;
+          btn.setAttribute('aria-label', 'Lire le segment audio');
+          btn.removeAttribute('data-playing');
+          currentAudio = null;
+        }
+      });
+
+      progressWrap.addEventListener('click', (e) => {
+        const rect = progressWrap.getBoundingClientRect();
+        const ratio = (e.clientX - rect.left) / rect.width;
+        if (audio.duration) {
+          audio.currentTime = ratio * audio.duration;
+          updateProgress();
+        }
+      });
+    }
+
     function showPhrase(index) {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
       phraseIndex = ((index % PHRASES.length) + PHRASES.length) % PHRASES.length;
-      document.getElementById('phrases-root').innerHTML = renderPhraseBlock(PHRASES[phraseIndex]);
+      const root = document.getElementById('phrases-root');
+      root.innerHTML = renderPhraseBlock(PHRASES[phraseIndex]);
+      bindAudioPlayer(root);
       document.getElementById('phrases-counter').textContent =
         (phraseIndex + 1) + ' / ' + PHRASES.length;
     }

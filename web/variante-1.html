@@ -288,17 +288,17 @@
               <td><code>run_035</code></td>
               <td>B-1k</td>
               <td><em>utterance</em></td>
-              <td><em>terminé</em></td>
+              <td>19,75</td>
               <td>≤ 3,5 h</td>
-              <td>v5 SpecAugment (Modyco) — résultats à rappatrier</td>
+              <td>v5 SpecAugment (Modyco, 15 juin)</td>
             </tr>
             <tr>
               <td><code>run_036</code></td>
               <td>L-14k</td>
               <td><em>utterance</em></td>
-              <td><em>en cours</em></td>
-              <td>~8–10 h</td>
-              <td>v9 warmup 10k — amélioration run_026 (Modyco)</td>
+              <td><em>interrompu</em></td>
+              <td>~4 h</td>
+              <td>v9 warmup 10k — @ ~31k, best dev ~24,1 (best.pt sauvegardé)</td>
             </tr>
             <tr>
               <td><code>run_038</code></td>
@@ -430,7 +430,7 @@
         </li>
         <li>
           <span class="imp-num">2</span>
-          <div><strong>Warmup LR</strong> — **implémenté** dans `4_train.py` ; ablation `run_036` (warmup 10k) **en cours** sur Modyco.</div>
+          <div><strong>Warmup LR</strong> — **implémenté** dans `4_train.py` ; ablation `run_036` (warmup 10k) **interrompue** (best dev ~24,1, sous run_026).</div>
         </li>
         <li>
           <span class="imp-num">3</span>
@@ -446,9 +446,9 @@
         </li>
         <li>
           <span class="imp-num">6</span>
-          <div><strong>SpecAugment v5</strong> (<code>run_026</code>, **26,12 test**, vocab 1k) — **meilleur ST local**. Ablations **v9** : <code>run_036</code> warmup 10k (en cours), <code>run_037</code> SpecAugment fort (en file).</div>
-          <div><strong>L-114k</strong> : v5 (<code>run_028</code>, **23,51** test OVH) ; v6 long (<code>run_030</code>) et v7 SPM 5k (<code>run_033</code>) en file ; <code>run_038</code> freq en file.</div>
-          <div><strong>Transfert</strong> : <code>run_039</code> speechLLM SpecAugment et <code>run_040</code> Speech_Text utterance — en file Modyco.</div>
+          <div><strong>SpecAugment v5</strong> (<code>run_026</code>, **26,12 test**, vocab 1k) — **meilleur ST local**. `run_036` warmup 10k **interrompu** (~24,1 dev).</div>
+          <div><strong>L-114k</strong> : v5 (<code>run_028</code>, **23,51** test OVH) ; <code>run_032</code> speechLLM **en cours** ; <code>run_033</code> SPM 5k et <code>run_038</code> freq **en file** OVH.</div>
+          <div><strong>Modyco</strong> : chaîne `run_037`/`run_039`/`run_040` **annulée** (GPU libéré en journée).</div>
         </li>
         <li>
           <span class="imp-num">7</span>

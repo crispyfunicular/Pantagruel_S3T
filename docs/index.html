@@ -620,7 +620,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (~37) et Gemini 2.5 (~34). Meilleur ST local : <strong>~26,1</strong> (L-14k v5 SpecAugment, vocab 1k, <code>run_026</code>) ; L-114k <strong>~23,5</strong> (<code>run_028</code> OVH). Ablations <code>run_036</code>–<code>run_040</code> en cours / en file. Meilleur speechLLM : ~15,2 (<code>run_013</code>) ; <code>run_032</code> replicate en cours ; <code>run_039</code> SpecAugment en file.",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (~37) et Gemini 2.5 (~34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>) ; L-114k <strong>23,5</strong> (<code>run_028</code> OVH). <code>run_032</code> speechLLM **en cours** sur OVH ; file <code>run_033</code> → <code>run_038</code>. Meilleur speechLLM : 15,2 (<code>run_013</code>).",
         rows: [
           {
             id: 3,

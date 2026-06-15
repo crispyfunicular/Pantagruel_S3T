@@ -78,12 +78,12 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | ST L-14k **v7** SPM 5k | `run_031_transformer_baseline_utterance_large_14k_v7_spm5k` | 24.24 | **24.02** | ok (Modyco, 14 juin) — sous run_026 |
 | ST L-14k **v8** SPM 8k | `run_034_transformer_baseline_utterance_large_14k_v8_spm8k` | 23.36 | **22.24** | ok (Modyco, 14 juin) — sous run_031 |
 | ST L-114k **v5** SpecAugment | `run_028_transformer_baseline_utterance_large_114k_v5` | 24.08 | **23.51** | ok (OVH, 14 juin) — **meilleur L-114k local** |
-| ST **B-1k v5** SpecAugment | `run_035_transformer_baseline_utterance_b1k_v5` | — | — | **terminé** (Modyco, résultats à rappatrier) |
-| ST L-14k **v9 warmup 10k** | `run_036_transformer_baseline_utterance_large_14k_v9_warmup10k` | — | — | **en cours** (Modyco, amélioration run_026) |
-| ST L-14k **v9 SpecAugment fort** | `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` | — | — | **en file** (Modyco, après run_040) |
-| ST L-114k **v9 SpecAugment freq** | `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` | — | — | **en file** (OVH, waiter post run_033) |
-| speechLLM L-14k **v5 SpecAugment** | `run_039_speechllm_b1_utterance_large_14k_v5_specaug` | — | — | **en file** (Modyco, après run_036) |
-| Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | — | — | **en file** (Modyco, après run_039) |
+| ST **B-1k v5** SpecAugment | `run_035_transformer_baseline_utterance_b1k_v5` | 20.18 | **19.75** | ok (Modyco, 15 juin) |
+| ST L-14k **v9 warmup 10k** | `run_036_transformer_baseline_utterance_large_14k_v9_warmup10k` | — | — | **interrompu** (Modyco, @ ~31k, best dev ~24,1 — éval test à lancer) |
+| ST L-14k **v9 SpecAugment fort** | `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` | — | — | **annulé** (chaîne Modyco stoppée) |
+| ST L-114k **v9 SpecAugment freq** | `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` | — | — | **en file** (OVH, après run_033) |
+| speechLLM L-14k **v5 SpecAugment** | `run_039_speechllm_b1_utterance_large_14k_v5_specaug` | — | — | **annulé** (chaîne Modyco stoppée) |
+| Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | — | — | **annulé** (chaîne Modyco stoppée) |
 | speechLLM L-14k **v3** (128 tok) | `run_021_speechllm_b1_utterance_large_14k_v3` | 5.84 | **5.48** | **échec** (Modyco) |
 | speechLLM L-114k **v3** (128 tok) | `run_022_speechllm_b1_utterance_large_114k_v3` | 5.28 | **4.78** | **échec** (OVH) |
 | speechLLM L-14k **replicate** | `run_023_speechllm_b1_utterance_large_14k_replicate` | 15.26 | **14.23** | ok (Modyco, 48 tok — proche `run_012` 15,03) |
@@ -112,8 +112,8 @@ Trois axes **indépendants** (ne pas les confondre) :
 - **Baseline ST Table 8** : terminée en `sentence_like` — **16.12** dev / **14.97** test (`run_001_transformer_baseline_sentence_like`).
 - Protocole d'évaluation **figé** : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
 - **Bench utterance** — [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
-- **Encodeur 14k / 114k** : meilleur ST **`run_026`** (**26,12**, vocab 1k) ; SPM 5k/8k sous-performent (`run_031` 24,02 ; `run_034` 22,24) ; L-114k **`run_028`** (**23,51**) ; améliorations **`run_036`–`run_040`** en cours / en file (warmup 10k, SpecAugment fort/freq, speechLLM SpecAugment, Speech_Text utterance) — voir [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md) et [`docs/plan_amelioration_table8.md`](docs/plan_amelioration_table8.md).
-- **OVH** : **`run_032`** speechLLM en cours ; **`run_030`/`run_033`** en file ; **`run_038`** SpecAugment freq en file (waiter post-033).
+- **Encodeur 14k / 114k** : meilleur ST **`run_026`** (**26,12**, vocab 1k) ; **`run_036`** warmup 10k **interrompu** (best dev ~24,1) ; **`run_037`/`run_039`/`run_040`** annulés (chaîne Modyco stoppée) — voir [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md).
+- **OVH** : **`run_032`** speechLLM **en cours** (~18k/20k) ; **`run_033`** puis **`run_038`** **en file** ; **`run_030`** v6 long **non planifié** (waiter retiré).
 - **Gemini 3.5 Flash** : **`run_005` utterance v2 terminé** — **41,42 / 41,09** ; **`run_004` sentence_like v2 terminé** — **38,69 / 36,76** (garde-fous, `max_output_tokens=8192`, `thinking_level: minimal`) ; devant Gemini 2.5 sur les deux découpages. Runs `run_003_*` v1 **non conclusifs** (troncature).
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.

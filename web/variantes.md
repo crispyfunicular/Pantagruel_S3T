@@ -132,8 +132,8 @@ C’est la piste de référence de l’article [Pantagruel](vocabulaire.md#panta
 | *utterance* L-14k v7 SPM 5k [^32] | ~24,0 | early stop (Modyco, 14 juin) — sous run_026 |
 | *utterance* L-14k v8 SPM 8k [^34] | ~22,2 | early stop (Modyco, 14 juin) — sous run_031 |
 | *utterance* L-114k v5 SpecAugment [^33] | **~23,5** | early stop (OVH, 14 juin) — meilleur L-114k local |
-| *utterance* B-1k v5 SpecAugment [^35] | *terminé* | Modyco (résultats à rappatrier) |
-| *utterance* L-14k v9 warmup 10k [^36] | *en cours* | amélioration run_026 (Modyco) |
+| *utterance* B-1k v5 SpecAugment [^35] | **19,75** | Modyco (15 juin) |
+| *utterance* L-14k v9 warmup 10k [^36] | *interrompu* | @ ~31k, best dev ~24,1 (best.pt ok) |
 | *utterance* L-114k v9 SpecAugment freq [^38] | *en file* | OVH (waiter post run_033) |
 | *utterance* L-114k v2 [^15] | **~19,6** | ~9 h GPU (OVH, early stop ~21k) |
 | *utterance* L-114k **v3** [^26] | **~20,2** | ~9–10 h GPU (OVH) |
@@ -491,12 +491,12 @@ Syntaxe : notes de bas de page Markdown (`[^n]`), supportées par Pandoc, GitHub
 [^32]: `run_031_transformer_baseline_utterance_large_14k_v7_spm5k` — 24,24 / **24,02** test (Modyco, SPM 5k — sous run_026)
 [^33]: `run_028_transformer_baseline_utterance_large_114k_v5` — 24,08 / **23,51** test (OVH, SpecAugment — meilleur L-114k local)
 [^34]: `run_034_transformer_baseline_utterance_large_14k_v8_spm8k` — 23,36 / **22,24** test (Modyco, SPM 8k — sous run_031)
-[^35]: `run_035_transformer_baseline_utterance_b1k_v5` — **terminé** (Modyco, B-1k SpecAugment ; résultats à rappatrier)
-[^36]: `run_036_transformer_baseline_utterance_large_14k_v9_warmup10k` — **en cours** (Modyco, warmup 10k, amélioration run_026)
-[^37]: `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` — **en file** (Modyco, `mask_time_prob: 0.10`)
-[^38]: `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` — **en file** (OVH, SpecAugment temporel + fréquentiel)
-[^39]: `run_039_speechllm_b1_utterance_large_14k_v5_specaug` — **en file** (Modyco, speechLLM + SpecAugment)
-[^40]: `run_040_pantagruel_multimodal_utterance_v2` — **en file** (Modyco, Speech_Text utterance aligné run_026)
+[^35]: `run_035_transformer_baseline_utterance_b1k_v5` — **19,75** test (Modyco, B-1k SpecAugment, 15 juin)
+[^36]: `run_036_transformer_baseline_utterance_large_14k_v9_warmup10k` — **interrompu** (Modyco, @ ~31k, best dev ~24,1, `best.pt` sauvegardé)
+[^37]: `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` — **annulé** (chaîne Modyco stoppée)
+[^38]: `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` — **en file** (OVH, après run_033)
+[^39]: `run_039_speechllm_b1_utterance_large_14k_v5_specaug` — **annulé** (chaîne Modyco stoppée)
+[^40]: `run_040_pantagruel_multimodal_utterance_v2` — **annulé** (chaîne Modyco stoppée)
 [^17]: `run_004_gemini_35_flash_utterance_v2` — 41,42 / **20,32** test (2 outliers, sans garde-fous)
 [^19]: `run_005_gemini_35_flash_utterance_v2` — 41,42 / **41,09** test (garde-fous anti-boucles)
 [^20]: `run_004_gemini_35_flash_sentence_like_v2` — 38,69 / **36,76** test (garde-fous anti-boucles)

@@ -157,6 +157,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_train.add_argument("--run-id", required=True)
     p_train.add_argument("--output-dir", type=Path, default=None)
     p_train.add_argument("--prefer-cpu", action="store_true", default=False)
+    p_train.add_argument("--resume", action="store_true")
+    p_train.add_argument("--resume-from", type=Path, default=None)
+    p_train.add_argument("--overwrite", action="store_true")
     p_train.set_defaults(func=cmd_train)
 
     p_evaluate = subparsers.add_parser("evaluate", help="Évaluer avec SacreBLEU")
