@@ -23,13 +23,30 @@ if [[ -f "${ROOT}/.venv/bin/activate" ]]; then
 fi
 
 POLL_SEC="${POLL_SEC:-300}"
+# Seuil VRAM (MiB) : en dessous, on considère la GPU utilisable pour S3T (~L-14k + marge).
+GPU_FREE_MIB="${GPU_FREE_MIB:-8192}"
+
+gpu_used_mib() {
+  nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d ' '
+}
 
 wait_gpu_free() {
-  echo "=== $(date -Is) Attente GPU libre (poll ${POLL_SEC}s) ==="
-  while pgrep -af "^python.*pipeline\.py (train|run)" >/dev/null 2>&1; do
-    pgrep -af "^python.*pipeline\.py (train|run)" | head -1 || true
-    echo "$(date -Is) GPU occupée — nouvelle vérif dans ${POLL_SEC}s"
-    sleep "$POLL_SEC"
+  echo "=== $(date -Is) Attente GPU libre (poll ${POLL_SEC}s, seuil VRAM < ${GPU_FREE_MIB} MiB) ==="
+  while true; do
+    if pgrep -af "^python.*pipeline\.py (train|run)" >/dev/null 2>&1; then
+      pgrep -af "^python.*pipeline\.py (train|run)" | head -1 || true
+      echo "$(date -Is) pipeline.py train/run actif — nouvelle vérif dans ${POLL_SEC}s"
+      sleep "$POLL_SEC"
+      continue
+    fi
+    used="$(gpu_used_mib)"
+    if [[ -n "${used}" && "${used}" -ge "${GPU_FREE_MIB}" ]]; then
+      echo "$(date -Is) VRAM ${used} MiB occupée (≥ ${GPU_FREE_MIB}) — attente libération (ex. vLLM tiers)…"
+      sleep "$POLL_SEC"
+      continue
+    fi
+    echo "$(date -Is) GPU libre (VRAM ${used:-?} MiB)."
+    break
   done
 }
 
