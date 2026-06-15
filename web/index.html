@@ -710,9 +710,8 @@
 
     let currentSegment = 'utterance';
 
-    function formatScore(score, exact) {
-      const text = Number.isInteger(score) ? String(score) : score.toFixed(1).replace('.', ',');
-      return exact ? text : '~' + text;
+    function formatScore(score) {
+      return Number.isInteger(score) ? String(score) : score.toFixed(1).replace('.', ',');
     }
 
     function renderSegment(segmentKey) {
@@ -740,7 +739,7 @@
               '<div class="chart-bar-wrap">' +
                 '<div class="chart-bar chart-bar--' + row.color + '" style="width:' + width + '%"></div>' +
               '</div>' +
-              '<div class="chart-value">' + formatScore(row.score, row.exact) + '</div>' +
+              '<div class="chart-value">' + formatScore(row.score) + '</div>' +
             '</div>'
           );
         })
@@ -751,7 +750,7 @@
           '<tr>' +
             '<td>' + row.id + '</td>' +
             '<td><span class="model-name model-name--' + row.color + '">' + row.tableLabel + '</span></td>' +
-            '<td>' + formatScore(row.score, row.exact) + '</td>' +
+            '<td>' + formatScore(row.score) + '</td>' +
             '<td>' + row.params + '</td>' +
           '</tr>'
         ))
