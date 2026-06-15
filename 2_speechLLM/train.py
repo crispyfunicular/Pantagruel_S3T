@@ -20,6 +20,10 @@ from pathlib import Path
 
 import sacrebleu
 import torch
+from scripts_communs.st_common import (
+    apply_waveform_time_mask,
+    parse_spec_augment_config,
+)
 from speechLLM.speechllm_common import (
     PROJECT_ROOT,
     SpeechLLMModel,
@@ -111,6 +115,7 @@ def run_train(
     train_manifest = PROJECT_ROOT / str(deep_get(config, "data.train_manifest"))
     valid_manifest = PROJECT_ROOT / str(deep_get(config, "data.valid_manifest"))
     sample_rate = int(deep_get(config, "data.sample_rate", 16000))
+    spec_augment = parse_spec_augment_config(config)
     prompt = str(
         deep_get(
             config,
@@ -242,6 +247,13 @@ def run_train(
             input_values = batch["input_values"].to(device)
             attention_mask = batch["attention_mask"].to(device)
             target_texts = batch["target_texts"]
+            if spec_augment.enabled:
+                input_values = apply_waveform_time_mask(
+                    input_values,
+                    attention_mask,
+                    spec_augment=spec_augment,
+                    sample_rate=sample_rate,
+                )
 
             with torch.autocast(
                 device_type=device.type,
