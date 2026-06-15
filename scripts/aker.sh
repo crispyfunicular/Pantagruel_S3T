@@ -4,8 +4,11 @@
 # Le code vit sur aker ; les jobs GPU passent en général par un nœud compute
 # (ex. lig-gpu1) avec le même $HOME NFS — vérifier sur site.
 #
-# Prérequis : clé SSH vers bonapelm@aker.imag.fr
-#   ssh-copy-id bonapelm@aker.imag.fr
+# Prérequis : accès SSH imbriqué ligone → aker (aker n'est pas joignable en direct
+# depuis l'extérieur). Définir LIGONE_JUMP si besoin (défaut : bonapelm@ligone.imag.fr).
+#
+#   ssh bonapelm@ligone.imag.fr
+#   ssh bonapelm@aker.imag.fr
 #
 # Usage :
 #   ./scripts/aker.sh check
@@ -17,9 +20,10 @@
 
 set -euo pipefail
 
+LIGONE_JUMP="${LIGONE_JUMP:-bonapelm@ligone.imag.fr}"
 AKER_USER="${AKER_USER:-bonapelm}"
 AKER_HOST="${AKER_HOST:-aker.imag.fr}"
-AKER_S3T="${AKER_S3T:-/home/bonapelm/S3T}"
+AKER_S3T="${AKER_S3T:-~/S3T}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOCAL_RUNS="${ROOT}/runs/fr-en"
@@ -30,7 +34,7 @@ if [[ ! -f "${SSH_ID}" ]]; then
   echo "ERROR: clé SSH locale introuvable: ${SSH_ID}" >&2
   exit 2
 fi
-SSH_BASE=(
+SSH_LOCAL=(
   ssh
   -i "${SSH_ID}"
   -o IdentitiesOnly=yes
@@ -40,16 +44,23 @@ SSH_BASE=(
   -o KbdInteractiveAuthentication=no
   -o StrictHostKeyChecking=accept-new
 )
-RSYNC_SSH="ssh -i ${SSH_ID} -o IdentitiesOnly=yes -o BatchMode=yes -o PreferredAuthentications=publickey -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o StrictHostKeyChecking=accept-new"
+SSH_NESTED=(
+  -o BatchMode=yes
+  -o PreferredAuthentications=publickey
+  -o PasswordAuthentication=no
+  -o KbdInteractiveAuthentication=no
+  -o StrictHostKeyChecking=accept-new
+)
+RSYNC_SSH="ssh -i ${SSH_ID} -o IdentitiesOnly=yes -o BatchMode=yes -o PreferredAuthentications=publickey -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o StrictHostKeyChecking=accept-new ${LIGONE_JUMP} ssh -o BatchMode=yes -o PreferredAuthentications=publickey -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o StrictHostKeyChecking=accept-new"
 
 remote() {
-  "${SSH_BASE[@]}" "${AKER_USER}@${AKER_HOST}" "$@"
+  "${SSH_LOCAL[@]}" "${LIGONE_JUMP}" ssh "${SSH_NESTED[@]}" "${AKER_USER}@${AKER_HOST}" "$@"
 }
 
 usage() {
   sed -n '1,16p' "$0" | tail -n +2
   echo ""
-  echo "Variables optionnelles : AKER_USER AKER_HOST AKER_S3T SSH_IDENTITY_FILE"
+  echo "Variables optionnelles : LIGONE_JUMP AKER_USER AKER_HOST AKER_S3T SSH_IDENTITY_FILE"
 }
 
 cmd_check() {

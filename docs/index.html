@@ -620,7 +620,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (~37) et Gemini 2.5 (~34) ; l’article Pantagruel atteint 25,2 BLEU test avec l’encodeur L-114k. Meilleur ST local : ~19,6 (L-114k, <code>run_016</code>) ; meilleur speechLLM : ~15,2 (L-114k, <code>run_013</code>). ST L-114k reste ~5,6 pts sous le papier. Les runs 3.5 v1 (<code>run_003</code>, troncature) ne sont pas comparables.",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (~37) et Gemini 2.5 (~34). Meilleur ST local : <strong>~26,1</strong> (L-14k v5 SpecAugment, vocab 1k, <code>run_026</code>) ; L-114k <strong>~23,5</strong> (<code>run_028</code> OVH). Ablations <code>run_036</code>–<code>run_040</code> en cours / en file. Meilleur speechLLM : ~15,2 (<code>run_013</code>) ; <code>run_032</code> replicate en cours ; <code>run_039</code> SpecAugment en file.",
         rows: [
           {
             id: 3,
@@ -652,8 +652,8 @@
             color: 'v1',
             chartLabel: '1 · Transformer',
             tableLabel: 'Transformer ST',
-            score: 19.6,
-            params: 'Meilleur : L-114k v2 gelé 5k + early stop (~19,6, <code>run_016</code>) ; L-14k : ~17,2 ; beam 5'
+            score: 26.1,
+            params: 'Meilleur : L-14k v5 ~26,1 (<code>run_026</code>, vocab 1k) ; L-114k v5 ~23,5 (<code>run_028</code> OVH) ; SPM 5k/8k sous-performent ; beam 5 à l’éval'
           },
           {
             id: 2,

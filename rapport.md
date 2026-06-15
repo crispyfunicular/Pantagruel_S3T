@@ -1,7 +1,7 @@
 # Multimodalité : speech-to-text translation avec Pantagruel
 # Traduction parole français → anglais sur m-TEDx : réplication Pantagruel et variantes multimodales
 
-Statut : bench utterance partiel ; ST B-1k run_002 échoué (3,79) ; run_004 v2 **terminé** (16,84 / 16,68) ; ST L-14k `run_010` **échec** (0,00) — **`run_014` v2 terminé** (17,12 / 17,21, Modyco) ; **`run_016` ST L-114k v2 terminé** (20,30 / 19,63, OVH) ; speechLLM `run_003` **terminé** (10,00 / 7,47) ; speechLLM L-14k **`run_012` ok** (15,49 / 15,03) ; L-114k **`run_013` ok** (15,92 / 15,24, OVH) ; Gemini 3.5 v2 **`run_005` terminé** (41,42 / 41,09 utterance) ; **`run_004_gemini_35_flash_sentence_like_v2` terminé** (38,69 / 36,76)
+Statut : bench utterance partiel ; ST B-1k run_002 échoué (3,79) ; run_004 v2 **terminé** (16,84 / 16,68) ; ST L-14k `run_010` **échec** (0,00) — **`run_014` v2** (17,21) — **`run_020` v3** (22,05 / **21,22**, Modyco) ; ST L-114k **`run_016` v2** (19,63) — **`run_019` v3** (21,09 / **20,19**, OVH) ; speechLLM **`run_012`/`run_013`** (15,03/15,24, 48 tok) — **`run_023` replicate** (15,26 / **14,23**, Modyco) ; échecs 128 tok (`run_017` 5,60 / `run_021` 5,48) ; Qwen **`run_018`** (12,95) ; **`run_022` v3 en cours** (OVH) ; Gemini 3.5 v2 **`run_005`** (41,09) ; sentence_like v2 **`run_004`** (36,76)
 
 Références : [Pantagruel (2026)](docs/Pantagruel_2026.pdf) ; dépôt et protocole [PRD](docs/PRD.md), [README](README.md).
 

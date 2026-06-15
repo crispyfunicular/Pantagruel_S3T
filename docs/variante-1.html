@@ -214,15 +214,15 @@
             </tr>
             <tr>
               <td><strong>Décodage</strong></td>
-              <td><code>greedy</code> (actuel) → cible <code>beam_size: 5</code></td>
-              <td>Beam 5 : +quelques pts BLEU estimés</td>
-              <td><span class="tag tag-orange">greedy en production</span></td>
+              <td><code>greedy</code> (train) / <code>beam_size: 5</code> (éval)</td>
+              <td>Beam 5 à l’évaluation (`5_evaluate.py`)</td>
+              <td><span class="tag tag-green">beam 5 eval</span></td>
             </tr>
             <tr>
               <td><strong>SpecAugment</strong></td>
               <td>Masquage temps/fréquence sur les features audio</td>
               <td>Régularisation standard en ST</td>
-              <td><span class="tag tag-orange">absent du code</span></td>
+              <td><span class="tag tag-green">temporel + fréquentiel (v5+)</span></td>
             </tr>
             <tr>
               <td><strong>Label smoothing</strong></td>
@@ -245,28 +245,100 @@
           </thead>
           <tbody>
             <tr>
+              <td><code>run_026</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td><span class="result-best">~26,1</span></td>
+              <td>~7,6 h</td>
+              <td>v5 SpecAugment ; early stop @~55k ; dépasse papier L-14k (~24) (Modyco)</td>
+            </tr>
+            <tr>
+              <td><code>run_027</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td>~25,1</td>
+              <td>~12–18 h</td>
+              <td>v6 long 120k ; early stop (Modyco, 14 juin) — sous run_026</td>
+            </tr>
+            <tr>
+              <td><code>run_031</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td>~24,0</td>
+              <td>~8 h</td>
+              <td>v7 SPM 5k ; early stop (Modyco, 14 juin) — sous run_026</td>
+            </tr>
+            <tr>
+              <td><code>run_034</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td>~22,2</td>
+              <td>~5 h</td>
+              <td>v8 SPM 8k ; early stop (Modyco, 14 juin) — sous run_031</td>
+            </tr>
+            <tr>
+              <td><code>run_028</code></td>
+              <td>L-114k</td>
+              <td><em>utterance</em></td>
+              <td><span class="result-best">~23,5</span></td>
+              <td>~9 h</td>
+              <td>v5 SpecAugment ; early stop (OVH, 14 juin) — meilleur L-114k local</td>
+            </tr>
+            <tr>
+              <td><code>run_035</code></td>
+              <td>B-1k</td>
+              <td><em>utterance</em></td>
+              <td><em>terminé</em></td>
+              <td>≤ 3,5 h</td>
+              <td>v5 SpecAugment (Modyco) — résultats à rappatrier</td>
+            </tr>
+            <tr>
+              <td><code>run_036</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td><em>en cours</em></td>
+              <td>~8–10 h</td>
+              <td>v9 warmup 10k — amélioration run_026 (Modyco)</td>
+            </tr>
+            <tr>
+              <td><code>run_038</code></td>
+              <td>L-114k</td>
+              <td><em>utterance</em></td>
+              <td><em>en file</em></td>
+              <td>~9–12 h</td>
+              <td>v9 SpecAugment temporel + fréquentiel (OVH, post run_033)</td>
+            </tr>
+            <tr>
               <td><code>run_020</code></td>
               <td>L-14k</td>
               <td><em>utterance</em></td>
-              <td><span class="result-best">~21,2</span></td>
+              <td>~21,2</td>
               <td>~9–10 h</td>
-              <td>v3 ; gel 5k ; eval dev complet ; patience 4 (Modyco)</td>
-            </tr>
-            <tr>
-              <td><code>run_016</code></td>
-              <td>L-114k</td>
-              <td><em>utterance</em></td>
-              <td><span class="result-best">~19,6</span></td>
-              <td>~9 h</td>
-              <td>v2 ; early stop @~21k updates (OVH)</td>
+              <td>v3 ; gel 5k ; eval dev complet (Modyco)</td>
             </tr>
             <tr>
               <td><code>run_019</code></td>
               <td>L-114k</td>
               <td><em>utterance</em></td>
-              <td><em>en cours</em></td>
+              <td><span class="result-best">~20,2</span></td>
               <td>~9–10 h</td>
-              <td>v3 ; best dev ~21,1 @ 30k — @~38k/80k upd. (OVH)</td>
+              <td>v3 ; eval dev complet (OVH)</td>
+            </tr>
+            <tr>
+              <td><code>run_016</code></td>
+              <td>L-114k</td>
+              <td><em>utterance</em></td>
+              <td>~19,6</td>
+              <td>~9 h</td>
+              <td>v2 ; early stop @~21k updates (OVH)</td>
+            </tr>
+            <tr>
+              <td><code>run_025</code></td>
+              <td>L-114k</td>
+              <td><em>utterance</em></td>
+              <td>0,31</td>
+              <td>~8 h</td>
+              <td>v4 batch 64 — collapse (OVH)</td>
             </tr>
             <tr>
               <td><code>run_014</code></td>
@@ -320,7 +392,7 @@
         </table>
       </div>
       <div class="note">
-        <strong>Écarts documentés par rapport à l’article :</strong> décodage greedy (au lieu de beam 5), pas de warmup LR, pas de SpecAugment, batch effectif plus petit (8 vs 64–256 séquences), stack PyTorch/HF vs fairseq. Ces points expliquent l’écart ~3–5 pts sous le papier sur les grands encodeurs.
+        <strong>Écarts documentés par rapport à l’article :</strong> batch effectif plus petit (8 vs 64–256 séquences), sélection checkpoint au greedy en train (beam à l’éval), stack PyTorch/HF vs fairseq, absence de speed perturbation. SpecAugment, warmup LR et beam 5 à l’évaluation sont désormais implémentés.
       </div>
     </div>
 
@@ -339,9 +411,9 @@
             <tr><td>Optimiseur AdamW</td><td>β₁=0,9 ; β₂=0,98</td><td><span class="tag tag-green">ok</span></td></tr>
             <tr><td>Label smoothing 0,1</td><td>0,1</td><td><span class="tag tag-green">ok</span></td></tr>
             <tr><td>Gel encodeur 5 000 premiers pas</td><td><code>freeze_encoder_updates: 5000</code></td><td><span class="tag tag-green">ok depuis v2</span></td></tr>
-            <tr><td>Beam search à l’évaluation</td><td>beam = 5</td><td><span class="tag tag-orange">YAML dit 5 ; code en greedy</span></td></tr>
-            <tr><td>Warmup LR (10 000 pas)</td><td>montée progressive</td><td><span class="tag tag-orange">champ YAML non lu par le code</span></td></tr>
-            <tr><td>SpecAugment</td><td>masquage temps/fréquence</td><td><span class="tag tag-orange">absent du code</span></td></tr>
+            <tr><td>Beam search à l’évaluation</td><td>beam = 5</td><td><span class="tag tag-green">beam 5 (`5_evaluate.py`)</span></td></tr>
+            <tr><td>Warmup LR (10 000 pas)</td><td>montée progressive</td><td><span class="tag tag-green">implémenté (`4_train.py`)</span></td></tr>
+            <tr><td>SpecAugment</td><td>masquage temps/fréquence</td><td><span class="tag tag-green">temporel + fréquentiel (v5+)</span></td></tr>
             <tr><td>Batch effectif 64–256</td><td>64–256 séquences</td><td><span class="tag tag-orange">8 seq. (contrainte VRAM)</span></td></tr>
           </tbody>
         </table>
@@ -354,15 +426,15 @@
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
-          <div><strong>Implémenter le beam search (beam = 5)</strong> dans <code>5_evaluate.py</code> et <code>6_infer.py</code> — priorité haute, impact estimé +2–3 pts BLEU. Le champ <code>decode.beam_size: 5</code> existe déjà dans les configs YAML.</div>
+          <div><strong>Beam search (beam = 5)</strong> — **implémenté** à l’évaluation (`5_evaluate.py`, `6_infer.py`). Sélection `best.pt` en train reste au greedy.</div>
         </li>
         <li>
           <span class="imp-num">2</span>
-          <div><strong>Ajouter le warmup LR</strong> (10 000 pas) dans <code>4_train.py</code> — le champ est déjà dans les templates YAML ; speechLLM l’a déjà implémenté dans son module d’entraînement.</div>
+          <div><strong>Warmup LR</strong> — **implémenté** dans `4_train.py` ; ablation `run_036` (warmup 10k) **en cours** sur Modyco.</div>
         </li>
         <li>
           <span class="imp-num">3</span>
-          <div><strong>Ajouter SpecAugment</strong> sur les features acoustiques (masquage temporel et fréquentiel) — prévu en Phase 3 du PRD.</div>
+          <div><strong>SpecAugment</strong> — **implémenté** (temporel + fréquentiel ST ; temporel speechLLM). Ablations `run_037` (fort) et `run_038` (freq L-114k) **en file**.</div>
         </li>
         <li>
           <span class="imp-num">4</span>
@@ -374,7 +446,9 @@
         </li>
         <li>
           <span class="imp-num">6</span>
-          <div><strong>Poursuivre L-114k v3</strong> (<code>run_019</code>, en cours @~38k/80k updates, best dev ~21,1 @ 30k) — potentiel de dépasser ou d’égaler L-14k si le run converge.</div>
+          <div><strong>SpecAugment v5</strong> (<code>run_026</code>, **26,12 test**, vocab 1k) — **meilleur ST local**. Ablations **v9** : <code>run_036</code> warmup 10k (en cours), <code>run_037</code> SpecAugment fort (en file).</div>
+          <div><strong>L-114k</strong> : v5 (<code>run_028</code>, **23,51** test OVH) ; v6 long (<code>run_030</code>) et v7 SPM 5k (<code>run_033</code>) en file ; <code>run_038</code> freq en file.</div>
+          <div><strong>Transfert</strong> : <code>run_039</code> speechLLM SpecAugment et <code>run_040</code> Speech_Text utterance — en file Modyco.</div>
         </li>
         <li>
           <span class="imp-num">7</span>

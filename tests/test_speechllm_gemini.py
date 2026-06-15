@@ -48,7 +48,9 @@ def test_part_is_thought() -> None:
 def test_sanitize_gemini_translation_trims_repetition_loop() -> None:
     loop = " and" * 40
     noisy = f"I advise you to go and see the work of{loop}"
-    assert sanitize_gemini_translation(noisy) == "I advise you to go and see the work of"
+    assert (
+        sanitize_gemini_translation(noisy) == "I advise you to go and see the work of"
+    )
     assert sanitize_gemini_translation("Nothing has changed.") == "Nothing has changed."
 
 
