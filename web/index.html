@@ -717,12 +717,13 @@
 
     function renderSegment(segmentKey) {
       const data = SEGMENTS[segmentKey];
-      const maxScore = Math.max(...data.rows.map((row) => row.score));
+      const sortedRows = [...data.rows].sort((a, b) => b.score - a.score);
+      const maxScore = Math.max(...sortedRows.map((row) => row.score));
 
       document.getElementById('results-intro').innerHTML = data.intro;
       document.getElementById('results-note').innerHTML = data.note;
 
-      document.getElementById('chart-root').innerHTML = data.rows
+      document.getElementById('chart-root').innerHTML = sortedRows
         .map((row) => {
           const width = ((row.score / maxScore) * 100).toFixed(1);
           const sublabel = row.chartSublabel
@@ -745,7 +746,7 @@
         })
         .join('');
 
-      document.getElementById('table-body').innerHTML = data.rows
+      document.getElementById('table-body').innerHTML = sortedRows
         .map((row) => (
           '<tr>' +
             '<td>' + row.id + '</td>' +
