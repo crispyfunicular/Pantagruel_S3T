@@ -3,8 +3,8 @@
 Étape 6 — Inférence sur des fichiers WAV français arbitraires (chemin production).
 
 Contrairement à l'étape 5, ne requiert pas les splits m-TEDx : charge un checkpoint
-fine-tuné, encode un WAV 16 kHz fourni par l'utilisateur, décode en glouton du texte
-anglais et ajoute un enregistrement JSONL pour audit.
+fine-tuné, encode un WAV 16 kHz fourni par l'utilisateur, décode le texte anglais
+(greedy ou beam search selon la config) et ajoute un enregistrement JSONL pour audit.
 
 Entrées :
     - ``--checkpoint`` (``best.pt`` de l'étape 4).
@@ -32,9 +32,9 @@ import torch
 from scripts_communs.st_common import (
     PROJECT_ROOT,
     build_s3t_model,
+    decode_batch,
     decode_ids_to_text,
     deep_get,
-    greedy_decode_batch,
     load_sentencepiece,
     load_waveform,
     load_yaml_config,
@@ -56,7 +56,7 @@ def run_infer(
     checkpoint: Path,
     input_audio: Path,
     config_path: Path | None,
-    beam_size: int,
+    beam_size: int | None,
     output: Path,
     dry_run: bool,
     verbose: bool,
@@ -69,14 +69,13 @@ def run_infer(
         checkpoint : ``best.pt`` fine-tuné.
         input_audio : WAV parole française (16 kHz mono attendu).
         config_path : YAML de repli si le checkpoint n'a pas de clé ``config``.
-        beam_size : Accepté pour parité CLI ; décodage glouton utilisé aujourd'hui.
+        beam_size : Largeur du faisceau (défaut : decode.beam_size du YAML).
         output : Chemin JSONL à compléter.
         dry_run, verbose, prefer_cpu : Drapeaux CLI.
 
     Retour :
         0 on success, 2 on missing inputs.
     """
-    del beam_size  # Baseline gloutonne pour l'instant ; beam search pas encore branché.
     start_wall_s = time.time()
     start_utc = datetime.now(timezone.utc).isoformat()
     payload = load_checkpoint(checkpoint)
@@ -101,6 +100,9 @@ def run_infer(
     sample_rate = int(deep_get(config, "data.sample_rate", 16000))
     max_target_tokens = int(deep_get(config, "train.max_target_tokens", 256))
     max_new_tokens = int(deep_get(config, "decode.max_len_b", 128))
+    effective_beam_size = int(
+        deep_get(config, "decode.beam_size", 5) if beam_size is None else beam_size
+    )
 
     if dry_run:
         print("[dry-run] infer stage plan:")
@@ -108,6 +110,7 @@ def run_infer(
         print(f"  input:      {input_audio}")
         print(f"  spm_model:  {spm_model_path}")
         print(f"  output:     {output}")
+        print(f"  beam_size:  {effective_beam_size}")
         return 0
 
     sp_model = load_sentencepiece(spm_model_path)
@@ -130,7 +133,7 @@ def run_infer(
 
     wave = load_waveform(input_audio, sample_rate).unsqueeze(0).to(device)
     attn = torch.ones((1, wave.size(1)), dtype=torch.long, device=device)
-    generated = greedy_decode_batch(
+    generated = decode_batch(
         model=model,
         input_values=wave,
         attention_mask=attn,
@@ -138,6 +141,7 @@ def run_infer(
         eos_id=eos_id,
         pad_id=pad_id,
         max_new_tokens=max_new_tokens,
+        beam_size=effective_beam_size,
     )
     prediction = decode_ids_to_text(
         generated[0].tolist(),
@@ -157,6 +161,7 @@ def run_infer(
         "input_audio": str(input_audio.resolve()),
         "checkpoint": str(checkpoint.resolve()),
         "prediction": prediction,
+        "beam_size": effective_beam_size,
     }
     with output.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -175,7 +180,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--config", type=Path, default=None)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--input-audio", type=Path, required=True)
-    parser.add_argument("--beam-size", type=int, default=5)
+    parser.add_argument(
+        "--beam-size",
+        type=int,
+        default=None,
+        help="Largeur du faisceau (défaut : decode.beam_size du YAML, sinon 5).",
+    )
     parser.add_argument(
         "--output",
         type=Path,
@@ -201,7 +211,7 @@ def run_from_namespace(args: argparse.Namespace) -> int:
         checkpoint=checkpoint,
         input_audio=input_audio,
         config_path=getattr(args, "config", None),
-        beam_size=getattr(args, "beam_size", 5),
+        beam_size=getattr(args, "beam_size", None),
         output=getattr(
             args, "output", PROJECT_ROOT / "inference" / "predictions.jsonl"
         ),

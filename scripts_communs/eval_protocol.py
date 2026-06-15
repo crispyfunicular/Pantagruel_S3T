@@ -22,7 +22,7 @@ import sacrebleu
 # ---------------------------------------------------------------------------
 # Version figée — incrémenter si le protocole change (décodage, métrique, splits).
 # ---------------------------------------------------------------------------
-EVAL_PROTOCOL_VERSION = "2026-06-02-v1"
+EVAL_PROTOCOL_VERSION = "2026-06-12-v2"
 EVAL_PROTOCOL_DOC = "docs/protocole_evaluation.md"
 
 SACREBLEU_MIN_VERSION = "2.3.0"
@@ -36,9 +36,9 @@ PIPELINE_DECODE_SPECS: dict[str, dict[str, Any]] = {
     "transformer_st": {
         "decode_target": {"mode": "beam", "beam_size": 5, "max_len_b": 128},
         "decode_implemented": {
-            "mode": "greedy",
-            "note": "1_Transformer/5_evaluate.py utilise greedy_decode_batch ; "
-            "beam_size YAML/CLI est journalisé uniquement.",
+            "mode": "beam_or_greedy",
+            "beam_size_from": "decode.beam_size YAML ou --beam-size CLI",
+            "note": "1_Transformer/5_evaluate.py : decode_batch (greedy si beam<=1).",
         },
         "text": "spm_decode_then_strip_special_tokens",
         "checkpoint": "checkpoints/best.pt (meilleur SacreBLEU dev en entraînement)",

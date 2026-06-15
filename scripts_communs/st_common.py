@@ -42,11 +42,17 @@ __all__ = [
     "ManifestSample",
     "PROJECT_ROOT",
     "S3TModel",
+    "beam_decode_batch",
+    "decode_batch",
     "deep_get",
     "ensure_project_relative",
     "greedy_decode_batch",
+    "SpecAugmentConfig",
+    "apply_feature_freq_mask",
+    "apply_waveform_time_mask",
     "load_waveform",
     "load_yaml_config",
+    "parse_spec_augment_config",
     "read_manifest",
     "set_seed",
     "write_json",
@@ -147,6 +153,92 @@ def load_waveform(path: Path, sample_rate: int) -> torch.Tensor:
     # Mixer multi-canal en mono par moyenne des canaux.
     mono = data.mean(axis=1)
     return torch.from_numpy(mono)
+
+
+@dataclass(frozen=True)
+class SpecAugmentConfig:
+    """Paramètres SpecAugment (masquage temporel + fréquentiel, entraînement ST)."""
+
+    enabled: bool = False
+    mask_time_prob: float = 0.05
+    mask_time_length: int = 10
+    mask_freq_prob: float = 0.0
+    mask_freq_length: int = 27
+
+
+def parse_spec_augment_config(config: dict[str, Any]) -> SpecAugmentConfig:
+    """
+    Lire la section ``spec_augment`` d'une config YAML ST.
+
+    ``mask_time_length`` compte des fenêtres d'environ 10 ms à ``sample_rate`` Hz
+    (aligné LeBenchmark / fairseq : masques courts sur la timeline acoustique).
+    """
+    block = deep_get(config, "spec_augment", {}) or {}
+    if not isinstance(block, dict):
+        block = {}
+    return SpecAugmentConfig(
+        enabled=bool(block.get("enabled", False)),
+        mask_time_prob=float(block.get("mask_time_prob", 0.05)),
+        mask_time_length=int(block.get("mask_time_length", 10)),
+        mask_freq_prob=float(block.get("mask_freq_prob", 0.0)),
+        mask_freq_length=int(block.get("mask_freq_length", 27)),
+    )
+
+
+def apply_waveform_time_mask(
+    input_values: torch.Tensor,
+    attention_mask: torch.Tensor,
+    *,
+    spec_augment: SpecAugmentConfig,
+    sample_rate: int,
+) -> torch.Tensor:
+    """
+    Appliquer un masquage temporel aléatoire (SpecAugment) sur des formes d'onde paddées.
+
+    Réservé à l'entraînement : zéro des échantillons sur un segment contigu par utterance
+    tirée au sort selon ``mask_time_prob``.
+    """
+    if not spec_augment.enabled or spec_augment.mask_time_prob <= 0:
+        return input_values
+    mask_samples = max(1, spec_augment.mask_time_length * sample_rate // 100)
+    out = input_values.clone()
+    batch_size = out.size(0)
+    for batch_idx in range(batch_size):
+        if random.random() > spec_augment.mask_time_prob:
+            continue
+        valid_len = int(attention_mask[batch_idx].sum().item())
+        if valid_len <= mask_samples:
+            continue
+        start = random.randint(0, valid_len - mask_samples)
+        out[batch_idx, start : start + mask_samples] = 0.0
+    return out
+
+
+def apply_feature_freq_mask(
+    features: torch.Tensor,
+    *,
+    spec_augment: SpecAugmentConfig,
+) -> torch.Tensor:
+    """
+    Appliquer un masquage « fréquentiel » sur les features encodeur ``[batch, time, hidden]``.
+
+    Sur les tenseurs cachés Pantagruel, on masque une bande contiguë de dimensions de
+    feature (analogue aux bandes de mélatre SpecAugment fairseq).
+    """
+    if not spec_augment.enabled or spec_augment.mask_freq_prob <= 0:
+        return features
+    mask_width = max(1, spec_augment.mask_freq_length)
+    hidden_dim = features.size(-1)
+    if mask_width >= hidden_dim:
+        return features
+    out = features.clone()
+    batch_size = out.size(0)
+    for batch_idx in range(batch_size):
+        if random.random() > spec_augment.mask_freq_prob:
+            continue
+        start = random.randint(0, hidden_dim - mask_width)
+        out[batch_idx, :, start : start + mask_width] = 0.0
+    return out
 
 
 def load_sentencepiece(path: Path) -> spm.SentencePieceProcessor:
@@ -490,6 +582,158 @@ def greedy_decode_batch(
             if bool(torch.all(finished)):
                 break
     return generated
+
+
+def _beam_decode_single(
+    *,
+    model: S3TModel,
+    memory: torch.Tensor,
+    bos_id: int,
+    eos_id: int,
+    pad_id: int,
+    max_new_tokens: int,
+    beam_size: int,
+) -> torch.Tensor:
+    """
+    Beam search sur un seul échantillon (mémoire encodeur ``[1, enc_time, dim]``).
+
+    Conserve les ``beam_size`` meilleures hypothèses par log-probabilité cumulée ;
+    les séquences terminées par EOS ne sont plus étendues mais restent candidates.
+    """
+    device = memory.device
+    beams: list[tuple[list[int], float, bool]] = [([bos_id], 0.0, False)]
+
+    for _ in range(max_new_tokens):
+        candidates: list[tuple[list[int], float, bool]] = []
+        active = [beam for beam in beams if not beam[2]]
+        finished = [beam for beam in beams if beam[2]]
+        candidates.extend(finished)
+
+        if not active:
+            break
+
+        for tokens, log_prob, _ in active:
+            token_tensor = torch.tensor([tokens], dtype=torch.long, device=device)
+            logits = model.decode(memory, token_tensor)[:, -1, :]
+            log_probs = torch.log_softmax(logits, dim=-1).squeeze(0)
+            top_log_probs, top_ids = torch.topk(
+                log_probs, min(beam_size, log_probs.numel())
+            )
+            for token_log_prob, token_id in zip(
+                top_log_probs.tolist(),
+                top_ids.tolist(),
+                strict=True,
+            ):
+                new_tokens = [*tokens, token_id]
+                new_log_prob = log_prob + token_log_prob
+                is_finished = token_id == eos_id
+                candidates.append((new_tokens, new_log_prob, is_finished))
+
+        candidates.sort(key=lambda item: item[1], reverse=True)
+        beams = candidates[:beam_size]
+        if beams and all(finished for _, _, finished in beams):
+            break
+
+    best_tokens = max(beams, key=lambda item: item[1])[0]
+    return torch.tensor(best_tokens, dtype=torch.long, device=device)
+
+
+def beam_decode_batch(
+    *,
+    model: S3TModel,
+    input_values: torch.Tensor,
+    attention_mask: torch.Tensor,
+    bos_id: int,
+    eos_id: int,
+    pad_id: int,
+    max_new_tokens: int,
+    beam_size: int,
+) -> torch.Tensor:
+    """
+    Décodage par faisceau (beam search) pour un lot — un faisceau indépendant par ligne.
+
+    Paramètres :
+        beam_size : Largeur du faisceau (``<= 1`` délègue au greedy).
+
+    Retour :
+        Token ids ``[batch, gen_len]`` paddés à droite avec ``pad_id`` si longueurs variables.
+    """
+    if beam_size <= 1:
+        return greedy_decode_batch(
+            model=model,
+            input_values=input_values,
+            attention_mask=attention_mask,
+            bos_id=bos_id,
+            eos_id=eos_id,
+            pad_id=pad_id,
+            max_new_tokens=max_new_tokens,
+        )
+
+    model.eval()
+    with torch.no_grad():
+        memory = model.encode(input_values, attention_mask)
+        batch_size = input_values.size(0)
+        sequences: list[torch.Tensor] = []
+        for batch_idx in range(batch_size):
+            seq = _beam_decode_single(
+                model=model,
+                memory=memory[batch_idx : batch_idx + 1],
+                bos_id=bos_id,
+                eos_id=eos_id,
+                pad_id=pad_id,
+                max_new_tokens=max_new_tokens,
+                beam_size=beam_size,
+            )
+            sequences.append(seq.cpu())
+
+        max_len = max(seq.size(0) for seq in sequences)
+        output = torch.full(
+            (batch_size, max_len),
+            fill_value=pad_id,
+            dtype=torch.long,
+        )
+        for batch_idx, seq in enumerate(sequences):
+            output[batch_idx, : seq.size(0)] = seq
+        return output
+
+
+def decode_batch(
+    *,
+    model: S3TModel,
+    input_values: torch.Tensor,
+    attention_mask: torch.Tensor,
+    bos_id: int,
+    eos_id: int,
+    pad_id: int,
+    max_new_tokens: int,
+    beam_size: int = 1,
+) -> torch.Tensor:
+    """
+    Point d'entrée unifié : greedy si ``beam_size <= 1``, sinon beam search.
+
+    Paramètres :
+        beam_size : Largeur du faisceau (objectif papier Pantagruel : 5).
+    """
+    if beam_size <= 1:
+        return greedy_decode_batch(
+            model=model,
+            input_values=input_values,
+            attention_mask=attention_mask,
+            bos_id=bos_id,
+            eos_id=eos_id,
+            pad_id=pad_id,
+            max_new_tokens=max_new_tokens,
+        )
+    return beam_decode_batch(
+        model=model,
+        input_values=input_values,
+        attention_mask=attention_mask,
+        bos_id=bos_id,
+        eos_id=eos_id,
+        pad_id=pad_id,
+        max_new_tokens=max_new_tokens,
+        beam_size=beam_size,
+    )
 
 
 def decode_ids_to_text(

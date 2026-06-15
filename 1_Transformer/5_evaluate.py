@@ -15,8 +15,8 @@ Sorties (``runs/<lang_pair>/<run_id>/eval/``) :
     - ``sacrebleu_dev.txt``, ``sacrebleu_test.txt`` (inclut la signature SacreBLEU)
     - ``metrics.json``
 
-Note : ``--beam-size`` est journalisé mais le décodage utilise actuellement la recherche
-gloutonne dans ``greedy_decode_batch`` (beam search prévu pour alignement article).
+Décodage : ``decode_batch`` (greedy si ``beam_size <= 1``, beam search sinon — objectif
+papier Pantagruel : ``decode.beam_size: 5``).
 
 Codes de sortie : 0 succès, 2 entrées manquantes.
 """
@@ -41,9 +41,9 @@ from scripts_communs.st_common import (
     S3TModel,
     build_s3t_model,
     collate_for_training,
+    decode_batch,
     decode_ids_to_text,
     deep_get,
-    greedy_decode_batch,
     load_sentencepiece,
     load_yaml_config,
     read_manifest,
@@ -84,9 +84,10 @@ def decode_manifest(
     eos_id: int,
     pad_id: int,
     max_new_tokens: int,
+    beam_size: int | None,
 ) -> tuple[list[str], list[str]]:
     """
-    Décoder en glouton tous les échantillons d'un DataLoader et détokeniser en chaînes.
+    Décoder tous les échantillons d'un DataLoader et détokeniser en chaînes.
 
     Retour :
         (predictions, references) comme listes parallèles d'une ligne par utterance.
@@ -96,7 +97,7 @@ def decode_manifest(
     model.eval()
     with torch.no_grad():
         for batch in loader:
-            generated = greedy_decode_batch(
+            generated = decode_batch(
                 model=model,
                 input_values=batch["input_values"].to(device),
                 attention_mask=batch["attention_mask"].to(device),
@@ -104,6 +105,7 @@ def decode_manifest(
                 eos_id=eos_id,
                 pad_id=pad_id,
                 max_new_tokens=max_new_tokens,
+                beam_size=beam_size,
             ).cpu()
             targets = batch["tokens_out"]
             for idx in range(generated.size(0)):
@@ -133,7 +135,7 @@ def run_evaluate(
     config_path: Path,
     run_id: str,
     checkpoint: Path | None,
-    beam_size: int,
+    beam_size: int | None,
     output_dir: Path | None,
     dry_run: bool,
     verbose: bool,
@@ -146,7 +148,7 @@ def run_evaluate(
         config_path: Experiment YAML.
         run_id: Run identifier matching stage 4.
         checkpoint : Chemin optionnel ; défaut ``checkpoints/best.pt``.
-        beam_size : Enregistré dans les métriques (décodage glouton aujourd'hui).
+        beam_size : Largeur du faisceau (1 = greedy ; 5 = objectif Pantagruel).
         output_dir: Override run root.
         dry_run, verbose, prefer_cpu : Drapeaux CLI.
 
@@ -165,6 +167,9 @@ def run_evaluate(
     sample_rate = int(deep_get(config, "data.sample_rate", 16000))
     max_target_tokens = int(deep_get(config, "train.max_target_tokens", 256))
     max_new_tokens = int(deep_get(config, "decode.max_len_b", 128))
+    effective_beam_size = int(
+        deep_get(config, "decode.beam_size", 5) if beam_size is None else beam_size
+    )
 
     if dry_run:
         print("[dry-run] evaluate stage plan:")
@@ -173,6 +178,7 @@ def run_evaluate(
         print(f"  valid_manifest: {valid_manifest}")
         print(f"  test_manifest: {test_manifest}")
         print(f"  spm_model: {spm_model_path}")
+        print(f"  beam_size: {effective_beam_size}")
         return 0
 
     if not valid_manifest.is_file() or not test_manifest.is_file():
@@ -245,6 +251,7 @@ def run_evaluate(
         eos_id=eos_id,
         pad_id=pad_id,
         max_new_tokens=max_new_tokens,
+        beam_size=effective_beam_size,
     )
     test_preds, test_refs = decode_manifest(
         model=model,
@@ -255,6 +262,7 @@ def run_evaluate(
         eos_id=eos_id,
         pad_id=pad_id,
         max_new_tokens=max_new_tokens,
+        beam_size=effective_beam_size,
     )
 
     dev_scores = score_corpus_metrics(dev_preds, dev_refs)
@@ -321,7 +329,7 @@ def run_evaluate(
             "run_id": run_id,
             "pipeline": "transformer",
             "checkpoint": str(checkpoint_path.resolve()),
-            "beam_size": beam_size,
+            "beam_size": effective_beam_size,
             "device": str(device),
             "config": config,
             "dev": dev_scores,
@@ -338,8 +346,8 @@ def run_evaluate(
             segment_mode=segment_mode,
             config_path=config_path,
             decode={
-                "mode": "greedy",
-                "beam_size_config": beam_size,
+                "mode": "greedy" if effective_beam_size <= 1 else "beam",
+                "beam_size": effective_beam_size,
                 "max_new_tokens": max_new_tokens,
             },
             sacrebleu_signatures={
@@ -365,7 +373,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--checkpoint", type=Path, default=None)
-    parser.add_argument("--beam-size", type=int, default=5)
+    parser.add_argument(
+        "--beam-size",
+        type=int,
+        default=None,
+        help="Largeur du faisceau (défaut : decode.beam_size du YAML, sinon 5).",
+    )
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--prefer-cpu", action="store_true", default=False)
     parser.add_argument("--verbose", "-v", action="store_true")
@@ -387,7 +400,7 @@ def run_from_namespace(args: argparse.Namespace) -> int:
         config_path=config_path,
         run_id=run_id,
         checkpoint=getattr(args, "checkpoint", None),
-        beam_size=getattr(args, "beam_size", 5),
+        beam_size=getattr(args, "beam_size", None),
         output_dir=getattr(args, "output_dir", None),
         dry_run=getattr(args, "dry_run", False),
         verbose=getattr(args, "verbose", False),

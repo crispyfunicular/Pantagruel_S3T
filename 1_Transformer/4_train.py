@@ -35,6 +35,8 @@ import torch
 from scripts_communs.st_common import (
     PROJECT_ROOT,
     S3TModel,
+    apply_feature_freq_mask,
+    apply_waveform_time_mask,
     build_s3t_model,
     collate_for_training,
     decode_ids_to_text,
@@ -42,6 +44,7 @@ from scripts_communs.st_common import (
     greedy_decode_batch,
     load_sentencepiece,
     load_yaml_config,
+    parse_spec_augment_config,
     read_manifest,
     resolve_run_dir,
     set_seed,
@@ -185,6 +188,7 @@ def run_train(
     max_updates = int(deep_get(config, "train.max_updates", 500))
     freeze_encoder_updates = int(deep_get(config, "train.freeze_encoder_updates", 0))
     learning_rate = float(deep_get(config, "train.learning_rate_peak", 2e-4))
+    warmup_updates = int(deep_get(config, "train.warmup_updates", 0))
     weight_decay = float(deep_get(config, "train.weight_decay", 0.01))
     label_smoothing = float(deep_get(config, "train.label_smoothing", 0.1))
     batch_size = int(deep_get(config, "train.batch_size", 2))
@@ -198,6 +202,7 @@ def run_train(
     amp_dtype = str(deep_get(config, "train.amp_dtype", "fp16")).lower()
     # 0 = désactivé ; sinon nombre d'évals dev consécutives sans gain BLEU avant arrêt (PRD §9).
     early_stopping_patience = int(deep_get(config, "train.early_stopping_patience", 0))
+    spec_augment = parse_spec_augment_config(config)
 
     if not train_manifest.is_file() or not valid_manifest.is_file():
         print("ERROR: missing train/valid manifest in config", file=sys.stderr)
@@ -215,7 +220,15 @@ def run_train(
         print(f"  spm_model:   {spm_model_path}")
         print(f"  encoder:     {encoder_name}")
         print(f"  max_updates: {max_updates}")
+        print(f"  warmup_updates: {warmup_updates}")
         print(f"  early_stopping_patience: {early_stopping_patience}")
+        print(
+            f"  spec_augment: enabled={spec_augment.enabled} "
+            f"mask_time_prob={spec_augment.mask_time_prob} "
+            f"mask_time_length={spec_augment.mask_time_length} "
+            f"mask_freq_prob={spec_augment.mask_freq_prob} "
+            f"mask_freq_length={spec_augment.mask_freq_length}"
+        )
         return 0
 
     start_wall_s = time.time()
@@ -308,6 +321,18 @@ def run_train(
     amp_enabled = device.type == "cuda"
     amp_type = torch.bfloat16 if amp_dtype == "bf16" else torch.float16
 
+    def current_lr(update: int) -> float:
+        """
+        Scheduler RF-10 : warmup linéaire puis décroissance inverse racine carrée.
+
+        ``update`` est 1-indexé (premier pas optimiseur = 1).
+        """
+        if warmup_updates <= 0:
+            return learning_rate
+        if update <= warmup_updates:
+            return learning_rate * float(update) / float(warmup_updates)
+        return learning_rate * (float(warmup_updates) ** 0.5) / (float(update) ** 0.5)
+
     while not stop_training:
         for batch in train_loader:
             if global_update >= max_updates:
@@ -323,17 +348,26 @@ def run_train(
             attention_mask = batch["attention_mask"].to(device)
             tokens_in = batch["tokens_in"].to(device)
             tokens_out = batch["tokens_out"].to(device)
+            if spec_augment.enabled:
+                input_values = apply_waveform_time_mask(
+                    input_values,
+                    attention_mask,
+                    spec_augment=spec_augment,
+                    sample_rate=sample_rate,
+                )
 
             with torch.autocast(
                 device_type=device.type,
                 enabled=amp_enabled,
                 dtype=amp_type,
             ):
-                logits = model(
-                    input_values=input_values,
-                    attention_mask=attention_mask,
-                    tokens=tokens_in,
-                )
+                memory = model.encode(input_values, attention_mask)
+                if spec_augment.enabled:
+                    memory = apply_feature_freq_mask(
+                        memory,
+                        spec_augment=spec_augment,
+                    )
+                logits = model.decode(memory, tokens_in)
                 loss = F.cross_entropy(
                     logits.reshape(-1, logits.size(-1)),
                     tokens_out.reshape(-1),
@@ -348,6 +382,10 @@ def run_train(
 
             if accumulated >= grad_accum:
                 # Une étape optimiseur par ``grad_accum`` passes avant.
+                next_update = global_update + 1
+                lr_now = current_lr(next_update)
+                for group in optimizer.param_groups:
+                    group["lr"] = lr_now
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
                 scaler.step(optimizer)
