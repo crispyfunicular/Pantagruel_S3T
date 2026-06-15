@@ -1,0 +1,52 @@
+# speechLLM B1 — fr-en, utterance, Pantagruel-L-114k v3.
+#
+# Améliorations vs run_017 v2 (5,60 test — échec) et run_013 (15,24 test) :
+#   - max_new_tokens : 128 (conservé depuis v2)
+#   - early_stopping_patience : 3
+#   - max_eval_batches : null (dev complet — leçon run_019 / run_020 ST v3)
+#
+# Run cible : run_022_speechllm_b1_utterance_large_114k_v3 (OVH, ~4–6 h GPU)
+
+experiment:
+  name: "fr-en_speechllm_b1_utterance_large_114k_v3"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_022_speechllm_b1_utterance_large_114k_v3"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-114K"
+  trust_remote_code: true
+  llm_name: "microsoft/phi-2"
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+
+prompt:
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: null
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 128

@@ -1,0 +1,51 @@
+# Baseline ST utterance Large 14k v3 — retry après run_014 (17,21 test, Modyco).
+#
+# Ajustements vs v2 (run_014) :
+#   - early_stopping_patience: 4 (vs 2)
+#   - max_eval_batches: null (dev complet pour early stop plus fiable)
+#
+# Encodeur : PantagrueLLM/speech-large-14K — cible papier Table 8 ~24 BLEU test.
+# Run cible : run_020_transformer_baseline_utterance_large_14k_v3 (Modyco, ≤10 h GPU)
+
+experiment:
+  name: "fr-en_baseline_utterance_large_14k_v3"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_020_transformer_baseline_utterance_large_14k_v3"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  spm_model: "datasets/processed/spm/fr-en_1000.model"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  decoder_layers: 6
+  decoder_heads: 8
+  hidden_dim: 1024
+  dropout: 0.1
+
+train:
+  max_updates: 80000
+  warmup_updates: 4000
+  freeze_encoder_updates: 5000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.01
+  label_smoothing: 0.1
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 2000
+  max_eval_batches: null
+  max_target_tokens: 256
+  early_stopping_patience: 4
+
+decode:
+  beam_size: 5
+  max_len_b: 128
