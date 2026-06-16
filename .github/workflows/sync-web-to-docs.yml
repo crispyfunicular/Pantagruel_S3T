@@ -35,7 +35,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/*.html docs/.nojekyll docs/theme.css docs/theme.js docs/audio/
+          git add docs/*.html docs/.nojekyll docs/theme.css docs/theme.js docs/theme-init.js docs/audio/
           if ! git diff --staged --quiet; then
             git commit -m "Synchronise docs/ depuis web/ [skip ci]"
             git push

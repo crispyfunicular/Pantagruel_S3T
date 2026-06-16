@@ -56,9 +56,17 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 
 | | |
 |---|---|
-| **En clair** | Code partagé par toutes les variantes : préparation des données (0–2), utilitaires ST (`st_common.py`), protocole d’éval, bootstrap. |
+| **En clair** | **Dossier** pipeline partagé par toutes les variantes : préparation des données (0–2), utilitaires ST (`st_common.py`), protocole d’éval, bootstrap. Ne pas confondre avec `speechllm_lib.py` (bibliothèque de la variante 2 uniquement). |
 | **Identifiant** | Répertoire `scripts_communs/` |
 | **Où** | Étapes 0–2, `pipeline.py` commun |
+
+### speechllm_lib
+
+| | |
+|---|---|
+| **En clair** | Bibliothèque Python de la variante 2 (modèle, prompts, checkpoints projecteur). Ancien nom : `speechllm_common.py`. |
+| **Identifiant** | `2_speechLLM/speechllm_lib.py` |
+| **Où** | Variante 2 ; utilitaires config Gemini/Cascade |
 
 ### pipeline (routeur)
 

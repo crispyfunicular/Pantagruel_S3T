@@ -12,6 +12,7 @@ for f in "${WEB}"/*.html; do
 done
 cp -f "${WEB}/theme.css" "${DOCS}/theme.css"
 cp -f "${WEB}/theme.js" "${DOCS}/theme.js"
+cp -f "${WEB}/theme-init.js" "${DOCS}/theme-init.js"
 cp -f "${WEB}/.nojekyll" "${DOCS}/.nojekyll"
 if [[ -d "${WEB}/audio" ]]; then
   mkdir -p "${DOCS}/audio"

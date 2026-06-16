@@ -190,7 +190,7 @@ Liens vers accueil et vocabulaire, mais pas vers pipeline ou corpus.
 
 ---
 
-### 18. Fichiers audio manquants (si déploiement local)
+### 18. Fichiers audio manquants (si déploiement local) - OK
 
 `index.html` référence `audio/9fxo9YJhnG8_*.wav` ; le dossier `web/audio/` doit être alimenté avant publication.
 

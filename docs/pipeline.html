@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>try{if(localStorage.getItem("s3t-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+  <script src="theme-init.js"></script>
 
   <title>Pipeline — Pantagruel S3T</title>
   <meta name="description" content="Présentation simple du pipeline S3T : étapes communes (scripts_communs) et étapes spécifiques aux variantes (Transformer, speechLLM, Gemini, Cascade, Speech_Text).">
@@ -263,7 +263,7 @@
         <div class="nav-links">
         <a href="pipeline.html" class="active">Pipeline</a>
         <a href="resultats.html">Résultats</a>
-        <a href="index.html#exemples">Exemples</a>
+        <a href="evaluation.html">Évaluation</a>
         <a href="corpus.html">Corpus</a>
         <a href="vocabulaire.html">Vocabulaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
@@ -482,41 +482,52 @@
       <p class="section-intro">
         Les variantes s’appuient sur quelques modules centraux pour rester cohérentes : même format de données, même protocole <span class="term">BLEU<span class="term-tip">Score de qualité de traduction comparé aux références humaines. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span>, mêmes chemins de sortie.
       </p>
+      <div class="note note-info">
+        <strong>Deux niveaux de partage — ne pas confondre :</strong>
+        le <strong>dossier</strong> <code>scripts_communs/</code> regroupe les étapes 0–2 et les utilitaires transverses (nom français <em>communs</em>).
+        Les fichiers <code>st_common.py</code>, <code>speechllm_lib.py</code>, etc. sont des <strong>bibliothèques Python</strong> importées par le code — le suffixe <code>_common</code> ou <code>_lib</code> indique une librairie réutilisable, pas le dossier pipeline.
+      </div>
 
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Module</th>
+              <th>Fichier</th>
+              <th>Périmètre</th>
               <th>Rôle</th>
-              <th>Où c’est utilisé</th>
+              <th>Variantes</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><code>scripts_communs/st_common.py</code></td>
+              <td><span class="tag tag-blue">toutes</span> · dans <code>scripts_communs/</code></td>
               <td>« boîte à outils » du Transformer : lecture manifests, <span class="term">décodage<span class="term-tip">Génération de la traduction anglaise à partir des vecteurs audio (greedy ou beam search). <a href="vocabulaire.html#beam-search">→ vocabulaire</a></span></span>, <span class="term">SpecAugment<span class="term-tip">Masquage aléatoire temps/fréquence sur le spectrogramme pendant l’entraînement. <a href="vocabulaire.html#specaugment">→ vocabulaire</a></span></span>, utilitaires audio</td>
               <td><span class="tag tag-gray">V1</span> + wrappers V5</td>
             </tr>
             <tr>
-              <td><code>2_speechLLM/speechllm_common.py</code></td>
+              <td><code>2_speechLLM/speechllm_lib.py</code></td>
+              <td><span class="tag tag-gray">V2</span> uniquement</td>
               <td>définit l’architecture speechLLM (<span class="term">projecteur<span class="term-tip">Petit adaptateur entre l’encodeur audio et le LLM — seul composant entraîné en mode B1. <a href="vocabulaire.html#projecteur">→ vocabulaire</a></span></span> + <span class="term">LLM<span class="term-tip">Grand modèle de langue pré-entraîné qui génère la traduction. <a href="vocabulaire.html#llm">→ vocabulaire</a></span></span>), les prompts et le chargement des configs</td>
-              <td><span class="tag tag-gray">V2</span> + Gemini/Cascade (utils config)</td>
+              <td><span class="tag tag-gray">V2</span> (+ utils config Gemini/Cascade)</td>
             </tr>
             <tr>
               <td><code>scripts_communs/config_utils.py</code></td>
+              <td><span class="tag tag-blue">toutes</span> · dans <code>scripts_communs/</code></td>
               <td>lecture/écriture de <span class="term">YAML<span class="term-tip">Format de fichier texte structuré pour décrire les réglages d’une expérience (hyperparamètres, chemins…).</span></span> et JSON, accès à des champs imbriqués</td>
-              <td><span class="tag tag-blue">toutes variantes</span></td>
+              <td><span class="tag tag-blue">toutes</span></td>
             </tr>
             <tr>
               <td><code>scripts_communs/eval_protocol.py</code></td>
+              <td><span class="tag tag-blue">toutes</span> · dans <code>scripts_communs/</code></td>
               <td><span class="term">protocole d’évaluation<span class="term-tip term-tip-left">Règles figées : SacreBLEU signé, version du protocole, écriture de <code>protocol.json</code> pour reproductibilité.</span></span> « figé » (mêmes métriques, mêmes artefacts)</td>
-              <td><span class="tag tag-blue">toutes variantes</span></td>
+              <td><span class="tag tag-blue">toutes</span></td>
             </tr>
             <tr>
               <td><code>scripts_communs/variant_bootstrap.py</code></td>
+              <td><span class="tag tag-blue">toutes</span> · dans <code>scripts_communs/</code></td>
               <td>rend importables les variantes numérotées (dossiers <span class="term">préfixés par un chiffre<span class="term-tip term-tip-left">Ex. <code>2_speechLLM/</code> n’est pas un package Python standard — ce module permet de l’importer comme <code>speechLLM</code>.</span></span>)</td>
-              <td><span class="tag tag-blue">toutes variantes</span></td>
+              <td><span class="tag tag-blue">toutes</span></td>
             </tr>
           </tbody>
         </table>

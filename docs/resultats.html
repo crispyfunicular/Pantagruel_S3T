@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>try{if(localStorage.getItem("s3t-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+  <script src="theme-init.js"></script>
 
   <title>Résultats — Pantagruel S3T</title>
   <meta name="description" content="Synthèse comparative des scores BLEU pour les 5 variantes du projet S3T, évolution des runs Transformer et speechLLM.">
@@ -314,7 +314,7 @@
         <div class="nav-links">
         <a href="pipeline.html">Pipeline</a>
         <a href="resultats.html" class="active">Résultats</a>
-        <a href="index.html#exemples">Exemples</a>
+        <a href="evaluation.html">Évaluation</a>
         <a href="corpus.html">Corpus</a>
         <a href="vocabulaire.html">Vocabulaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
@@ -336,7 +336,7 @@
 
   <header class="hero">
     <h1>Résultats</h1>
-    <p class="lead">Synthèse des scores BLEU obtenus sur m-TEDx FR→EN pour les cinq variantes du projet. Le score BLEU mesure la qualité d’une traduction automatique : de 0 (aucun mot correct) à 100 (traduction identique à la référence humaine).</p>
+    <p class="lead">Synthèse des scores SacreBLEU sur m-TEDx FR→EN pour les cinq variantes du projet. Le BLEU (<a href="evaluation.html#bleu">voir Évaluation</a>) mesure le recouvrement lexical avec les références : il sert surtout à comparer des systèmes sur un même test, pas comme une « note sur 100 ».</p>
   </header>
 
   <main class="container">

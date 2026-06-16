@@ -1,6 +1,6 @@
 /**
- * Bascule thème clair / sombre — préférence persistée dans localStorage.
- * Thème par défaut : clair.
+ * Bascule thème clair / sombre.
+ * Défaut : clair. Choix explicite persisté dans localStorage (dark | light).
  */
 (function () {
   const STORAGE_KEY = 's3t-theme';
@@ -46,21 +46,16 @@
     });
   }
 
-  function setTheme(dark) {
+  function applyTheme(dark) {
     if (dark) {
       root.dataset.theme = 'dark';
-      try {
-        localStorage.setItem(STORAGE_KEY, 'dark');
-      } catch (e) {
-        /* stockage indisponible */
-      }
     } else {
       root.removeAttribute('data-theme');
-      try {
-        localStorage.setItem(STORAGE_KEY, 'light');
-      } catch (e) {
-        /* stockage indisponible */
-      }
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, dark ? 'dark' : 'light');
+    } catch (e) {
+      /* stockage indisponible */
     }
     syncToggle();
     refreshCharts();
@@ -74,7 +69,7 @@
       return;
     }
     input.addEventListener('change', function () {
-      setTheme(input.checked);
+      applyTheme(input.checked);
     });
   });
 })();

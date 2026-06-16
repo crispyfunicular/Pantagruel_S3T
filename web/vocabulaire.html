@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>try{if(localStorage.getItem("s3t-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+  <script src="theme-init.js"></script>
 
   <title>Vocabulaire — Pantagruel S3T</title>
   <meta name="description" content="Glossaire des termes techniques utilisés dans le projet S3T : BLEU, LLM, encodeur, projecteur, beam search, etc.">
@@ -82,15 +82,16 @@
         <div class="nav-links">
         <a href="pipeline.html">Pipeline</a>
         <a href="resultats.html">Résultats</a>
-        <a href="index.html#exemples">Exemples</a>
+        <a href="evaluation.html">Évaluation</a>
         <a href="corpus.html">Corpus</a>
         <a href="vocabulaire.html" class="active">Vocabulaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
         <label class="theme-switch" for="theme-toggle" title="Thème sombre">
-          <span class="theme-switch__text">Sombre</span>
+          <span class="theme-switch__icon theme-switch__icon--sun" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
           <input type="checkbox" id="theme-toggle" role="switch" aria-label="Activer le thème sombre">
           <span class="theme-switch__track" aria-hidden="true"><span class="theme-switch__thumb"></span></span>
+          <span class="theme-switch__icon theme-switch__icon--moon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         </label>
       </div>
     </div>
@@ -146,11 +147,11 @@
             <span class="entry-cat cat-metric">métrique</span>
           </div>
           <div class="entry-def">
-            Score standard pour évaluer la qualité d’une traduction automatique. Il compare les <em>n-grammes</em> (séquences de mots consécutifs) de l’hypothèse produite par le modèle avec ceux de la traduction de référence. Va de <strong>0 à 100</strong> : plus c’est élevé, plus la traduction est proche de la référence.
+            Score standard pour évaluer la qualité d’une traduction automatique (<a href="https://aclanthology.org/P02-1040/" target="_blank" rel="noopener noreferrer">Papineni et al., 2002</a>). Il compare les <em>n-grammes</em> de l’hypothèse avec ceux de la référence via une moyenne géométrique de précisions modifiées. SacreBLEU (<a href="https://aclanthology.org/W18-6319/" target="_blank" rel="noopener noreferrer">Post, 2018</a>) l’affiche sur une échelle <strong>0–100</strong>.
           </div>
-          <div class="entry-context">Un score de 15–20 est considéré comme « utile » pour la traduction de discours spontané. Dans ce projet on utilise SacreBLEU, une implémentation standardisée.</div>
-          <div class="entry-example">run_005 : 19 BLEU → meilleur résultat de la variante 2.</div>
-          <div class="backrefs">Utilisé dans : <a href="variante-1.html">Variante 1</a> <a href="variante-2.html">Variante 2</a> <a href="resultats.html">Tableau global</a></div>
+          <div class="entry-context">Le BLEU classe surtout des systèmes entre eux sur un même test ; un traducteur humain natif obtient ~26 BLEU sur le benchmark de Papineni et al. (2 références). Sur m-TEDx ST, la référence article Pantagruel est <strong>25,2</strong> (Table 8). Détail : <a href="evaluation.html#bleu">page Évaluation</a>.</div>
+          <div class="entry-example">run_013 : 15,2 BLEU → meilleur run speechLLM sur <em>utterance</em>.</div>
+          <div class="backrefs">Utilisé dans : <a href="evaluation.html">Évaluation</a> <a href="variante-1.html">Variante 1</a> <a href="variante-2.html">Variante 2</a> <a href="resultats.html">Tableau global</a></div>
         </div>
 
       </div>
