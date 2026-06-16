@@ -69,10 +69,6 @@
     .score-tier__body { font-size: 0.86rem; color: var(--muted); line-height: 1.55; }
     .score-tier__example { margin-top: 0.5rem; font-size: 0.84rem; padding: 0.55rem 0.65rem; border-left: 3px solid var(--accent-soft); background: var(--surface); border-radius: 0 8px 8px 0; }
     .callout { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: 10px; background: var(--accent-soft); font-size: 0.86rem; color: var(--text); }
-    .ref-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin: 0.75rem 0; }
-    .ref-table th, .ref-table td { padding: 0.45rem 0.55rem; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
-    .ref-table th { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
-    .ref-table td:last-child { color: var(--muted); font-size: 0.8rem; }
     .references { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed var(--border); font-size: 0.8rem; color: var(--muted); }
     .references ol { margin: 0.35rem 0 0 1.15rem; }
     .references li { margin-bottom: 0.35rem; line-height: 1.5; }
@@ -299,9 +295,10 @@
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
         <label class="theme-switch" for="theme-toggle" title="Thème sombre">
-          <span class="theme-switch__text">Sombre</span>
+          <span class="theme-switch__icon theme-switch__icon--sun" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
           <input type="checkbox" id="theme-toggle" role="switch" aria-label="Activer le thème sombre">
           <span class="theme-switch__track" aria-hidden="true"><span class="theme-switch__thumb"></span></span>
+          <span class="theme-switch__icon theme-switch__icon--moon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         </label>
       </div>
     </div>
@@ -325,8 +322,7 @@
         <a href="#bleu">BLEU / SacreBLEU</a>
         <a href="#segmentation">Utterance vs sentence_like</a>
         <a href="#niveaux">Échelle de scores</a>
-        <a href="#exemples">Exemples traduits</a>
-      </div>
+        <a href="#exemples">Exemples traduits</a>      </div>
     </div>
 
     <div class="card" id="bleu">
@@ -343,56 +339,59 @@
           <li><strong>Mesure de surface, pas de sens.</strong> Une paraphrase correcte peut être pénalisée si elle n’emploie pas les mêmes mots que la référence ; d’où l’intérêt des <a href="#exemples">lectures qualitatives</a> ci-dessous.</li>
         </ul>
 
-        <h3>Repères publiés (échelle SacreBLEU 0–100)</h3>
-        <p class="section-note">Ordres de grandeur tirés de la littérature — à contextualiser, pas à appliquer mécaniquement à m-TEDx.</p>
-        <table class="ref-table">
-          <thead>
-            <tr>
-              <th>Repère</th>
-              <th>BLEU</th>
-              <th>Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Système MT faible (S1)</td>
-              <td>~5</td>
-              <td>Papineni et al., 2002, tableau 1 (2 réf., actualités zh→en)</td>
-            </tr>
-            <tr>
-              <td>Meilleur MT commercial de l’époque (S3)</td>
-              <td>~9</td>
-              <td>idem</td>
-            </tr>
-            <tr>
-              <td>Traducteur humain non natif (H1)</td>
-              <td>~19</td>
-              <td>idem</td>
-            </tr>
-            <tr>
-              <td>Traducteur humain natif anglais (H2)</td>
-              <td>~26</td>
-              <td>idem</td>
-            </tr>
-            <tr>
-              <td>Pantagruel-L-114k, ST m-TEDx fr→en (<em>utterance</em>)</td>
-              <td>25,2</td>
-              <td><a href="https://arxiv.org/abs/2601.05911" target="_blank" rel="noopener noreferrer">Pantagruel (2026)</a>, Table 8 — protocole du projet</td>
-            </tr>
-            <tr>
-              <td>Meilleur modèle entraîné localement (S3T)</td>
-              <td>26,1</td>
-              <td><code>run_026</code> — voir <a href="resultats.html">Résultats</a></td>
-            </tr>
-            <tr>
-              <td>Meilleur score API observé</td>
-              <td>41,1</td>
-              <td><code>run_005</code> (Gemini 3.5) — modèles pré-entraînés, biais corpus possible</td>
-            </tr>
-          </tbody>
-        </table>
+        <h3 id="niveaux">Repères sur m-TEDx fr→en (<em>utterance</em>)</h3>
+        <p class="section-note">Illustrations tirées de nos runs — même intervention TED (<code>9fxo9YJhnG8</code>), split <code>valid</code>. Le BLEU corpus agrège des centaines de segments ; une phrase peut être correcte malgré un score modeste.</p>
+        <div class="score-ladder">
+          <div class="score-tier">
+            <div class="score-tier__head">
+              <span class="score-tier__badge">&lt; 10 BLEU</span>
+              <span class="score-tier__label">Effondrement ou sorties incohérentes</span>
+            </div>
+            <p class="score-tier__body">Batch trop grand (<code>run_024</code>, 0,35) ou entraînement instable (<code>run_002</code>, ~4). Répétitions, néologismes, sens difficile à reconstruire.</p>
+            <div class="score-tier__example">
+              <strong>FR</strong> — J’ai mon cœur qui palpite et encore les papillons dans le ventre…<br>
+              <strong>Réf.</strong> — « My heart rate rises and I am still head over heals, almost 24 hours a day. »<br>
+              <strong>Transformer B-1k</strong> (<code>run_002</code>) — « I have my heart that papers, and there are still 24-mands in the stomach. »
+            </div>
+          </div>
+          <div class="score-tier">
+            <div class="score-tier__head">
+              <span class="score-tier__badge">~15–17 BLEU</span>
+              <span class="score-tier__label">Message global, fragilité locale</span>
+            </div>
+            <p class="score-tier__body">Baseline B-1k corrigée (<code>run_004</code>, 16,7 test) ou speechLLM L-114k (<code>run_013</code>, 15,2). Le sens passe souvent ; collocations ou temps verbaux restent approximatifs.</p>
+            <div class="score-tier__example">
+              <strong>FR</strong> — Il m’a regardée avec ses grands yeux bleus et on s’est aimés au premier regard.<br>
+              <strong>Réf.</strong> — « His huge blue eyes watched me back, and we fell in love at first sight. »<br>
+              <strong>speechLLM</strong> (<code>run_012</code>) — « He looked at me with his big blue eyes, and we fell in love at first sight. » — proche sur cette phrase, score corpus modeste.
+            </div>
+          </div>
+          <div class="score-tier">
+            <div class="score-tier__head">
+              <span class="score-tier__badge">~21–26 BLEU</span>
+              <span class="score-tier__label">Meilleurs modèles entraînés localement</span>
+            </div>
+            <p class="score-tier__body">Baseline L-14k (<code>run_020</code>, 21,2) puis SpecAugment (<code>run_026</code>, <strong>26,1</strong> test — niveau article Pantagruel Table 8). Lexique solide, quelques tournures maladroites.</p>
+            <div class="score-tier__example">
+              <strong>FR</strong> — Aujourd’hui encore, quand je me lève le matin, je regarde mon homme à côté de moi…<br>
+              <strong>Réf.</strong> — « Still today, when I wake up in the morning, I watch my man lying next to me and I am still amazed. »<br>
+              <strong>Transformer L-14k</strong> (<code>run_026</code>) — « Today, when I get riding up in the morning, I look at my man, and I am still awaken. »
+            </div>
+          </div>
+          <div class="score-tier">
+            <div class="score-tier__head">
+              <span class="score-tier__badge">~41 BLEU</span>
+              <span class="score-tier__label">Plafond observé (API)</span>
+            </div>
+            <p class="score-tier__body">Gemini 2.5 Flash (<code>run_005</code>, 41,1 test) : formulations naturelles, peu d’écarts lexicaux — modèle pré-entraîné, non comparable en coût ni en protocole d’entraînement.</p>
+            <div class="score-tier__example">
+              <strong>FR</strong> — Il m’a regardée avec ses grands yeux bleus…<br>
+              <strong>Gemini 2.5</strong> — « He looked at me with his big blue eyes, and we fell in love at first sight. » — quasi aligné sur la référence.
+            </div>
+          </div>
+        </div>
 
-        <p class="callout">Sur <em>notre</em> jeu de test m-TEDx, un BLEU autour de <strong>25</strong> se situe donc au niveau de la référence article Pantagruel ; ~<strong>15</strong> correspond à un système encore loin d’une traduction humaine fluide sur ce protocole, même si certaines phrases isolées peuvent être correctes.</p>
+        <p class="callout">Sur <em>notre</em> jeu de test, un BLEU autour de <strong>25–26</strong> se situe au niveau de la référence article Pantagruel-L-14k ; ~<strong>15</strong> correspond à un système utile mais encore fragile. Comparaisons chiffrées : <a href="resultats.html">page Résultats</a> · lectures détaillées : <a href="#exemples">exemples audio</a>.</p>
 
         <div class="references">
           <strong>Références</strong>
@@ -416,45 +415,6 @@
         </ul>
         <p>Comparer un BLEU <em>utterance</em> et un BLEU <em>sentence_like</em> sans précaution est trompeur : les références changent de granularité, et les modèles cloud ou en cascade peuvent ne pas avoir été évalués sur les deux découpages.</p>
         <p>Définitions détaillées : <a href="vocabulaire.html#utterance">utterance</a> · <a href="vocabulaire.html#sentence-like">sentence_like</a> · <a href="vocabulaire.html#segmentation">segmentation</a>.</p>
-      </div>
-    </div>
-
-    <div class="card" id="niveaux">
-      <h2><span class="icon">📊</span> À quoi ressemblent ces ordres de grandeur ?</h2>
-      <p class="section-note">Illustrations qualitatives tirées de nos runs — le BLEU corpus agrège des centaines de segments ; une phrase peut être bonne malgré un score modeste (Papineni et al., 2002, §2.1.2).</p>
-      <div class="score-ladder">
-        <div class="score-tier">
-          <div class="score-tier__head">
-            <span class="score-tier__badge">&lt; 10 BLEU</span>
-            <span class="score-tier__label">Sorties défaillantes</span>
-          </div>
-          <p class="score-tier__body">Répétitions, effondrement lexical, sens difficile à reconstruire. Ex. speechLLM <code>run_002</code> sur <em>utterance</em> (~3 BLEU) ou Speech_Text sur <em>sentence_like</em> (~8).</p>
-          <div class="score-tier__example"><strong>FR</strong> — J’ai mon cœur qui palpite…<br><strong>Hypothèse (~3)</strong> — « I have my heart that papers, and there are still 24-mands in the stomach. »</div>
-        </div>
-        <div class="score-tier">
-          <div class="score-tier__head">
-            <span class="score-tier__badge">~15 BLEU</span>
-            <span class="score-tier__label">Utile mais fragile</span>
-          </div>
-          <p class="score-tier__body">Le message global passe souvent ; erreurs de temps, collocations ou segments tronqués subsistent. Meilleur speechLLM B1 : <code>run_013</code> (15,2 sur <em>utterance</em>).</p>
-          <div class="score-tier__example"><strong>FR</strong> — Il m’a regardée avec ses grands yeux bleus…<br><strong>speechLLM</strong> — « He looked at me with his big blue eyes, and we fell in love at first sight. » (proche de la référence sur cette phrase, mais le score corpus reste modeste.)</div>
-        </div>
-        <div class="score-tier">
-          <div class="score-tier__head">
-            <span class="score-tier__badge">~26 BLEU</span>
-            <span class="score-tier__label">Meilleur modèle entraîné localement</span>
-          </div>
-          <p class="score-tier__body">Transformer ST L-14k + SpecAugment (<code>run_026</code>) : alignement lexical solide, quelques maladresses (« get riding up », « loved at the first look »).</p>
-          <div class="score-tier__example"><strong>Transformer</strong> — « He looked at me with his great blue eyes and we were loved at the first look. »</div>
-        </div>
-        <div class="score-tier">
-          <div class="score-tier__head">
-            <span class="score-tier__badge">~41 BLEU</span>
-            <span class="score-tier__label">Plafond observé (API)</span>
-          </div>
-          <p class="score-tier__body">Gemini 3.5 Flash v2 (<code>run_005</code>, <em>utterance</em>) : formulations naturelles, peu d’écarts lexicaux avec la référence sur ce jeu de test.</p>
-          <div class="score-tier__example"><strong>Gemini 2.5</strong> (phrase comparable) — « He looked at me with his big blue eyes, and we fell in love at first sight. » — tableau complet : <a href="resultats.html">Résultats</a>.</div>
-        </div>
       </div>
     </div>
 
