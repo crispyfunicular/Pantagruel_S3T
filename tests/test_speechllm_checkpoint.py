@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from speechLLM.speechllm_common import _speechllm_checkpoint_prefixes
+from speechLLM.speechllm_lib import _speechllm_checkpoint_prefixes
 
 
 def test_checkpoint_prefixes_frozen_encoder() -> None:

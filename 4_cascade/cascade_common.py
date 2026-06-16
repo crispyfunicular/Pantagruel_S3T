@@ -22,7 +22,7 @@ from typing import Any
 
 import torch
 from scripts_communs.st_common import load_waveform
-from speechLLM.speechllm_common import PROJECT_ROOT, deep_get
+from speechLLM.speechllm_lib import PROJECT_ROOT, deep_get
 
 CASCADE_ROOT = Path(__file__).resolve().parent
 

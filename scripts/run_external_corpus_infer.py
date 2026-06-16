@@ -78,14 +78,14 @@ def run_speechllm(
     from scripts_communs.variant_bootstrap import bootstrap_speechllm
 
     bootstrap_speechllm()
-    from speechLLM.speechllm_common import (
+    from speechLLM.speechllm_lib import (
         collate_speechllm_batch,
         load_projector_checkpoint,
         load_speechllm_checkpoint,
         load_speechllm_from_config,
         resolve_speechllm_config_path,
     )
-    from speechLLM.speechllm_common import (
+    from speechLLM.speechllm_lib import (
         deep_get as sl_deep_get,
     )
 
@@ -154,7 +154,7 @@ def run_gemini(
         create_gemini_client,
         translate_audio_with_metadata,
     )
-    from speechLLM.speechllm_common import resolve_speechllm_config_path
+    from speechLLM.speechllm_lib import resolve_speechllm_config_path
 
     config = load_yaml_config(resolve_speechllm_config_path(config_path))
     model_id = str(deep_get(config, "model.gemini_id", DEFAULT_GEMINI_MODEL_ID))

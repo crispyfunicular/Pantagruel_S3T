@@ -23,7 +23,7 @@ from Gemini.gemini_common import (
     create_gemini_client,
     translate_audio,
 )
-from speechLLM.speechllm_common import (
+from speechLLM.speechllm_lib import (
     PROJECT_ROOT,
     deep_get,
     load_yaml_config,

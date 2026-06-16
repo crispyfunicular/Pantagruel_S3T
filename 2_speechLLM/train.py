@@ -24,7 +24,7 @@ from scripts_communs.st_common import (
     apply_waveform_time_mask,
     parse_spec_augment_config,
 )
-from speechLLM.speechllm_common import (
+from speechLLM.speechllm_lib import (
     PROJECT_ROOT,
     SpeechLLMModel,
     collate_speechllm_batch,

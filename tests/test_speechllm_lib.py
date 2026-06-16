@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import torch
 from scripts_communs.st_common import ManifestSample
-from speechLLM.speechllm_common import (
+from speechLLM.speechllm_lib import (
     IGNORE_INDEX,
     collate_speechllm_batch,
     downsample_encoder_states,

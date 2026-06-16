@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run 005 — encodeur dégelé (fr-en, sentence_like) : train 20k updates puis evaluate.
-# Prérequis : patch ``_speechllm_checkpoint_prefixes`` dans speechllm_common.py (persiste encoder.*).
+# Prérequis : patch ``_speechllm_checkpoint_prefixes`` dans speechllm_lib.py (persiste encoder.*).
 #
 # Lancement détachable (fermer le laptop) :
 #   cd ~/S3T && source .venv/bin/activate
@@ -26,8 +26,8 @@ LOG_DIR="${ROOT}/logs"
 mkdir -p "$LOG_DIR"
 LOG="${LOG_DIR}/${RUN}_train_eval.log"
 
-if ! grep -q '_speechllm_checkpoint_prefixes' "${ROOT}/2_speechLLM/speechllm_common.py"; then
-  echo "ERROR: patch checkpoint manquant dans 2_speechLLM/speechllm_common.py" >&2
+if ! grep -q '_speechllm_checkpoint_prefixes' "${ROOT}/2_speechLLM/speechllm_lib.py"; then
+  echo "ERROR: patch checkpoint manquant dans 2_speechLLM/speechllm_lib.py" >&2
   exit 1
 fi
 

@@ -105,7 +105,7 @@ Mettre en œuvre une pipeline ST fr→en **speechLLM** reproductible sur m-TEDx,
 | Tête de génération | décodeur Transformer 6 couches | **LLM pré-entraîné** |
 | Paramètres entraînés | décodeur (+ encodeur après dégel) | **projecteur** (B1) |
 | Tokenisation | SentencePiece | **tokenizer LLM** |
-| Où coder | `scripts/st_common.py`, `4_train.py`… | `2_speechLLM/speechllm_common.py`, … |
+| Où coder | `scripts/st_common.py`, `4_train.py`… | `2_speechLLM/speechllm_lib.py`, … |
 
 La baseline ST n’est **pas abandonnée** : elle sert de point de comparaison quand un run speechLLM B1 est disponible.
 
@@ -127,7 +127,7 @@ La baseline ST n’est **pas abandonnée** : elle sert de point de comparaison q
 
 | # | Livrable |
 |---|----------|
-| 1 | `2_speechLLM/speechllm_common.py` (encodeur, downsampler, projecteur, LLM, collate masqué) |
+| 1 | `2_speechLLM/speechllm_lib.py` (encodeur, downsampler, projecteur, LLM, collate masqué) |
 | 2 | `2_speechLLM/4_train.py`, `5_evaluate.py`, `6_infer.py`, `pipeline.py` |
 | 3 | `2_speechLLM/configs/fr-en/b1.yaml` |
 | 4 | `2_speechLLM/README.md` (usage CLI) |

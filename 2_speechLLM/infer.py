@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from speechLLM.speechllm_common import (
+from speechLLM.speechllm_lib import (
     PROJECT_ROOT,
     deep_get,
     load_projector_checkpoint,

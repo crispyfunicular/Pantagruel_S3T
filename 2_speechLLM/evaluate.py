@@ -20,7 +20,7 @@ from scripts_communs.eval_protocol import (
     score_corpus_metrics,
     write_eval_protocol_artifact,
 )
-from speechLLM.speechllm_common import (
+from speechLLM.speechllm_lib import (
     PROJECT_ROOT,
     SpeechLLMModel,
     collate_speechllm_batch,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from speechLLM.speechllm_common import (
+from speechLLM.speechllm_lib import (
     build_prompt_text_parts,
     resolve_prompt_format,
 )

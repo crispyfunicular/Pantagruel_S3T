@@ -26,7 +26,7 @@ from Cascade.cascade_common import (
     load_cascade_settings,
     resolve_cascade_config_path,
 )
-from speechLLM.speechllm_common import load_yaml_config
+from speechLLM.speechllm_lib import load_yaml_config
 
 
 def run_infer_cascade(
@@ -96,7 +96,7 @@ def run_infer_cascade(
 
 def build_parser() -> argparse.ArgumentParser:
     """Construire le parseur CLI de l'étape ``infer-cascade``."""
-    from speechLLM.speechllm_common import PROJECT_ROOT
+    from speechLLM.speechllm_lib import PROJECT_ROOT
 
     parser = argparse.ArgumentParser(description="Cascade ASR→MT — inférence WAV")
     parser.add_argument("--input-audio", type=Path, required=True)
