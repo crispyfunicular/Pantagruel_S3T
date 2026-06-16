@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>try{if(localStorage.getItem("s3t-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+
+  <title>Résultats — Pantagruel S3T</title>
+  <meta name="description" content="Synthèse comparative des scores BLEU pour les 5 variantes du projet S3T, évolution des runs Transformer et speechLLM.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --muted: #5c5c7a;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --border: rgba(0,0,0,0.08);
+      --radius: 16px;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --sans: "Inter", system-ui, sans-serif;
+      /* couleurs par variante */
+      --v1: #4338ca; --v1-soft: #eef2ff;
+      --v2: #7c3aed; --v2-soft: #ede9fe;
+      --v3: #b45309; --v3-soft: #fffbeb;
+      --v4: #047857; --v4-soft: #ecfdf5;
+      --v5: #0e7490; --v5-soft: #ecfeff;
+      --ref: #64748b; --ref-soft: #f1f5f9;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .nav { position: sticky; top: 0; z-index: 10; background: rgba(245,245,247,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+    .nav-inner { max-width: 1040px; margin: 0 auto; padding: 0.9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .nav-logo { font-weight: 700; color: var(--text); }
+    .nav-links { display: flex; gap: 1.25rem; flex-wrap: wrap; font-size: 0.9rem; }
+    .nav-links a { color: var(--muted); font-weight: 500; }
+    .nav-links a:hover { color: var(--accent); text-decoration: none; }
+    .nav-links a.active { color: var(--accent); }
+    .container { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+    .breadcrumb { max-width: 1040px; margin: 0 auto; padding: 1rem 1.5rem 0; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+    .breadcrumb a { color: var(--muted); }
+    .breadcrumb a:hover { color: var(--accent); }
+    .hero { padding: 1.5rem 1.5rem 1.25rem; max-width: 1040px; margin: 0 auto; }
+    .hero h1 { font-size: clamp(1.5rem,3.5vw,2rem); line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+    .hero .lead { font-size: 0.97rem; color: var(--muted); max-width: 50rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 1rem; }
+    h2 { font-size: 1.1rem; margin-bottom: 0.6rem; letter-spacing: -0.01em; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+    h3 { font-size: 0.95rem; font-weight: 600; margin: 1.2rem 0 0.5rem; color: var(--text); }
+    .icon { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-size: 0.9rem; flex-shrink: 0; }
+    .section-intro { color: var(--muted); margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.55; }
+    code { font-family: var(--mono); font-size: 0.81em; background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 5px; font-size: 0.74rem; font-weight: 600; }
+    .tag-green { background: #dcfce7; color: #166534; }
+    .tag-orange { background: #fed7aa; color: #9a3412; }
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    .tag-blue { background: var(--accent-soft); color: #1e40af; }
+    .tag-gray { background: #f1f5f9; color: #475569; }
+
+    /* ── Grille scores : 3 colonnes égales (2 lignes de 3) ─── */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem; margin: 1rem 0; }
+    @media (max-width: 720px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 420px) { .stats-grid { grid-template-columns: 1fr; } }
+    .stat-card { border-radius: 12px; padding: 0.75rem 1rem; display: flex; flex-direction: column; min-height: 5.25rem; }
+    a.stat-card {
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    a.stat-card:hover {
+      text-decoration: none;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    }
+    a.stat-card:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .stat-card-v1 { background: var(--v1-soft); border: 1px solid rgba(99,102,241,0.2); }
+    .stat-card-v2 { background: var(--v2-soft); border: 1px solid rgba(124,58,237,0.2); }
+    .stat-card-v3 { background: var(--v3-soft); border: 1px solid rgba(180,83,9,0.2); }
+    .stat-card-v4 { background: var(--v4-soft); border: 1px solid rgba(4,120,87,0.2); }
+    .stat-card-v5 { background: var(--v5-soft); border: 1px solid rgba(14,116,144,0.2); }
+    .stat-card-ref { background: var(--ref-soft); border: 1px solid rgba(100,116,139,0.2); }
+    .stat-bleu { font-size: 1.6rem; font-weight: 700; line-height: 1; font-family: var(--mono); margin-bottom: 0.2rem; }
+    .stat-bleu-v1 { color: var(--v1); } .stat-bleu-v2 { color: var(--v2); }
+    .stat-bleu-v3 { color: var(--v3); } .stat-bleu-v4 { color: var(--v4); }
+    .stat-bleu-v5 { color: var(--v5); } .stat-bleu-ref { color: var(--ref); }
+    .stat-label { font-size: 0.79rem; font-weight: 600; color: var(--text); margin-bottom: 0.15rem; }
+    .stat-sub { font-size: 0.74rem; color: var(--muted); }
+
+    /* ── Graphique barres (style page d’accueil) ─── */
+    .results-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .results-header h2 { margin: 0; }
+    .seg-toggle {
+      display: inline-flex;
+      padding: 0.2rem;
+      background: #eef2ff;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .seg-toggle button {
+      padding: 0.45rem 0.9rem;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    .seg-toggle button[aria-selected="true"] {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .seg-toggle button:hover:not([aria-selected="true"]) { color: var(--text); }
+
+    .seg-toggle-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.25rem;
+    }
+
+    .seg-toggle-help {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .seg-toggle-help:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+    .results-subheading {
+      font-size: 1rem;
+      margin: 1.75rem 0 0.75rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      letter-spacing: -0.01em;
+    }
+    .chart { margin-top: 1rem; }
+    .chart-row {
+      display: grid;
+      grid-template-columns: 11rem 1fr 3.5rem;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 0.85rem;
+      font-size: 0.9rem;
+    }
+    .chart-label { font-weight: 500; }
+    .chart-sublabel {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .chart-bar-wrap {
+      height: 1.5rem;
+      background: #eef2ff;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .chart-bar {
+      height: 100%;
+      border-radius: 999px;
+      min-width: 2px;
+      transition: width 0.8s ease;
+    }
+    .chart-bar--v1 { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+    .chart-bar--v2 { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+    .chart-bar--v3 { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .chart-bar--v4 { background: linear-gradient(90deg, #10b981, #059669); }
+    .chart-bar--v5 { background: linear-gradient(90deg, #06b6d4, #0891b2); }
+    .chart-bar--ref { background: linear-gradient(90deg, #94a3b8, #64748b); }
+    .chart-bar--qwen { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+    .chart-bar--sentlike { background: linear-gradient(90deg, #c4b5fd, #a78bfa); }
+    .chart-bar--fail { background: linear-gradient(90deg, #f87171, #ef4444); }
+    .model-name { display: inline-flex; align-items: center; font-weight: 600; }
+    .model-name--ref { color: #475569; }
+    .model-name--v1 { color: #4338ca; }
+    .model-name--v2 { color: #6d28d9; }
+    .model-name--v3 { color: #b45309; }
+    .model-name--v4 { color: #047857; }
+    .model-name--v5 { color: #0e7490; }
+    .model-name--qwen { color: #d97706; }
+    .model-name--sentlike { color: #7c3aed; }
+    .model-name--fail { color: #dc2626; }
+    .model-name strong { font-weight: inherit; color: inherit; }
+    .chart-value {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: right;
+    }
+    @media (max-width: 560px) {
+      .chart-row { grid-template-columns: 1fr; gap: 0.35rem; }
+      .chart-value { text-align: left; }
+    }
+
+    /* ── Graphiques Chart.js (détail par variante) ─── */
+    .chart-wrap { position: relative; height: 300px; }
+    .chart-wrap-tall { position: relative; height: 380px; }
+    .chart-caption { font-size: 0.78rem; color: var(--muted); margin-top: 0.6rem; text-align: center; font-style: italic; }
+
+    /* ── Tableau résultats ─── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 0.55rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; background: #f8fafc; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    .result-best { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 6px; font-family: var(--mono); font-size: 0.84rem; font-weight: 700; }
+    .rb-v1 { background: var(--v1-soft); color: var(--v1); }
+    .rb-v2 { background: var(--v2-soft); color: var(--v2); }
+    .rb-v3 { background: var(--v3-soft); color: var(--v3); }
+    .rb-v4 { background: var(--v4-soft); color: var(--v4); }
+    .rb-v5 { background: var(--v5-soft); color: var(--v5); }
+    .rb-ref { background: var(--ref-soft); color: var(--ref); }
+    .variant-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; flex-shrink: 0; }
+    .vd-1 { background: var(--v1); } .vd-2 { background: var(--v2); }
+    .vd-3 { background: var(--v3); } .vd-4 { background: var(--v4); }
+    .vd-5 { background: var(--v5); } .vd-r { background: var(--ref); }
+    .note { margin-top: 0.75rem; padding: 0.8rem 1rem; border-radius: 10px; background: #fffbeb; border: 1px solid #fde68a; font-size: 0.84rem; color: #78350f; }
+    .note-info { background: var(--accent-soft); border-color: rgba(37,99,235,0.2); color: #1e40af; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+    .page-end {
+      margin-top: 2.5rem;
+      padding: 1.75rem 0 1.5rem;
+      background: #e8eaef;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .about-card {
+      max-width: 34rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .about-card h2 {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .about-card p {
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 0.75rem;
+      font-size: 0.84rem;
+    }
+
+    .about-links {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .page-end .btn-small {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.76rem;
+      border-radius: 8px;
+    }
+
+    .page-end .btn-outline {
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .page-end footer {
+      padding: 1rem 0 0;
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-align: center;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    .links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .btn { display: inline-block; padding: 0.4rem 0.85rem; border-radius: 10px; font-size: 0.84rem; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+    .btn:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: #1d4ed8; color: #fff; }
+    /* Légende colorée custom */
+    .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; margin: 0.6rem 0 0.2rem; font-size: 0.8rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  </style>
+  <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-logo" href="index.html">Pantagruel S3T</a>
+      <div class="nav-actions">
+        <div class="nav-links">
+        <a href="pipeline.html">Pipeline</a>
+        <a href="resultats.html" class="active">Résultats</a>
+        <a href="index.html#exemples">Exemples</a>
+        <a href="corpus.html">Corpus</a>
+        <a href="vocabulaire.html">Vocabulaire</a>
+        <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+        <label class="theme-switch" for="theme-toggle" title="Thème sombre">
+          <span class="theme-switch__text">Sombre</span>
+          <input type="checkbox" id="theme-toggle" role="switch" aria-label="Activer le thème sombre">
+          <span class="theme-switch__track" aria-hidden="true"><span class="theme-switch__thumb"></span></span>
+        </label>
+      </div>
+    </div>
+  </nav>
+
+  <div class="breadcrumb">
+    <a href="index.html">Accueil</a>
+    <span>›</span>
+    <span>Résultats</span>
+  </div>
+
+  <header class="hero">
+    <h1>Résultats</h1>
+    <p class="lead">Synthèse des scores BLEU obtenus sur m-TEDx FR→EN pour les cinq variantes du projet. Le score BLEU mesure la qualité d’une traduction automatique : de 0 (aucun mot correct) à 100 (traduction identique à la référence humaine).</p>
+  </header>
+
+  <main class="container">
+
+    <!-- ── 1. Meilleurs scores par variante ─────────────────────── -->
+    <div class="card">
+      <h2>Meilleur score par variante</h2>
+      <p class="section-intro">Score BLEU obtenu sur le jeu de <strong>test</strong> m-TEDx pour chaque approche. Les scores en segmentation <em>utterance</em> sont comparables entre eux ; les scores <em>sentence_like</em> ne le sont pas directement.</p>
+
+      <div class="stats-grid">
+        <a class="stat-card stat-card-v3" href="variante-3.html" title="Variante 3 · Gemini">
+          <div class="stat-bleu stat-bleu-v3">41,1</div>
+          <div class="stat-label">3 · Gemini 3.5 Flash</div>
+          <div class="stat-sub">utterance · run_005</div>
+        </a>
+        <a class="stat-card stat-card-v4" href="variante-4.html" title="Variante 4 · Cascade">
+          <div class="stat-bleu stat-bleu-v4">37,4</div>
+          <div class="stat-label">4 · Cascade ASR→MT</div>
+          <div class="stat-sub">utterance · run_001</div>
+        </a>
+        <a class="stat-card stat-card-v1" href="variante-1.html" title="Variante 1 · Transformer ST">
+          <div class="stat-bleu stat-bleu-v1">26,1</div>
+          <div class="stat-label">1 · Transformer ST</div>
+          <div class="stat-sub">utterance · run_026</div>
+        </a>
+        <a class="stat-card stat-card-ref" href="variante-1.html" title="Référence article Pantagruel (variante 1)">
+          <div class="stat-bleu stat-bleu-ref">25,2</div>
+          <div class="stat-label">Référence article</div>
+          <div class="stat-sub">L-114k · Table 8 Pantagruel</div>
+        </a>
+        <a class="stat-card stat-card-v2" href="variante-2.html" title="Variante 2 · speechLLM">
+          <div class="stat-bleu stat-bleu-v2">15,2</div>
+          <div class="stat-label">2 · speechLLM (B1)</div>
+          <div class="stat-sub">utterance · run_013</div>
+        </a>
+        <a class="stat-card stat-card-v5" href="variante-5.html" title="Variante 5 · Speech_Text">
+          <div class="stat-bleu stat-bleu-v5">7,9</div>
+          <div class="stat-label">5 · Speech_Text</div>
+          <div class="stat-sub">sentence_like · run_001</div>
+        </a>
+      </div>
+
+      <div class="note note-info" style="margin-top:0.75rem;">
+        <strong>Pourquoi Gemini et Cascade font mieux ?</strong> Ces deux variantes s’appuient sur des modèles pré-entraînés sur d’immenses corpus — Gemini via une API cloud, Cascade en chaînant Whisper (transcription) et Marian MT (traduction). Les variantes 1, 2 et 5, elles, entraînent un modèle de zéro ou presque sur les seules données m-TEDx.
+        <br><br>
+        <strong>Données déjà vues ?</strong> Gemini et Whisper ont peut-être déjà rencontré des enregistrements proches de m-TEDx lors de leur entraînement initial : les conférences TED sont librement téléchargeables sur Internet. Ce biais potentiel complique la comparaison directe avec les approches entraînées uniquement sur le corpus du projet.
+      </div>
+    </div>
+
+    <!-- ── 2. Comparaison globale ─────────────────────── -->
+    <div class="card">
+      <div class="results-header">
+        <h2>Résultats BLEU (test)</h2>
+        <div class="seg-toggle-block">
+          <div class="seg-toggle" role="tablist" aria-label="Découpage audio">
+            <button type="button" role="tab" data-segment="utterance" aria-selected="true">utterance</button>
+            <button type="button" role="tab" data-segment="sentence_like" aria-selected="false">sentence_like</button>
+          </div>
+          <a class="seg-toggle-help" href="vocabulaire.html#segmentation">Découpage audio → glossaire</a>
+        </div>
+      </div>
+      <p class="section-intro" id="results-intro"></p>
+      <div class="chart" id="chart-root" aria-label="Graphique des scores BLEU test"></div>
+      <h3 class="results-subheading">Paramètres des runs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Variante</th>
+              <th>Run</th>
+              <th>BLEU test</th>
+              <th>Paramètres clés</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+      <div class="note" id="results-note"></div>
+    </div>
+
+    <!-- ── 3. Évolution des runs Transformer ────────────────────── -->
+    <div class="card">
+      <h2><span class="icon" style="background:var(--v1-soft);color:var(--v1);">1</span> Variante 1 · Transformer — évolution des runs</h2>
+      <p class="section-intro">Chaque point représente un run d’entraînement (segmentation utterance). La couleur indique la taille de l’encodeur utilisé. Les runs échoués (collapse ou interruption) sont marqués en rouge.</p>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#6366f1;"></div> B-1k</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4338ca;"></div> L-14k</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1e1b4b;"></div> L-114k</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444;border-radius:50%;"></div> Échec / interrompu</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#94a3b8;border:1px dashed #64748b;"></div> Référence article</div>
+      </div>
+
+      <div class="chart-wrap-tall">
+        <canvas id="chartV1"></canvas>
+      </div>
+      <p class="chart-caption">run_026 (L-14k, SpecAugment v5) atteint 26,1 BLEU et dépasse la référence article L-14k (24,0). run_025 (collapse batch 64) et run_036 (warmup interrompu) sont exclus du tracé principal.</p>
+
+      <div class="note" style="margin-top:0.75rem;">
+        <strong>Lecture :</strong> les runs sont ordonnés par numéro (approximativement chronologiques). On observe une progression régulière jusqu’à run_020 (21 BLEU), puis un saut important avec l’introduction du SpecAugment dans run_026.
+      </div>
+    </div>
+
+    <!-- ── 4. Comparaison runs speechLLM ─────────────────────────── -->
+    <div class="card">
+      <h2><span class="icon" style="background:var(--v2-soft);color:var(--v2);">2</span> Variante 2 · speechLLM — impact des paramètres</h2>
+      <p class="section-intro">Chaque barre représente un run speechLLM. La couleur indique la configuration : bonne (48 tokens, utterance), sentence_like, ou échouée (128 tokens).</p>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#7c3aed;"></div> Utterance · 48 tok (bon)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a78bfa;"></div> Sentence_like</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> LLM alternatif (Qwen)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Utterance · 128 tok (échec)</div>
+      </div>
+
+      <div class="chart" id="chart-v2-root" aria-label="Scores BLEU des runs speechLLM"></div>
+      <p class="chart-caption">run_013 et run_012 (L-114k/L-14k gelés, 48 tok) obtiennent 15 BLEU utterance. Les runs à 128 tokens (run_017, run_021) s’effondrent à 5–6 malgré un encodeur identique.</p>
+
+      <div class="note" style="margin-top:0.75rem;">
+        <strong>Effet max_new_tokens :</strong> 128 tokens → le modèle génère des traductions 3× trop longues, ce qui pénalise fortement le score BLEU même si le début de la traduction est correct.
+      </div>
+    </div>
+
+    <!-- ── 5. Tableau récapitulatif complet ──────────────────────── -->
+    <div class="card">
+      <h2>Tableau récapitulatif</h2>
+      <p class="section-intro">Tous les meilleurs runs par variante, avec leur contexte. <strong>Utterance</strong> et <strong>sentence_like</strong> sont deux modes de segmentation de l’audio — leurs scores BLEU ne sont pas directement comparables.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Variante</th>
+              <th>Run</th>
+              <th>BLEU test</th>
+              <th>Seg.</th>
+              <th>Paramètres clés</th>
+              <th>Lien</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- V3 -->
+            <tr>
+              <td><span class="variant-dot vd-3"></span><strong>3 · Gemini</strong></td>
+              <td><code>run_005</code></td>
+              <td><span class="result-best rb-v3">41,1</span></td>
+              <td><em>utterance</em></td>
+              <td>Gemini 3.5 Flash · max 8192 tok · thinking minimal · garde-fous anti-boucles</td>
+              <td><a href="variante-3.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_004</code></td>
+              <td>36,8</td>
+              <td><em>sentence_like</em></td>
+              <td>Gemini 3.5 Flash v2 · sentence_like</td>
+              <td><a href="variante-3.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_001</code></td>
+              <td>33,7</td>
+              <td><em>utterance</em></td>
+              <td>Gemini 2.5 Flash · temp 0 · max 256 tok</td>
+              <td><a href="variante-3.html">→</a></td>
+            </tr>
+            <!-- V4 -->
+            <tr>
+              <td><span class="variant-dot vd-4"></span><strong>4 · Cascade</strong></td>
+              <td><code>run_001</code></td>
+              <td><span class="result-best rb-v4">37,4</span></td>
+              <td><em>utterance</em></td>
+              <td>Whisper large-v3 (ASR) → Marian opus-mt-fr-en (MT)</td>
+              <td><a href="variante-4.html">→</a></td>
+            </tr>
+            <!-- V1 meilleurs -->
+            <tr>
+              <td><span class="variant-dot vd-1"></span><strong>1 · Transformer</strong></td>
+              <td><code>run_026</code></td>
+              <td><span class="result-best rb-v1">26,1</span></td>
+              <td><em>utterance</em></td>
+              <td>L-14k · SpecAugment v5 · vocab 1k · dépasse référence article L-14k (24,0)</td>
+              <td><a href="variante-1.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_028</code></td>
+              <td>23,5</td>
+              <td><em>utterance</em></td>
+              <td>L-114k · SpecAugment v5 — meilleur L-114k local</td>
+              <td><a href="variante-1.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_020</code></td>
+              <td>21,2</td>
+              <td><em>utterance</em></td>
+              <td>L-14k · v3 · gel 5k puis dégel</td>
+              <td><a href="variante-1.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><em>Article réf.</em></td>
+              <td><span class="result-best rb-ref">25,2</span></td>
+              <td><em>utterance</em></td>
+              <td>L-114k · fairseq · beam 5 · Table 8 Pantagruel (2026)</td>
+              <td></td>
+            </tr>
+            <!-- V2 meilleurs -->
+            <tr>
+              <td><span class="variant-dot vd-2"></span><strong>2 · speechLLM</strong></td>
+              <td><code>run_013</code></td>
+              <td><span class="result-best rb-v2">15,2</span></td>
+              <td><em>utterance</em></td>
+              <td>L-114k gelé · Phi-2 · 48 tok</td>
+              <td><a href="variante-2.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_005</code></td>
+              <td>19,0</td>
+              <td><em>sentence_like</em></td>
+              <td>B-1k dégelé · Phi-2 · meilleur global B1</td>
+              <td><a href="variante-2.html">→</a></td>
+            </tr>
+            <!-- V5 -->
+            <tr>
+              <td><span class="variant-dot vd-5"></span><strong>5 · Speech_Text</strong></td>
+              <td><code>run_001</code></td>
+              <td><span class="result-best rb-v5">7,9</span></td>
+              <td><em>sentence_like</em></td>
+              <td>Speech_Text B-1k · décodeur 6 couches · réglages non optimisés</td>
+              <td><a href="variante-5.html">→</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note" style="margin-top:0.85rem;">
+        <strong>Attention à la comparaison :</strong> les variantes 1, 2 et 5 entraînent un modèle sur m-TEDx. Les variantes 3 (Gemini) et 4 (Cascade) utilisent des modèles pré-entraînés sur bien plus de données — leurs scores élevés ne signifient pas qu’elles sont « meilleures » au sens de la contribution du projet, mais qu’elles partent d’un avantage fondamental.
+      </div>
+    </div>
+
+    <!-- ── 6. Contexte variantes rapides ─────────────────────────── -->
+    <div class="two-col">
+      <div class="card">
+        <h2><span class="icon" style="background:var(--v3-soft);color:var(--v3);">3</span> Gemini — détail</h2>
+        <p class="section-intro">Le meilleur score du projet (<strong>41,1 BLEU</strong>) est obtenu avec Gemini 3.5 Flash via l’API Google. Le paramètre clé : les <em>garde-fous</em> anti-boucles et un budget <em>thinking</em> minimal. Sans ces réglages, run_004 initial ne donnait que 20,3.</p>
+        <div class="links"><a class="btn" href="variante-3.html">Page complète →</a></div>
+      </div>
+      <div class="card">
+        <h2><span class="icon" style="background:var(--v4-soft);color:var(--v4);">4</span> Cascade — détail</h2>
+        <p class="section-intro">En chaînant Whisper large-v3 (transcription) puis Marian opus-mt-fr-en (traduction), on obtient <strong>37,4 BLEU</strong> avec un seul run. Avantage : pas d’entraînement ; inconvénient : deux modèles distincts, erreurs ASR propagées.</p>
+        <div class="links"><a class="btn" href="variante-4.html">Page complète →</a></div>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="page-end">
+    <section id="about" class="container">
+      <div class="about-card">
+        <h2>À propos</h2>
+        <p><strong>Morgane Bona-Pellissier</strong> est étudiante en master de traitement automatique des langues à l’Université Paris Nanterre après un doctorat en traductologie (Université de Genève, 2023). Ses recherches portent sur la traduction automatique neuronale et les langues peu dotées et minorisées ; elle parle notamment catalan et étudie le breton.</p>
+        <div class="about-links">
+          <a href="https://www.linkedin.com/in/morgane-bona-pellissier-0648aa112/" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-primary">LinkedIn ↗</a>
+          <a href="https://bona-pellissier.net/" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-outline">Site personnel ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="container">
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
+    </footer>
+  </div>
+
+  <script>
+    /* ── Graphique comparatif (même logique que index.html) ─────── */
+    const SEGMENTS = {
+      utterance: {
+        intro:
+          'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
+        note:
+          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>) ; L-114k <strong>23,5</strong> (<code>run_028</code>). Meilleur speechLLM : 15,2 (<code>run_013</code>).',
+        chartRows: [
+          { id: 3, color: 'v3', chartLabel: '3 · Gemini 3.5 Flash', tableLabel: 'Gemini 3.5 Flash v2', score: 41.1 },
+          { id: 4, color: 'v4', chartLabel: '4 · Cascade', tableLabel: 'Cascade ASR→MT', score: 37 },
+          { id: '—', color: 'ref', chartLabel: 'Article Pantagruel-L-114k', tableLabel: 'Pantagruel-L-114k (article)', score: 25.2 },
+          { id: 1, color: 'v1', chartLabel: '1 · Transformer', tableLabel: 'Transformer ST', score: 26.1 },
+          { id: 2, color: 'v2', chartLabel: '2 · speechLLM', tableLabel: 'speechLLM B1', score: 15.2 }
+        ],
+        tableRows: [
+          { id: 3, color: 'v3', tableLabel: 'Gemini 3.5 Flash v2', run: 'run_005', score: 41.1,
+            params: 'max 8192 tok · thinking minimal · garde-fous anti-boucles' },
+          { id: 3, color: 'v3', tableLabel: 'Gemini 2.5 Flash', run: 'run_001', score: 33.7,
+            params: 'temp 0 · max 256 tok' },
+          { id: 4, color: 'v4', tableLabel: 'Cascade ASR→MT', run: 'run_001', score: 37.4,
+            params: 'Whisper large-v3 (ASR) → Marian opus-mt-fr-en (MT)' },
+          { id: '—', color: 'ref', tableLabel: 'Pantagruel-L-114k (article)', run: '—', score: 25.2,
+            params: 'fairseq · beam 5 · Table 8 Pantagruel (2026)' },
+          { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_026', score: 26.1,
+            params: 'L-14k · SpecAugment v5 · vocab 1k' },
+          { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_028', score: 23.5,
+            params: 'L-114k · SpecAugment v5' },
+          { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_020', score: 21.2,
+            params: 'L-14k · v3 · gel 5k puis dégel' },
+          { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_013', score: 15.2,
+            params: 'L-114k gelé · Phi-2 · 48 tok' }
+        ]
+      },
+      sentence_like: {
+        intro:
+          'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>sentence_like</em> (fusion de segments voisins). Ces scores ne sont pas directement comparables au protocole <em>utterance</em> de l’article.',
+        note:
+          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>sentence_like</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_004</code>, 36,8 BLEU test) devance Gemini 2.5 (23) ; puis speechLLM dégelé (19) et la baseline Transformer (15). La cascade n’a pas encore de run sur ce découpage.',
+        chartRows: [
+          { id: 3, color: 'v3', chartLabel: '3 · Gemini 3.5 Flash', tableLabel: 'Gemini 3.5 Flash v2', score: 36.8 },
+          { id: 2, color: 'v2', chartLabel: '2 · speechLLM', tableLabel: 'speechLLM B1', score: 19 },
+          { id: 1, color: 'v1', chartLabel: '1 · Transformer', tableLabel: 'Transformer ST', score: 15 },
+          { id: 5, color: 'v5', chartLabel: '5 · Speech_Text', tableLabel: 'Speech_Text + ST', score: 8 }
+        ],
+        tableRows: [
+          { id: 3, color: 'v3', tableLabel: 'Gemini 3.5 Flash v2', run: 'run_004', score: 36.8,
+            params: 'max 8192 tok · thinking minimal' },
+          { id: 3, color: 'v3', tableLabel: 'Gemini 2.5 Flash', run: 'run_001', score: 23,
+            params: 'sentence_like · max 256 tok' },
+          { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_005', score: 19,
+            params: 'B-1k dégelé · Phi-2 gelé · projecteur seul entraîné' },
+          { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'baseline', score: 15,
+            params: 'B-1k · gel encodeur 5k updates puis dégel · greedy' },
+          { id: 5, color: 'v5', tableLabel: 'Speech_Text + ST', run: 'run_001', score: 7.9,
+            params: 'Speech_Text B-1k · décodeur 6 couches · réglages non optimisés' }
+        ]
+      }
+    };
+
+    let currentSegment = 'utterance';
+
+    function formatScore(score) {
+      return Number.isInteger(score) ? String(score) : score.toFixed(1).replace('.', ',');
+    }
+
+    function formatRun(run) {
+      if (!run || run === '—') return '—';
+      if (run === 'baseline') return '<em>baseline</em>';
+      return '<code>' + run + '</code>';
+    }
+
+    function renderSegment(segmentKey) {
+      const data = SEGMENTS[segmentKey];
+      const chartRows = data.chartRows || data.rows;
+      const tableRows = data.tableRows || data.rows;
+      const sortedChartRows = [...chartRows].sort((a, b) => b.score - a.score);
+      const sortedTableRows = [...tableRows].sort((a, b) => b.score - a.score);
+      const maxScore = Math.max(...sortedChartRows.map((row) => row.score));
+
+      document.getElementById('results-intro').innerHTML = data.intro;
+      document.getElementById('results-note').innerHTML = data.note;
+
+      document.getElementById('chart-root').innerHTML = sortedChartRows
+        .map((row) => {
+          const width = ((row.score / maxScore) * 100).toFixed(1);
+          const sublabel = row.chartSublabel
+            ? '<span class="chart-sublabel">' + row.chartSublabel + '</span>'
+            : '';
+          return (
+            '<div class="chart-row">' +
+              '<div class="chart-label">' +
+                '<span class="model-name model-name--' + row.color + '">' + row.chartLabel + '</span>' +
+                sublabel +
+              '</div>' +
+              '<div class="chart-bar-wrap">' +
+                '<div class="chart-bar chart-bar--' + row.color + '" style="width:' + width + '%"></div>' +
+              '</div>' +
+              '<div class="chart-value">' + formatScore(row.score) + '</div>' +
+            '</div>'
+          );
+        })
+        .join('');
+
+      document.getElementById('table-body').innerHTML = sortedTableRows
+        .map((row) => (
+          '<tr>' +
+            '<td>' + row.id + '</td>' +
+            '<td><span class="model-name model-name--' + row.color + '">' + row.tableLabel + '</span></td>' +
+            '<td>' + formatRun(row.run) + '</td>' +
+            '<td>' + formatScore(row.score) + '</td>' +
+            '<td>' + row.params + '</td>' +
+          '</tr>'
+        ))
+        .join('');
+    }
+
+    function setSegment(segmentKey) {
+      currentSegment = segmentKey;
+      document.querySelectorAll('.seg-toggle button').forEach((button) => {
+        const active = button.dataset.segment === segmentKey;
+        button.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      renderSegment(segmentKey);
+    }
+
+    document.querySelectorAll('.seg-toggle button').forEach((button) => {
+      button.addEventListener('click', () => setSegment(button.dataset.segment));
+    });
+    setSegment(currentSegment);
+
+    /* ── Graphique speechLLM (barres pilule) ───────────────────── */
+    (function renderSpeechLLMChart() {
+      const runs = [
+        { id: 'run_005', sub: 'B-1k dégelé · sentence_like', bleu: 19.0, color: 'sentlike' },
+        { id: 'run_013', sub: 'L-114k gelé · 48 tok', bleu: 15.2, color: 'v2' },
+        { id: 'run_012', sub: 'L-14k gelé · 48 tok', bleu: 15.0, color: 'v2' },
+        { id: 'run_018', sub: 'L-14k + Qwen2.5-3B', bleu: 13.0, color: 'qwen' },
+        { id: 'run_002', sub: 'B-1k gelé · sentence_like', bleu: 16.0, color: 'sentlike' },
+        { id: 'run_003', sub: 'B-1k · utterance', bleu: 7.5, color: 'v2' },
+        { id: 'run_015', sub: 'L-14k dégelé · utterance', bleu: 3.7, color: 'v2' },
+        { id: 'run_017', sub: 'L-114k · 128 tok (échec)', bleu: 5.6, color: 'fail' },
+        { id: 'run_021', sub: 'L-14k · 128 tok (échec)', bleu: 5.5, color: 'fail' },
+      ];
+      const sorted = [...runs].sort((a, b) => b.bleu - a.bleu);
+      const max = Math.max(...sorted.map((r) => r.bleu));
+      document.getElementById('chart-v2-root').innerHTML = sorted.map((run) => {
+        const width = ((run.bleu / max) * 100).toFixed(1);
+        return (
+          '<div class="chart-row">' +
+            '<div class="chart-label">' +
+              '<span class="model-name model-name--' + run.color + '"><code>' + run.id + '</code></span>' +
+              '<span class="chart-sublabel">' + run.sub + '</span>' +
+            '</div>' +
+            '<div class="chart-bar-wrap">' +
+              '<div class="chart-bar chart-bar--' + run.color + '" style="width:' + width + '%"></div>' +
+            '</div>' +
+            '<div class="chart-value">' + formatScore(run.bleu) + '</div>' +
+          '</div>'
+        );
+      }).join('');
+    })();
+
+    /* ── Graphiques Chart.js (détail Transformer) ───────────────── */
+    const COLORS = {
+      v1: '#4338ca', ref: '#64748b', fail: '#ef4444',
+      bk: '#6366f1', lk: '#4338ca', lkk: '#1e1b4b',
+    };
+    (function() {
+      /* Runs utterance V1, triés par numéro de run */
+      const runs = [
+        { id: 'run_004',  n: 4,  bleu: 16.7,  enc: 'B-1k',   ok: true },
+        { id: 'run_014',  n: 14, bleu: 17.2,  enc: 'L-14k',  ok: true },
+        { id: 'run_016',  n: 16, bleu: 19.6,  enc: 'L-114k', ok: true },
+        { id: 'run_019',  n: 19, bleu: 20.2,  enc: 'L-114k', ok: true },
+        { id: 'run_020',  n: 20, bleu: 21.2,  enc: 'L-14k',  ok: true },
+        { id: 'run_026',  n: 26, bleu: 26.1,  enc: 'L-14k',  ok: true },
+        { id: 'run_027',  n: 27, bleu: 25.1,  enc: 'L-14k',  ok: true },
+        { id: 'run_028',  n: 28, bleu: 23.5,  enc: 'L-114k', ok: true },
+        { id: 'run_031',  n: 31, bleu: 24.0,  enc: 'L-14k',  ok: true },
+        { id: 'run_034',  n: 34, bleu: 22.2,  enc: 'L-14k',  ok: true },
+        { id: 'run_035',  n: 35, bleu: 19.75, enc: 'B-1k',   ok: true },
+        { id: 'run_025',  n: 25, bleu: 0.31,  enc: 'L-114k', ok: false }, /* collapse */
+        { id: 'run_036',  n: 36, bleu: 0.60,  enc: 'L-14k',  ok: false }, /* interrompue */
+      ];
+
+      const encColor = { 'B-1k': COLORS.bk, 'L-14k': COLORS.lk, 'L-114k': COLORS.lkk };
+
+      /* 3 datasets par encodeur + 1 pour les échecs */
+      const dsOk = ['B-1k', 'L-14k', 'L-114k'].map(enc => ({
+        label: enc,
+        data: runs.filter(r => r.ok && r.enc === enc).map(r => ({ x: r.n, y: r.bleu, id: r.id })),
+        backgroundColor: encColor[enc],
+        borderColor: encColor[enc],
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        showLine: false,
+        order: 1,
+      }));
+
+      const dsFail = {
+        label: 'Échec / interrompu',
+        data: runs.filter(r => !r.ok).map(r => ({ x: r.n, y: r.bleu, id: r.id })),
+        backgroundColor: COLORS.fail,
+        borderColor: COLORS.fail,
+        pointRadius: 6,
+        pointStyle: 'crossRot',
+        showLine: false,
+        order: 0,
+      };
+
+      const ctx = document.getElementById('chartV1').getContext('2d');
+      new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets: [...dsOk, dsFail] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: items => items[0].raw.id,
+                label: item => ` BLEU ${item.raw.y}`,
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min: 1, max: 40,
+              title: { display: true, text: 'Numéro du run', font: { size: 11 }, color: '#5c5c7a' },
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: {
+                stepSize: 5,
+                callback: v => `run_0${v < 10 ? '0' : ''}${v}`
+              }
+            },
+            y: {
+              min: 0, max: 30,
+              title: { display: true, text: 'BLEU test', font: { size: 11 }, color: '#5c5c7a' },
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 11 } }
+            }
+          }
+        },
+        plugins: [{
+          id: 'refLines',
+          afterDraw(chart) {
+            const { ctx, scales } = chart;
+            /* Référence article L-14k (24.0) */
+            const drawRef = (val, label, dash) => {
+              const y = scales.y.getPixelForValue(val);
+              ctx.save();
+              ctx.beginPath();
+              ctx.setLineDash(dash);
+              ctx.strokeStyle = COLORS.ref;
+              ctx.lineWidth = 1.3;
+              ctx.moveTo(chart.chartArea.left, y);
+              ctx.lineTo(chart.chartArea.right, y);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.fillStyle = COLORS.ref;
+              ctx.font = '10px Inter, sans-serif';
+              ctx.textAlign = 'right';
+              ctx.fillText(label, chart.chartArea.right - 4, y - 4);
+              ctx.restore();
+            };
+            drawRef(25.2, 'Réf. article L-114k (25,2)', [5, 4]);
+            drawRef(24.0, 'Réf. article L-14k (24,0)',  [3, 3]);
+
+            /* Annotation run_026 (meilleur) */
+            const best = chart.data.datasets[1].data.find(d => d.id === 'run_026');
+            if (best) {
+              const bx = scales.x.getPixelForValue(best.x);
+              const by = scales.y.getPixelForValue(best.y);
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(bx, by, 12, 0, 2 * Math.PI);
+              ctx.strokeStyle = COLORS.v1;
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              ctx.fillStyle = COLORS.v1;
+              ctx.font = 'bold 10px Inter, sans-serif';
+              ctx.textAlign = 'left';
+              ctx.fillText('run_026 ★', bx + 14, by + 4);
+              ctx.restore();
+            }
+          }
+        }]
+      });
+    })();
+  </script>
+
+  <script src="theme.js"></script>
+</body>
+</html>
