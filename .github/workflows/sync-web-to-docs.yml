@@ -1,0 +1,42 @@
+# Miroir web/ → docs/ pour GitHub Pages (source : branche main, dossier /docs).
+# Le déploiement Pages est assuré uniquement par « pages build and deployment » (pas d'artifact GHA).
+name: Sync web to docs
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "web/**"
+      - "scripts/sync_web_pages.sh"
+      - ".github/workflows/sync-web-to-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-web-to-docs
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      !contains(github.event.head_commit.message, '[skip ci]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync web/ into docs/ (miroir Pages)
+        run: bash scripts/sync_web_pages.sh
+
+      - name: Commit docs mirror if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/*.html docs/.nojekyll docs/theme.css docs/theme.js docs/audio/
+          if ! git diff --staged --quiet; then
+            git commit -m "Synchronise docs/ depuis web/ [skip ci]"
+            git push
+          fi

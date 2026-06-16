@@ -1,7 +1,7 @@
 # S3T — Speech Translation (Pantagruel replication)
 
 > **Page web** — [crispyfunicular.github.io/Pantagruel_S3T](https://crispyfunicular.github.io/Pantagruel_S3T/) · [bona-pellissier.net](https://bona-pellissier.net/)  
-> **Source à éditer** : [`web/`](web/) uniquement. GitHub Pages lit le dossier [`docs/`](docs/) (miroir auto : `bash scripts/sync_web_pages.sh` ou workflow [`.github/workflows/static.yml`](.github/workflows/static.yml)). **Audio du carrousel** : après `2_prepare` (utterance), `python scripts/extract_web_audio.py` puis resynchroniser. FTP OVH : copier `web/*.html` et `web/audio/` vers `www/`.
+> **Source à éditer** : [`web/`](web/) uniquement. **GitHub Pages** publie le dossier [`docs/`](docs/) (branche `main`) — miroir : `bash scripts/sync_web_pages.sh` ou workflow [`.github/workflows/sync-web-to-docs.yml`](.github/workflows/sync-web-to-docs.yml). **Réglage dépôt (une fois)** : *Settings → Pages → Build and deployment → Deploy from a branch → `main` / `/docs`* (ne pas utiliser « GitHub Actions » comme source, pour éviter les checks en double). **Audio du carrousel** : après `2_prepare` (utterance), `python scripts/extract_web_audio.py` puis resynchroniser. FTP OVH : copier `web/*.html` et `web/audio/` vers `www/`.
 
 Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`, `fr-es`), évaluée avec **SacreBLEU**. Le dépôt expose **cinq variantes** partageant la même préparation des données (étapes 0–2), avec un choix de **découpage audio** au moment de `prepare` :
 
