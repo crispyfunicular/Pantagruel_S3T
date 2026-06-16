@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>try{if(localStorage.getItem("s3t-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+
   <title>Pantagruel S3T — Traduction de la parole FR→EN</title>
   <meta name="description" content="Comparaison de cinq approches de traduction automatique de la parole français→anglais avec Pantagruel sur m-TEDx (SacreBLEU).">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -101,16 +103,81 @@
       font-size: 0.95rem;
     }
 
-    .pipeline {
-      font-family: var(--mono);
-      font-size: 0.78rem;
-      line-height: 1.5;
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 1.25rem;
+    .arch-overview {
+      background: #f8fafc;
+      border: 1px solid var(--border);
       border-radius: 12px;
-      overflow-x: auto;
-      white-space: pre;
+      padding: 1.25rem 1rem 1rem;
+      margin: 0.75rem 0 0;
+    }
+
+    .arch-overview .pipeline-detail-link {
+      margin: 0.85rem 0 0;
+      text-align: center;
+    }
+
+    .arch-overview .pipeline-detail-link a {
+      color: var(--accent);
+    }
+
+    .arch-overview .pipeline-detail-link a:hover {
+      color: #1d4ed8;
+    }
+
+    .arch-variants {
+      padding: 0 0.25rem;
+      margin-top: 0.15rem;
+    }
+
+    .arch-variants-label {
+      margin: 0 0 0.75rem;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .arch-overview .variants-grid {
+      margin-top: 0;
+      gap: 0.6rem;
+    }
+
+    @media (min-width: 900px) {
+      .arch-overview .variants-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+
+    .arch-overview svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .arch-overview a {
+      cursor: pointer;
+    }
+
+    .arch-overview a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .arch-overview a:hover .arch-corpus-sub,
+    .arch-overview a:focus-visible .arch-corpus-sub {
+      fill: #1d4ed8;
+    }
+
+    .arch-overview a:hover .arch-prep-text,
+    .arch-overview a:focus-visible .arch-prep-text {
+      fill: #1e40af;
+    }
+
+    .pipeline-detail-link {
+      margin: 0.85rem 0 0;
+      font-size: 0.9rem;
     }
 
     .variants-grid {
@@ -299,7 +366,7 @@
       font-weight: 600;
       color: var(--muted);
       cursor: pointer;
-      font-family: var(--mono);
+      font-family: var(--sans);
       transition: background 0.2s, color 0.2s, box-shadow 0.2s;
     }
 
@@ -311,6 +378,24 @@
 
     .seg-toggle button:hover:not([aria-selected="true"]) {
       color: var(--text);
+    }
+
+    .seg-toggle-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.25rem;
+    }
+
+    .seg-toggle-help {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .seg-toggle-help:hover {
+      color: var(--accent);
+      text-decoration: underline;
     }
 
     .results-subheading {
@@ -481,6 +566,26 @@
       line-height: 1.5;
     }
 
+    .phrases-source-note {
+      margin: 0.85rem 0 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-style: italic;
+      line-height: 1.45;
+    }
+
+    .source-mark {
+      color: var(--muted);
+      font-weight: 600;
+      text-decoration: none;
+      font-style: normal;
+    }
+
+    .source-mark:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
     .phrases-footnote code {
       font-family: var(--mono);
       font-size: 0.78rem;
@@ -549,17 +654,26 @@
     }
 
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <nav class="nav">
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
-      <div class="nav-links">
-        <a href="#pipeline">Pipeline</a>
-        <a href="#resultats">Résultats</a>
+      <div class="nav-actions">
+        <div class="nav-links">
+        <a href="pipeline.html">Pipeline</a>
+        <a href="resultats.html">Résultats</a>
         <a href="#exemples">Exemples</a>
         <a href="corpus.html">Corpus</a>
+        <a href="vocabulaire.html">Vocabulaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+        <label class="theme-switch" for="theme-toggle" title="Thème sombre">
+          <span class="theme-switch__text">Sombre</span>
+          <input type="checkbox" id="theme-toggle" role="switch" aria-label="Activer le thème sombre">
+          <span class="theme-switch__track" aria-hidden="true"><span class="theme-switch__thumb"></span></span>
+        </label>
       </div>
     </div>
   </nav>
@@ -572,9 +686,9 @@
       Projet de réplication autour de l’encodeur <a href="https://huggingface.co/PantagrueLLM" target="_blank" rel="noopener noreferrer"><strong>Pantagruel</strong></a> (<a href="http://lig-getalp.imag.fr/fr/accueil/" target="_blank" rel="noopener noreferrer">LIG-GETALP (UGA)</a>).
     </p>
     <div class="links">
-      <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/web/variantes.md" target="_blank" rel="noopener noreferrer">Documentation complète ↗</a>
-      <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/web/vocabulaire.md" target="_blank" rel="noopener noreferrer">Glossaire ↗</a>
-      <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/web/phrases.md" target="_blank" rel="noopener noreferrer">Exemples traduits ↗</a>
+      <a class="btn" href="pipeline.html">Pipeline détaillé</a>
+      <a class="btn" href="vocabulaire.html">Glossaire</a>
+      <a class="btn" href="#exemples">Exemples traduits</a>
       <a class="btn" href="https://arxiv.org/abs/2601.05911" target="_blank" rel="noopener noreferrer">Article Pantagruel (2026) ↗</a>
     </div>
   </header>
@@ -583,19 +697,39 @@
     <div class="card">
       <h2>Vue d’ensemble</h2>
       <p class="section-intro">Toutes les variantes partagent la même préparation des données (étapes 0–2), puis appliquent une recette distincte.</p>
-      <pre class="pipeline">Audio français (m-TEDx)
-        │
-        ├──► [1] Pantagruel + décodeur     ──► anglais  (E2E, référence article)
-        ├──► [2] Pantagruel → projecteur → LLM ──► anglais  (peu de paramètres entraînés)
-        ├──► [3] Gemini (cloud)          ──► anglais  (pas d’entraînement local)
-        ├──► [4] Whisper → Marian        ──► anglais  (deux modèles en série)
-        └──► [5] Speech_Text + décodeur  ──► anglais  (encodeur multimodal)</pre>
-      <div class="variants-grid">
-        <a href="variante-1.html" class="variant-chip variant-chip--v1"><span class="model-name model-name--v1"><strong>1 · Transformer</strong></span><span class="variant-chip-desc">E2E Pantagruel</span></a>
-        <a href="variante-2.html" class="variant-chip variant-chip--v2"><span class="model-name model-name--v2"><strong>2 · speechLLM</strong></span><span class="variant-chip-desc">LLM + adaptateur</span></a>
-        <a href="variante-3.html" class="variant-chip variant-chip--v3"><span class="model-name model-name--v3"><strong>3 · Gemini</strong></span><span class="variant-chip-desc">API cloud</span></a>
-        <a href="variante-4.html" class="variant-chip variant-chip--v4"><span class="model-name model-name--v4"><strong>4 · Cascade</strong></span><span class="variant-chip-desc">ASR puis MT</span></a>
-        <a href="variante-5.html" class="variant-chip variant-chip--v5"><span class="model-name model-name--v5"><strong>5 · Speech_Text</strong></span><span class="variant-chip-desc">Encodeur multimodal</span></a>
+      <div class="arch-overview" aria-label="Schéma des cinq variantes">
+        <svg viewBox="0 0 480 112" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="arch-index-desc">
+          <desc id="arch-index-desc">Audio français, préparation commune, puis cinq recettes de traduction</desc>
+          <defs>
+            <marker id="arrIdx" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0,8 3,0 6" fill="#64748b"/>
+            </marker>
+          </defs>
+          <a href="corpus.html#mtedx" title="m-TEDx — Multilingual TEDx (page Corpus)" aria-label="m-TEDx — Multilingual TEDx, page Corpus">
+            <title>m-TEDx — Multilingual TEDx (page Corpus)</title>
+            <rect class="arch-svg-box arch-svg-box--corpus" x="140" y="8" width="200" height="44" rx="8" stroke-width="1.5"/>
+            <text class="arch-svg-text arch-svg-text--title" x="240" y="28" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter,system-ui,sans-serif">Audio FR</text>
+            <text class="arch-corpus-sub arch-svg-text arch-svg-text--link" x="240" y="42" text-anchor="middle" font-size="9" font-family="Inter,system-ui,sans-serif">m-TEDx</text>
+          </a>
+          <line x1="240" y1="52" x2="240" y2="66" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrIdx)"/>
+          <a href="pipeline.html#scripts-communs" title="Étapes communes (0–2) — scripts_communs" aria-label="Préparation commune, étapes 0–2 — scripts communs">
+            <title>Étapes communes (0–2) — scripts_communs</title>
+            <rect class="arch-svg-box arch-svg-box--prep" x="72" y="68" width="336" height="36" rx="8" stroke-width="1.5"/>
+            <text class="arch-prep-text arch-svg-text arch-svg-text--prep" x="240" y="90" text-anchor="middle" font-size="10" font-weight="600" font-family="Inter,system-ui,sans-serif">Préparation commune (étapes 0–2)</text>
+          </a>
+          <line x1="240" y1="104" x2="240" y2="112" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrIdx)"/>
+        </svg>
+        <div class="arch-variants">
+          <p class="arch-variants-label">5 recettes distinctes</p>
+          <div class="variants-grid">
+            <a href="variante-1.html" class="variant-chip variant-chip--v1"><span class="model-name model-name--v1"><strong>1 · Transformer</strong></span><span class="variant-chip-desc">E2E Pantagruel</span></a>
+            <a href="variante-2.html" class="variant-chip variant-chip--v2"><span class="model-name model-name--v2"><strong>2 · speechLLM</strong></span><span class="variant-chip-desc">LLM + adaptateur</span></a>
+            <a href="variante-3.html" class="variant-chip variant-chip--v3"><span class="model-name model-name--v3"><strong>3 · Gemini</strong></span><span class="variant-chip-desc">API cloud</span></a>
+            <a href="variante-4.html" class="variant-chip variant-chip--v4"><span class="model-name model-name--v4"><strong>4 · Cascade</strong></span><span class="variant-chip-desc">ASR puis MT</span></a>
+            <a href="variante-5.html" class="variant-chip variant-chip--v5"><span class="model-name model-name--v5"><strong>5 · Speech_Text</strong></span><span class="variant-chip-desc">Encodeur multimodal</span></a>
+          </div>
+        </div>
+        <p class="pipeline-detail-link"><a href="pipeline.html">Voir le pipeline détaillé →</a></p>
       </div>
     </div>
   </section>
@@ -604,9 +738,12 @@
     <div class="card">
       <div class="results-header">
         <h2>Résultats BLEU (test)</h2>
-        <div class="seg-toggle" role="tablist" aria-label="Découpage audio">
-          <button type="button" role="tab" id="seg-utterance" data-segment="utterance" aria-selected="true">utterance</button>
-          <button type="button" role="tab" id="seg-sentence" data-segment="sentence_like" aria-selected="false">sentence_like</button>
+        <div class="seg-toggle-block">
+          <div class="seg-toggle" role="tablist" aria-label="Découpage audio">
+            <button type="button" role="tab" id="seg-utterance" data-segment="utterance" aria-selected="true">utterance</button>
+            <button type="button" role="tab" id="seg-sentence" data-segment="sentence_like" aria-selected="false">sentence_like</button>
+          </div>
+          <a class="seg-toggle-help" href="vocabulaire.html#segmentation">Découpage audio → glossaire</a>
         </div>
       </div>
       <p class="section-intro" id="results-intro"></p>
@@ -629,6 +766,10 @@
       </div>
 
       <div class="note" id="results-note"></div>
+
+      <div class="links">
+        <a class="btn btn-primary" href="resultats.html">Résultats détaillés</a>
+      </div>
     </div>
   </section>
 
@@ -637,7 +778,7 @@
       <h2>Exemples traduits</h2>
       <p class="section-intro">
         Au-delà du BLEU, lire ce que chaque système produit sur le même exposé TED.
-        Analyses détaillées et protocole : <a href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/web/phrases.md" target="_blank" rel="noopener noreferrer">phrases.md ↗</a>.
+        Scores comparatifs : <a href="resultats.html">page Résultats</a>.
       </p>
       <div class="phrases-carousel" id="phrases-carousel" role="region" aria-label="Exemples de traductions" tabindex="0">
         <button type="button" class="phrases-nav phrases-nav--prev" aria-label="Exemple précédent">←</button>
@@ -650,7 +791,8 @@
       <p class="phrases-footnote">
         Runs : Transformer L-14k <code>run_014</code> · speechLLM L-14k <code>run_012</code> · Gemini 2.5 <code>run_001</code> · Cascade <code>run_001</code>.
         La variante <span class="model-name model-name--v5">5 · Speech_Text</span> est sur des segments fusionnés —
-        voir <a href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/web/phrases.md" target="_blank" rel="noopener noreferrer">phrases.md ↗</a>.
+        voir <a href="variante-5.html">la fiche variante 5</a>.
+        <span style="display:block;margin-top:0.5rem;font-size:0.78rem;">Sources Markdown (<code>phrases.md</code>, etc.) : <a href="https://github.com/crispyfunicular/Pantagruel_S3T/tree/main/web" target="_blank" rel="noopener noreferrer">dépôt GitHub ↗</a>.</span>
       </p>
     </div>
   </section>
@@ -668,7 +810,7 @@
     </section>
 
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN</p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 
@@ -679,15 +821,15 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (~37) et Gemini 2.5 (~34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>) ; L-114k <strong>23,5</strong> (<code>run_028</code> OVH). <code>run_032</code> speechLLM **en cours** sur OVH ; file <code>run_033</code> → <code>run_038</code>. Meilleur speechLLM : 15,2 (<code>run_013</code>).",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>) ; L-114k <strong>23,5</strong> (<code>run_028</code>). Meilleur speechLLM : 15,2 (<code>run_013</code>).",
         rows: [
           {
             id: 3,
             color: 'v3',
-            chartLabel: '3 · Gemini 3.5',
+            chartLabel: '3 · Gemini 3.5 Flash',
             tableLabel: 'Gemini 3.5 Flash v2',
-            score: 41,
-            params: "API <code>gemini-3.5-flash</code> ; max 8192 tok, thinking minimal, garde-fous anti-boucles (<code>run_005</code>) ; 2.5 : ~34"
+            score: 41.1,
+            params: '<code>run_005</code> — API Gemini 3.5 Flash, garde-fous anti-boucles.'
           },
           {
             id: 4,
@@ -695,7 +837,7 @@
             chartLabel: '4 · Cascade',
             tableLabel: 'Cascade ASR→MT',
             score: 37,
-            params: 'Whisper large-v3 → Marian opus-mt-fr-en'
+            params: '<code>run_001</code> — Whisper large-v3 puis Marian opus-mt-fr-en.'
           },
           {
             id: '—',
@@ -704,7 +846,7 @@
             tableLabel: 'Pantagruel-L-114k (article)',
             score: 25.2,
             exact: true,
-            params: 'Encodeur L-114k ; ST E2E ; référence Table 8'
+            params: 'Référence article (Table 8) — encodeur L-114k, beam 5.'
           },
           {
             id: 1,
@@ -712,7 +854,7 @@
             chartLabel: '1 · Transformer',
             tableLabel: 'Transformer ST',
             score: 26.1,
-            params: 'Meilleur : L-14k v5 ~26,1 (<code>run_026</code>, vocab 1k) ; L-114k v5 ~23,5 (<code>run_028</code> OVH) ; SPM 5k/8k sous-performent ; beam 5 à l’éval'
+            params: '<code>run_026</code> — L-14k, SpecAugment v5 ; meilleur modèle entraîné localement.'
           },
           {
             id: 2,
@@ -720,7 +862,7 @@
             chartLabel: '2 · speechLLM',
             tableLabel: 'speechLLM B1',
             score: 15.2,
-            params: 'Meilleur utterance : L-114k gelé (~15,2) ; B-1k : ~7,5 ; Phi-2 gelé'
+            params: '<code>run_013</code> — L-114k gelé, Phi-2, 48 tokens max.'
           }
         ]
       },
@@ -729,15 +871,15 @@
         intro:
           "SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>sentence_like</em> (fusion de segments voisins). Ces scores ne sont pas directement comparables au protocole <em>utterance</em> de l’article.",
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>sentence_like</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_004</code>, 36,8 BLEU test) devance Gemini 2.5 (~23) ; puis speechLLM dégelé (~19) et la baseline Transformer (~15). La cascade et Speech_Text n’ont pas encore de run sur ce découpage.",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>sentence_like</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_004</code>, 36,8 BLEU test) devance Gemini 2.5 (23) ; puis speechLLM dégelé (19) et la baseline Transformer (15). La cascade et Speech_Text n’ont pas encore de run sur ce découpage.",
         rows: [
           {
             id: 3,
             color: 'v3',
-            chartLabel: '3 · Gemini 3.5',
+            chartLabel: '3 · Gemini 3.5 Flash',
             tableLabel: 'Gemini 3.5 Flash v2',
             score: 36.8,
-            params: "API <code>gemini-3.5-flash</code> ; max 8192 tok, thinking minimal (<code>run_004</code>) ; 2.5 : ~23"
+            params: '<code>run_004</code> — API Gemini 3.5 Flash sur segments fusionnés.'
           },
           {
             id: 2,
@@ -745,7 +887,7 @@
             chartLabel: '2 · speechLLM',
             tableLabel: 'speechLLM B1',
             score: 19,
-            params: 'Encodeur B-1k dégelé ; Phi-2 gelé ; projecteur seul entraîné'
+            params: '<code>run_005</code> — B-1k dégelé ; seul le projecteur est entraîné (Phi-2 gelé).'
           },
           {
             id: 1,
@@ -753,7 +895,7 @@
             chartLabel: '1 · Transformer',
             tableLabel: 'Transformer ST',
             score: 15,
-            params: 'Encodeur B-1k ; gel encodeur 5k updates puis dégel ; greedy'
+            params: 'B-1k — gel encodeur 5k updates puis dégel, décodage greedy.'
           },
           {
             id: 5,
@@ -761,7 +903,7 @@
             chartLabel: '5 · Speech_Text',
             tableLabel: 'Speech_Text + ST',
             score: 8,
-            params: 'Encodeur Speech_Text B-1k ; décodeur 6 couches + SPM'
+            params: '<code>run_001</code> — encodeur Speech_Text B-1k, décodeur 6 couches (réglages non optimisés).'
           }
         ]
       }
@@ -860,6 +1002,10 @@
         title: 'Phrase 3 — Papillons dans le ventre',
         audio: 'audio/9fxo9YJhnG8_7.wav',
         fr: "J’ai mon cœur qui palpite et encore les papillons dans le ventre, presque 24 heures sur 24.",
+        sourceErrors: {
+          fr: ['encore'],
+          ref: ['heals']
+        },
         lines: [
           { color: 'ref', label: 'Référence', text: 'My heart rate rises and I am still head over heals, almost 24 hours a day.' },
           { color: 'v1', label: '1 · Transformer', text: 'I have my heart that papers, and there are still 24-mands in the stomach.' },
@@ -885,6 +1031,9 @@
         title: 'Phrase 5 — Comme au premier jour',
         audio: 'audio/9fxo9YJhnG8_9.wav',
         fr: "Rien n’a changé : je l’aime comme au premier jour.",
+        sourceErrors: {
+          ref: ['as much I did']
+        },
         lines: [
           { color: 'ref', label: 'Référence', text: 'Nothing has changed: I love him as much I did the first day.' },
           { color: 'v1', label: '1 · Transformer', text: 'Nothing to change, I love it as in the first day.' },
@@ -908,6 +1057,24 @@
     const ICON_PLAY = '<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" aria-hidden="true"><path d="M1 1l10 6-10 6V1z"/></svg>';
     const ICON_PAUSE = '<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="4" height="12" rx="1"/><rect x="7" y="1" width="4" height="12" rx="1"/></svg>';
 
+    const SOURCE_NOTE_HTML =
+      '<p class="phrases-source-note" id="phrases-source-note">' +
+        '<sup>*</sup> Les textes <em>FR</em> et la référence <em>EN</em> proviennent du corpus m-TEDx (sous-titres alignés) ; d’éventuelles coquilles ou formulations inhabituelles sont héritées du jeu de données source.' +
+      '</p>';
+
+    function applySourceMarks(text, marks) {
+      if (!marks || !marks.length) return escapeHtml(text);
+      const star = '<sup><a href="#phrases-source-note" class="source-mark" aria-label="Voir la note sur les coquilles du corpus">*</a></sup>';
+      let safe = escapeHtml(text);
+      for (const needle of marks) {
+        const esc = escapeHtml(needle);
+        const idx = safe.indexOf(esc);
+        if (idx === -1) continue;
+        safe = safe.slice(0, idx + esc.length) + star + safe.slice(idx + esc.length);
+      }
+      return safe;
+    }
+
     function renderPhraseBlock(phrase) {
       const subtitle = phrase.subtitle
         ? ' <span style="font-weight:400;color:var(--muted);font-size:0.85rem">(' + phrase.subtitle + ')</span>'
@@ -926,7 +1093,14 @@
         : '';
 
       const lines = phrase.lines.map((line) => {
-        const body = line.html ? line.text : escapeHtml(line.text);
+        let body;
+        if (line.html) {
+          body = line.text;
+        } else if (line.color === 'ref' && phrase.sourceErrors?.ref) {
+          body = applySourceMarks(line.text, phrase.sourceErrors.ref);
+        } else {
+          body = escapeHtml(line.text);
+        }
         return (
           '<div class="tr-line">' +
             '<span class="model-name model-name--' + line.color + '">' +
@@ -936,12 +1110,20 @@
           '</div>'
         );
       }).join('');
+
+      const frBody = phrase.sourceErrors?.fr
+        ? applySourceMarks(phrase.fr, phrase.sourceErrors.fr)
+        : escapeHtml(phrase.fr);
+
+      const sourceNote = phrase.sourceErrors ? SOURCE_NOTE_HTML : '';
+
       return (
         '<article class="phrase-block">' +
           '<h3>' + phrase.title + subtitle + '</h3>' +
           audioHtml +
-          '<p class="phrase-fr"><em>FR</em> — ' + escapeHtml(phrase.fr) + '</p>' +
+          '<p class="phrase-fr"><em>FR</em> — ' + frBody + '</p>' +
           '<div class="tr-lines">' + lines + '</div>' +
+          sourceNote +
         '</article>'
       );
     }
@@ -1049,5 +1231,6 @@
 
     showPhrase(0);
   </script>
+  <script src="theme.js"></script>
 </body>
 </html>

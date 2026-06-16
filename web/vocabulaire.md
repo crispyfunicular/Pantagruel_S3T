@@ -195,7 +195,7 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 
 | | |
 |---|---|
-| **En clair** | Fusion de prises consécutives du même exposé (même intervenant si possible) pour former des blocs plus longs (~10 s cible, max ~15 s), en coupant de préférence après `. ? !`. Objectif : segments plus proches d’une phrase complète, souvent plus stables à l’entraînement. |
+| **En clair** | Fusion de prises consécutives du même exposé (même intervenant si possible) pour former des blocs plus longs (10 s cible, max 15 s), en coupant de préférence après `. ? !`. Objectif : segments plus proches d’une phrase complète, souvent plus stables à l’entraînement. |
 | **Identifiant** | `--segment-mode sentence_like` |
 | **Où** | `datasets/manifests_sentence/<pair>/`, `datasets/processed_sentence/<pair>/` |
 | **Paramètres** | `--sentence-target-duration`, `--sentence-max-duration`, `--sentence-require-punctuation` |
@@ -296,7 +296,7 @@ Pour la **parole**, Pantagruel utilise une perte purement JEPA (prédiction dans
 
 | | |
 |---|---|
-| **En clair** | Tableau de résultats de l’article (ST fr→en sur m-TEDx, utterance) ; référence ~17,5 BLEU pour Pantagruel-B-1k. |
+| **En clair** | Tableau de résultats de l’article (ST fr→en sur m-TEDx, utterance) ; référence 17,5 BLEU pour Pantagruel-B-1k. |
 | **Identifiant** | « Table 8 » (pas un fichier du repo) |
 | **Où** | README, `protocole_utterance_pantagruel.md` |
 
@@ -328,7 +328,7 @@ Pour la **parole**, Pantagruel utilise une perte purement JEPA (prédiction dans
 
 | | |
 |---|---|
-| **En clair** | Encodeur parole seule Pantagruel Base (~1k h pré-train), sortie 768 dim — référence principale S3T aujourd’hui. |
+| **En clair** | Encodeur parole seule Pantagruel Base (1k h pré-train), sortie 768 dim — référence principale S3T aujourd’hui. |
 | **Identifiant** | `PantagrueLLM/speech-base-1K` |
 | **Où** | `base.yaml`, speechLLM `b1.yaml` |
 
@@ -345,7 +345,7 @@ Pour la **parole**, Pantagruel utilise une perte purement JEPA (prédiction dans
 | | |
 |---|---|
 | **En clair** | Ligne de base concurrente de l’article (famille wav2vec2 / data2vec française), distincte des variantes S3T. |
-| **Identifiant** | Cité Table 8 (~14 BLEU wav2vec B-1k) |
+| **Identifiant** | Cité Table 8 (14 BLEU wav2vec B-1k) |
 | **Où** | README baselines article |
 
 ### FlauBERT / CamemBERT

@@ -1,0 +1,290 @@
+/* Thème clair (défaut) + sombre optionnel — voir theme.js */
+
+html {
+  color-scheme: light;
+}
+
+.arch-svg-box--corpus {
+  fill: #ffffff;
+  stroke: #cbd5e1;
+}
+
+.arch-svg-box--prep {
+  fill: #eef2ff;
+  stroke: #2563eb;
+}
+
+.arch-svg-text--title {
+  fill: #1a1a2e;
+}
+
+.arch-svg-text--link {
+  fill: #2563eb;
+}
+
+.arch-svg-text--prep {
+  fill: #1d4ed8;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --text: #e8eaf0;
+  --muted: #9ca3b8;
+  --accent: #60a5fa;
+  --accent-mid: #3b82f6;
+  --accent-soft: rgba(96, 165, 250, 0.12);
+  --border: rgba(255, 255, 255, 0.09);
+  --nav-bg: rgba(15, 17, 23, 0.92);
+  --code-bg: #252836;
+  --elevated: #252836;
+  --input-bg: #252836;
+  --v1-soft: rgba(99, 102, 241, 0.18);
+  --v2-soft: rgba(124, 58, 237, 0.18);
+  --v3-soft: rgba(217, 119, 6, 0.18);
+  --v4-soft: rgba(5, 150, 105, 0.18);
+  --v5-soft: rgba(8, 145, 178, 0.18);
+  --ref-soft: rgba(100, 116, 139, 0.2);
+}
+
+:root {
+  --nav-bg: rgba(245, 245, 247, 0.9);
+}
+
+/* ── Navigation + interrupteur ─────────────────────────────── */
+
+.nav {
+  background: var(--nav-bg) !important;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.theme-switch__text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.theme-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-switch__track {
+  position: relative;
+  display: inline-block;
+  width: 2.6rem;
+  height: 1.45rem;
+  background: #cbd5e1;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.theme-switch__thumb {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.theme-switch input:checked + .theme-switch__track {
+  background: var(--accent);
+}
+
+.theme-switch input:checked + .theme-switch__track .theme-switch__thumb {
+  transform: translateX(1.15rem);
+}
+
+.theme-switch input:focus-visible + .theme-switch__track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+html[data-theme="dark"] .theme-switch__track {
+  background: #475569;
+}
+
+html[data-theme="dark"] .theme-switch__thumb {
+  background: #f1f5f9;
+}
+
+/* ── Composants partagés (couleurs en dur dans les pages) ─── */
+
+html[data-theme="dark"] code {
+  background: var(--code-bg);
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] th {
+  background: var(--elevated) !important;
+}
+
+html[data-theme="dark"] .step,
+html[data-theme="dark"] .tag-gray {
+  background: var(--elevated);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .note {
+  background: rgba(217, 119, 6, 0.12);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fcd34d;
+}
+
+html[data-theme="dark"] .note-info {
+  background: var(--accent-soft);
+  border-color: rgba(96, 165, 250, 0.25);
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .arch-container {
+  background: #12151f;
+  border: 1px solid var(--border);
+}
+
+html[data-theme="dark"] .arch-overview {
+  background: #12151f;
+  border-color: var(--border);
+}
+
+html[data-theme="dark"] .arch-svg-box--corpus {
+  fill: #252836;
+  stroke: #475569;
+}
+
+html[data-theme="dark"] .arch-svg-box--prep {
+  fill: rgba(37, 99, 235, 0.15);
+  stroke: #60a5fa;
+}
+
+html[data-theme="dark"] .arch-svg-text--title {
+  fill: #e8eaf0;
+}
+
+html[data-theme="dark"] .arch-svg-text--link {
+  fill: #60a5fa;
+}
+
+html[data-theme="dark"] .arch-svg-text--prep {
+  fill: #93c5fd;
+}
+
+html[data-theme="dark"] .arch-overview a:hover .arch-corpus-sub,
+html[data-theme="dark"] .arch-overview a:focus-visible .arch-corpus-sub {
+  fill: #bfdbfe;
+}
+
+html[data-theme="dark"] .arch-overview a:hover .arch-prep-text,
+html[data-theme="dark"] .arch-overview a:focus-visible .arch-prep-text {
+  fill: #dbeafe;
+}
+
+html[data-theme="dark"] .seg-toggle {
+  background: var(--elevated);
+  border-color: var(--border);
+}
+
+html[data-theme="dark"] .chart-bar-wrap {
+  background: var(--elevated);
+}
+
+html[data-theme="dark"] .card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .btn {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+html[data-theme="dark"] .btn-primary {
+  background: var(--accent);
+  color: #0f1117;
+  border-color: var(--accent);
+}
+
+html[data-theme="dark"] .btn-primary:hover {
+  background: #93c5fd;
+  color: #0f1117;
+}
+
+html[data-theme="dark"] .btn-outline {
+  background: transparent;
+}
+
+html[data-theme="dark"] .phrase-card,
+html[data-theme="dark"] .stat-card {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .phrases-nav {
+  background: var(--elevated);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .audio-play-btn {
+  background: var(--accent);
+  color: #0f1117;
+}
+
+html[data-theme="dark"] .audio-progress {
+  background: var(--elevated);
+}
+
+html[data-theme="dark"] .glossary-entry {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .glossary-entry:hover {
+  background: var(--elevated);
+}
+
+html[data-theme="dark"] .corpus-card,
+html[data-theme="dark"] .stat-chip {
+  background: var(--elevated);
+}
+
+html[data-theme="dark"] .detail-table tbody tr:hover {
+  background: var(--elevated);
+}
+
+html[data-theme="dark"] .about-card {
+  background: var(--elevated);
+}
+
+html[data-theme="dark"] .hero .tagline {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .site-footer {
+  border-top-color: var(--border);
+  color: var(--muted);
+}

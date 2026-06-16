@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>try{if(localStorage.getItem("s3t-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+
   <title>4 · Cascade ASR→MT — Pantagruel S3T</title>
   <meta name="description" content="Approche en deux étapes : reconnaissance vocale avec Whisper (ASR) puis traduction texte-vers-texte avec Marian (MT).">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -84,15 +86,26 @@
     /* Specific: two-stage diagram label */
     .stage-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.35rem; }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <nav class="nav">
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
-      <div class="nav-links">
-        <a href="index.html#pipeline">Vue d’ensemble</a>
-        <a href="index.html#resultats">Résultats</a>
+      <div class="nav-actions">
+        <div class="nav-links">
+        <a href="pipeline.html">Pipeline</a>
+        <a href="resultats.html">Résultats</a>
+        <a href="index.html#exemples">Exemples</a>
+        <a href="corpus.html">Corpus</a>
+        <a href="vocabulaire.html">Vocabulaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+        <label class="theme-switch" for="theme-toggle" title="Thème sombre">
+          <span class="theme-switch__text">Sombre</span>
+          <input type="checkbox" id="theme-toggle" role="switch" aria-label="Activer le thème sombre">
+          <span class="theme-switch__track" aria-hidden="true"><span class="theme-switch__thumb"></span></span>
+        </label>
       </div>
     </div>
   </nav>
@@ -185,7 +198,7 @@
             <tr>
               <td><strong>Taille de Whisper</strong></td>
               <td><code>large-v3</code> (actuel) · <code>medium</code> · <code>small</code></td>
-              <td>Large-v3 = meilleure qualité ASR ; medium ~10× plus rapide</td>
+              <td>Large-v3 = meilleure qualité ASR ; medium 10× plus rapide</td>
               <td><span class="tag tag-green">large-v3 actuel</span></td>
             </tr>
             <tr>
@@ -231,8 +244,8 @@
               <td>Whisper large-v3</td>
               <td>Marian opus-mt-fr-en</td>
               <td><em>utterance</em></td>
-              <td><span class="result-best">~37,4</span></td>
-              <td>~3–5 h (inférence)</td>
+              <td><span class="result-best">37,4</span></td>
+              <td>3–5 h (inférence)</td>
             </tr>
             <tr style="color:var(--muted)">
               <td colspan="4"><em>sentence_like</em></td>
@@ -243,7 +256,7 @@
         </table>
       </div>
       <div class="note">
-        <strong>Très bon BLEU utterance (~37,4)</strong> — deuxième meilleur score du projet, derrière Gemini 3.5 v2 (~41). La transcription française intermédiaire est un avantage pour l’interprétabilité : on peut lire les erreurs et comprendre pourquoi la traduction échoue.
+        <strong>Très bon BLEU utterance (37,4)</strong> — deuxième meilleur score du projet, derrière Gemini 3.5 v2 (41). La transcription française intermédiaire est un avantage pour l’interprétabilité : on peut lire les erreurs et comprendre pourquoi la traduction échoue.
       </div>
     </div>
 
@@ -256,7 +269,7 @@
           <tbody>
             <tr>
               <td><span class="tag tag-green">Forces</span></td>
-              <td>Très bon BLEU utterance (~37,4) ; transcription française lisible (interprétabilité) ; pas d’entraînement ; modèles ASR/MT SOTA disponibles librement</td>
+              <td>Très bon BLEU utterance (37,4) ; transcription française lisible (interprétabilité) ; pas d’entraînement ; modèles ASR/MT SOTA disponibles librement</td>
             </tr>
             <tr>
               <td><span class="tag tag-orange">Faiblesses</span></td>
@@ -264,7 +277,7 @@
             </tr>
             <tr>
               <td><span class="tag tag-gray">Coût</span></td>
-              <td>~3–5 h GPU pour l’inférence (Whisper large-v3 seul peut prendre 2–3 h sur le test set)</td>
+              <td>3–5 h GPU pour l’inférence (Whisper large-v3 seul peut prendre 2–3 h sur le test set)</td>
             </tr>
             <tr>
               <td><span class="tag tag-blue">Usage typique</span></td>
@@ -285,7 +298,7 @@
         </li>
         <li>
           <span class="imp-num">2</span>
-          <div><strong>Tester Whisper medium vs large-v3</strong> — mesurer le compromis vitesse/qualité ASR et son impact sur le BLEU final. Whisper medium est ~10× plus rapide.</div>
+          <div><strong>Tester Whisper medium vs large-v3</strong> — mesurer le compromis vitesse/qualité ASR et son impact sur le BLEU final. Whisper medium est 10× plus rapide.</div>
         </li>
         <li>
           <span class="imp-num">3</span>
@@ -327,9 +340,10 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l’accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 
+  <script src="theme.js"></script>
 </body>
 </html>

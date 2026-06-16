@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>try{if(localStorage.getItem("s3t-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+
   <title>5 · Speech_Text — Pantagruel S3T</title>
   <meta name="description" content="Encodeur multimodal Pantagruel pré-entraîné sur parole et texte : même architecture que la variante 1, hypothèse sur la représentation bimodale.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -88,15 +90,26 @@
     .vs-cell p { font-size: 0.83rem; color: var(--muted); margin: 0; }
     @media (max-width: 560px) { .vs-row { grid-template-columns: 1fr; } }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <nav class="nav">
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
-      <div class="nav-links">
-        <a href="index.html#pipeline">Vue d’ensemble</a>
-        <a href="index.html#resultats">Résultats</a>
+      <div class="nav-actions">
+        <div class="nav-links">
+        <a href="pipeline.html">Pipeline</a>
+        <a href="resultats.html">Résultats</a>
+        <a href="index.html#exemples">Exemples</a>
+        <a href="corpus.html">Corpus</a>
+        <a href="vocabulaire.html">Vocabulaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+        <label class="theme-switch" for="theme-toggle" title="Thème sombre">
+          <span class="theme-switch__text">Sombre</span>
+          <input type="checkbox" id="theme-toggle" role="switch" aria-label="Activer le thème sombre">
+          <span class="theme-switch__track" aria-hidden="true"><span class="theme-switch__thumb"></span></span>
+        </label>
       </div>
     </div>
   </nav>
@@ -153,7 +166,7 @@
           <text x="462" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#c4b5fd">Décodeur</text>
           <text x="462" y="64" text-anchor="middle" font-size="12" font-weight="700" fill="#c4b5fd">Transformer</text>
           <text x="462" y="82" text-anchor="middle" font-size="9.5" fill="#a78bfa">6 couches · 8 têtes</text>
-          <text x="462" y="98" text-anchor="middle" font-size="9.5" fill="#a78bfa">+ SentencePiece ~1 000</text>
+          <text x="462" y="98" text-anchor="middle" font-size="9.5" fill="#a78bfa">+ SentencePiece 1 000</text>
           <text x="462" y="114" text-anchor="middle" font-size="9" fill="#10b981">entraîné sur m-TEDx</text>
           <text x="462" y="130" text-anchor="middle" font-size="8" fill="#64748b">= identique variante 1</text>
           <!-- Arrow 3 -->
@@ -167,8 +180,8 @@
       </div>
       <div class="prose">
         <p><strong>Encodeur Speech_Text :</strong> variante de l’encodeur Pantagruel pré-entraînée simultanément sur de la parole française et du texte français. L’hypothèse est que ces représentations bimodales (parole + texte) pourraient mieux capturer le contenu linguistique et ainsi améliorer la traduction de la parole.</p>
-        <p><strong>Décodeur et SPM :</strong> strictement identiques à la variante 1 — Transformer 6 couches avec SentencePiece ~1 000 unités. Cela permet d’isoler l’effet de l’encodeur : toute différence de performance par rapport à la variante 1 est attribuable à l’encodeur multimodal.</p>
-        <p><strong>État expérimental :</strong> un seul run disponible (<code>run_001</code>, <em>sentence_like</em>, ~8 BLEU). Ce score est nettement inférieur à la variante 1 (~15 BLEU sur le même découpage), mais les hyperparamètres n’ont pas été optimisés pour cette variante. Il serait prématuré de conclure sur la valeur de l’encodeur multimodal sans avoir d’abord aligné les réglages.</p>
+        <p><strong>Décodeur et SPM :</strong> strictement identiques à la variante 1 — Transformer 6 couches avec SentencePiece 1 000 unités. Cela permet d’isoler l’effet de l’encodeur : toute différence de performance par rapport à la variante 1 est attribuable à l’encodeur multimodal.</p>
+        <p><strong>État expérimental :</strong> un seul run disponible (<code>run_001</code>, <em>sentence_like</em>, 8 BLEU). Ce score est nettement inférieur à la variante 1 (15 BLEU sur le même découpage), mais les hyperparamètres n’ont pas été optimisés pour cette variante. Il serait prématuré de conclure sur la valeur de l’encodeur multimodal sans avoir d’abord aligné les réglages.</p>
       </div>
     </div>
 
@@ -179,15 +192,15 @@
       <div class="vs-row">
         <div class="vs-cell" style="border-left: 3px solid #6366f1;">
           <h3 style="color:#4338ca;">Variante 1 — Encodeur parole seule</h3>
-          <p>Pantagruel B-1k/L-14k/L-114k pré-entraîné uniquement sur de la parole française (JEPA/data2vec 2.0). BLEU <em>sentence_like</em> B-1k : ~15.</p>
+          <p>Pantagruel B-1k/L-14k/L-114k pré-entraîné uniquement sur de la parole française (JEPA/data2vec 2.0). BLEU <em>sentence_like</em> B-1k : 15.</p>
         </div>
         <div class="vs-cell" style="border-left: 3px solid #0891b2;">
           <h3 style="color:#0e7490;">Variante 5 — Encodeur parole + texte</h3>
-          <p>Speech_Text B-1k pré-entraîné sur parole <em>et</em> texte français. BLEU <em>sentence_like</em> B-1k : ~8 (réglages non optimisés — 1 seul run).</p>
+          <p>Speech_Text B-1k pré-entraîné sur parole <em>et</em> texte français. BLEU <em>sentence_like</em> B-1k : 8 (réglages non optimisés — 1 seul run).</p>
         </div>
       </div>
       <div class="note" style="margin-top:1rem;">
-        Écart actuel : ~7 pts BLEU en faveur de la V1, mais avec des hyperparamètres non optimisés pour V5. Un run sur <em>utterance</em> avec les mêmes réglages que V1 (gel 5k, LR 1e-4) permettrait une comparaison juste.
+        Écart actuel : 7 pts BLEU en faveur de la V1, mais avec des hyperparamètres non optimisés pour V5. Un run sur <em>utterance</em> avec les mêmes réglages que V1 (gel 5k, LR 1e-4) permettrait une comparaison juste.
       </div>
     </div>
 
@@ -249,8 +262,8 @@
               <td><code>run_001</code></td>
               <td>Speech_Text B-1k</td>
               <td><em>sentence_like</em></td>
-              <td><span class="result-best">~7,9</span></td>
-              <td>~8 h</td>
+              <td><span class="result-best">7,9</span></td>
+              <td>8 h</td>
               <td>Seul run disponible ; réglages non optimisés</td>
             </tr>
             <tr style="color:var(--muted)">
@@ -263,7 +276,7 @@
         </table>
       </div>
       <div class="note note-warn">
-        <strong>Interprétation prudente :</strong> un seul run, sur <em>sentence_like</em>, avec des hyperparamètres non ajustés. Ce score (~7,9) ne permet pas encore de conclure sur la valeur de l’encodeur multimodal. Les runs <em>utterance</em> avec les mêmes réglages que V1 sont nécessaires avant tout jugement.
+        <strong>Interprétation prudente :</strong> un seul run, sur <em>sentence_like</em>, avec des hyperparamètres non ajustés. Ce score (7,9) ne permet pas encore de conclure sur la valeur de l’encodeur multimodal. Les runs <em>utterance</em> avec les mêmes réglages que V1 sont nécessaires avant tout jugement.
       </div>
     </div>
 
@@ -319,9 +332,10 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l’accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 
+  <script src="theme.js"></script>
 </body>
 </html>

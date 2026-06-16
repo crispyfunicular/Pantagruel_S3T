@@ -130,7 +130,7 @@ Rien n’a changé : je l’aime comme au premier jour.
 
 ## Variante 5 — segments fusionnés (*sentence_like*)
 
-L’encodeur **Speech_Text** n’a pas été évalué sur les mêmes utterances que les quatre autres variantes : le run `run_001_pantagruel_multimodal` utilise des **segments plus longs** (fusion de prises voisines, ~10–15 s). On ne peut donc pas aligner ligne à ligne les tableaux ci-dessus.
+L’encodeur **Speech_Text** n’a pas été évalué sur les mêmes utterances que les quatre autres variantes : le run `run_001_pantagruel_multimodal` utilise des **segments plus longs** (fusion de prises voisines, 10–15 s). On ne peut donc pas aligner ligne à ligne les tableaux ci-dessus.
 
 Exemple comparable (même exposé TED, segment fusionné) :
 
@@ -144,7 +144,7 @@ Aujourd’hui encore, quand je me lève le matin, je regarde mon homme à côté
 | **Référence m-TEDx** | Still today, when I wake up in the morning, I watch my man lying next to me and I am still amazed. My heart rate rises and I am still head over heals, almost 24 hours a day. |
 | **5 — Speech_Text + ST** | Today, when I look at the morning, I look at my man, and I always looked my heart. I’m still pair. I’m still paper. I’m still path in the body. I’m still a few hours in the body. |
 
-Ce run reste expérimental (BLEU test ~8 en *sentence_like*) : la sortie mélange anglais approximatif et répétitions (*still paper*, *still pair*).
+Ce run reste expérimental (BLEU test 8 en *sentence_like*) : la sortie mélange anglais approximatif et répétitions (*still paper*, *still pair*).
 
 ---
 

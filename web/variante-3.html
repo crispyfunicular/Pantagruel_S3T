@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>try{if(localStorage.getItem("s3t-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+
   <title>3 · Gemini — Pantagruel S3T</title>
   <meta name="description" content="Baseline API cloud : envoyer l’audio à Google Gemini et récupérer la traduction anglaise sans entraînement local.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -82,16 +84,31 @@
     .vchip-v5 { border: 1px solid rgba(8,145,178,0.3); background: #ecfeff; color: #0e7490; }
     .page-end { margin-top: 1.5rem; padding: 1.5rem 0 1.25rem; background: #e8eaef; border-top: 1px solid rgba(0,0,0,0.1); }
     .page-end footer { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; color: var(--muted); font-size: 0.72rem; text-align: center; }
+    .prompt-block { background: #0f172a; border-radius: 12px; padding: 1rem 1.15rem; margin: 0.5rem 0 1rem; }
+    .prompt-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; }
+    .prompt-text { font-family: var(--mono); font-size: 0.92rem; color: #e2e8f0; line-height: 1.55; white-space: pre-wrap; margin: 0; }
+    .prompt-meta { font-size: 0.82rem; color: var(--muted); margin-top: 0.65rem; }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <nav class="nav">
     <div class="nav-inner">
       <a class="nav-logo" href="index.html">Pantagruel S3T</a>
-      <div class="nav-links">
-        <a href="index.html#pipeline">Vue d’ensemble</a>
-        <a href="index.html#resultats">Résultats</a>
+      <div class="nav-actions">
+        <div class="nav-links">
+        <a href="pipeline.html">Pipeline</a>
+        <a href="resultats.html">Résultats</a>
+        <a href="index.html#exemples">Exemples</a>
+        <a href="corpus.html">Corpus</a>
+        <a href="vocabulaire.html">Vocabulaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+        <label class="theme-switch" for="theme-toggle" title="Thème sombre">
+          <span class="theme-switch__text">Sombre</span>
+          <input type="checkbox" id="theme-toggle" role="switch" aria-label="Activer le thème sombre">
+          <span class="theme-switch__track" aria-hidden="true"><span class="theme-switch__thumb"></span></span>
+        </label>
       </div>
     </div>
   </nav>
@@ -135,7 +152,7 @@
           <text x="319" y="70" text-anchor="middle" font-size="10" fill="#fcd34d">gemini-2.5-flash · gemini-3.5-flash</text>
           <text x="319" y="88" text-anchor="middle" font-size="9.5" fill="#f59e0b">modèle multimodal (audio + texte)</text>
           <text x="319" y="104" text-anchor="middle" font-size="9.5" fill="#d97706">sans entraînement local</text>
-          <text x="319" y="120" text-anchor="middle" font-size="9" fill="#78350f">~0,50–1,30 $ / run complet</text>
+          <text x="319" y="120" text-anchor="middle" font-size="9" fill="#78350f">0,50–1,30 $ / run complet</text>
           <!-- Arrow 2 -->
           <line x1="473" y1="75" x2="499" y2="75" stroke="#475569" stroke-width="1.5" marker-end="url(#arr3)"/>
           <!-- Texte EN -->
@@ -146,9 +163,25 @@
         </svg>
       </div>
       <div class="prose">
-        <p><strong>Comment ça marche :</strong> l’audio est encodé en base64 et envoyé à l’API Gemini avec une consigne textuelle demandant la traduction en anglais. Le modèle multimodal traite directement l’audio et retourne le texte traduit. Aucun entraînement, aucun checkpoint local.</p>
-        <p><strong>Garde-fous anti-boucles :</strong> les meilleurs runs (3.5 Flash v2) incluent des instructions explicites pour éviter les répétitions et limiter la longueur. Sans ces garde-fous (<code>run_004</code> v2 initial), 2 extraits producent des boucles de répétition qui biaisent le score test (20,3 au lieu de 41,1).</p>
+        <p><strong>Comment ça marche :</strong> l’audio est encodé et envoyé à l’API Gemini avec une consigne textuelle (voir section <a href="#prompt">Consigne</a>). Le modèle multimodal traite directement l’audio et retourne le texte traduit. Aucun entraînement, aucun checkpoint local.</p>
+        <p><strong>Garde-fous anti-boucles :</strong> pour le run de référence <code>run_005</code>, un <em>post-traitement</em> du texte renvoyé par l’API filtre le raisonnement interne et tronque les répétitions (« and and and… »). Sans ce filtre (<code>run_004</code> utterance v2 initial), 2 extraits produisent des boucles qui biaisent le score test (20,3 au lieu de 41,1). Ce n’est pas une instruction ajoutée au prompt.</p>
         <p><strong>Point de vigilance :</strong> le corpus m-TEDx est librement accessible sur Internet (vidéos, transcriptions, sous-titres). On ne peut pas exclure que Gemini l’ait rencontré pendant son pré-entraînement. Les scores se comparent donc avec prudence aux modèles entraînés uniquement sur m-TEDx train/dev/test.</p>
+      </div>
+    </div>
+
+    <!-- Prompt -->
+    <div class="card" id="prompt">
+      <h2><span class="icon">💬</span> Consigne (prompt)</h2>
+      <p class="section-intro">Texte envoyé à l’API avec chaque segment audio. <strong>Identique pour tous les runs</strong> du projet (Gemini 2.5 et 3.5 Flash, utterance et sentence_like, configs v1 et v2).</p>
+      <div class="prompt-block">
+        <p class="prompt-label">Instruction envoyée à Gemini (<code>prompt.template</code>)</p>
+        <pre class="prompt-text">Translate the French speech to English.</pre>
+        <p class="prompt-meta">Défaut du code : <code>gemini_common.DEFAULT_PROMPT</code> · <code>temperature: 0</code></p>
+      </div>
+      <div class="prose">
+        <p><strong>Format de la requête :</strong> l’API reçoit, dans l’ordre, la consigne ci-dessus puis le fichier audio (WAV 16 kHz). Le modèle doit renvoyer la traduction anglaise de la parole française entendue.</p>
+        <p><strong>Fichiers de config :</strong> <code>3_Gemini/configs/fr-en/gemini_flash_35_utterance_v2.yaml</code> (runs <code>run_004</code> / <code>run_005</code> utterance), <code>gemini_flash_35_sentence_v2.yaml</code> (sentence_like), <code>gemini_flash.yaml</code> et <code>gemini_flash_utterance.yaml</code> (2.5 Flash). La formulation est volontairement proche de celle utilisée en variante 2 (speechLLM).</p>
+        <p><strong>Post-traitement (hors prompt) :</strong> les garde-fous du <code>run_005</code> sont appliqués <em>après</em> la réponse API dans <code>gemini_common.sanitize_gemini_translation</code> : exclusion des parts de raisonnement interne (<em>thought</em>) et troncature des boucles de mots avant calcul du BLEU.</p>
       </div>
     </div>
 
@@ -164,13 +197,13 @@
             <tr>
               <td><strong>Modèle</strong></td>
               <td><code>gemini-2.5-flash</code> · <code>gemini-3.5-flash</code></td>
-              <td>3.5 Flash v2 (~41) > 2.5 Flash (~34) en utterance avec bons réglages</td>
+              <td>3.5 Flash v2 (41) > 2.5 Flash (34) en utterance avec bons réglages</td>
               <td><span class="tag tag-green">ok</span></td>
             </tr>
             <tr>
               <td><strong>max_output_tokens</strong></td>
               <td><code>256</code> (trop bas !) → <code>8192</code> (recommandé)</td>
-              <td>256 tok → troncature → BLEU ~13 au lieu de ~41</td>
+              <td>256 tok → troncature → BLEU 13 au lieu de 41</td>
               <td><span class="tag tag-orange">corrigé en v2</span></td>
             </tr>
             <tr>
@@ -181,19 +214,19 @@
             </tr>
             <tr>
               <td><strong>Consigne (prompt)</strong></td>
-              <td>Texte libre — inclure « anglais uniquement, sans commentaire »</td>
-              <td>Important pour éviter que le modèle réponde en français ou ajoute du markdown</td>
-              <td><span class="tag tag-blue">à affiner</span></td>
+              <td><code>Translate the French speech to English.</code> — <a href="#prompt">voir section</a></td>
+              <td>Même texte pour tous les runs ; pas de variante « anglais uniquement » testée à ce jour</td>
+              <td><span class="tag tag-green">ok</span></td>
             </tr>
             <tr>
               <td><strong>Garde-fous anti-boucles</strong></td>
-              <td>Instructions explicites dans le prompt</td>
-              <td>Évite les répétitions qui biaisent le BLEU (2 outliers en v2 initial)</td>
+              <td>Post-traitement <code>sanitize_gemini_translation</code></td>
+              <td>Filtre les répétitions après l’API — actif à partir de <code>run_005</code> utterance (pas dans le prompt)</td>
               <td><span class="tag tag-green">ok en run_005</span></td>
             </tr>
             <tr>
               <td><strong>Mode de segmentation</strong></td>
-              <td><code>utterance</code> (~41 BLEU) · <code>sentence_like</code> (~36,8)</td>
+              <td><code>utterance</code> (41 BLEU) · <code>sentence_like</code> (36,8)</td>
               <td>utterance donne un meilleur BLEU en 3.5 v2</td>
               <td><span class="tag tag-green">ok</span></td>
             </tr>
@@ -215,26 +248,26 @@
               <td><code>run_005</code></td>
               <td>3.5 Flash</td>
               <td><em>utterance</em></td>
-              <td><span class="result-best">~41,1</span></td>
-              <td>~66 min</td>
-              <td>~0,94 $</td>
-              <td>v2 ; max 8192 ; thinking minimal ; <strong>garde-fous</strong></td>
+              <td><span class="result-best">41,1</span></td>
+              <td>66 min</td>
+              <td>0,94 $</td>
+              <td>v2 ; max 8192 ; thinking minimal ; <strong>post-traitement</strong></td>
             </tr>
             <tr>
               <td><code>run_004</code></td>
               <td>3.5 Flash</td>
               <td><em>sentence_like</em></td>
-              <td><span class="result-best">~36,8</span></td>
-              <td>~38 min</td>
-              <td>~1,27 $</td>
-              <td>v2 ; max 8192 ; garde-fous anti-boucles</td>
+              <td><span class="result-best">36,8</span></td>
+              <td>38 min</td>
+              <td>1,27 $</td>
+              <td>v2 ; max 8192 ; post-traitement anti-boucles</td>
             </tr>
             <tr>
               <td><code>run_001</code></td>
               <td>2.5 Flash</td>
               <td><em>utterance</em></td>
-              <td>~33,7</td>
-              <td>~1–2 h</td>
+              <td>33,7</td>
+              <td>1–2 h</td>
               <td>voir metrics.json</td>
               <td>temp 0 ; max 256 tok</td>
             </tr>
@@ -242,8 +275,8 @@
               <td><code>run_001</code></td>
               <td>2.5 Flash</td>
               <td><em>sentence_like</em></td>
-              <td>~23</td>
-              <td>~1–2 h</td>
+              <td>23</td>
+              <td>1–2 h</td>
               <td>voir metrics.json</td>
               <td>—</td>
             </tr>
@@ -251,34 +284,34 @@
               <td><code>run_003</code></td>
               <td>3.5 Flash</td>
               <td><em>utterance</em></td>
-              <td>~13,4</td>
-              <td>~99 min</td>
-              <td>~0,60 $</td>
+              <td>13,4</td>
+              <td>99 min</td>
+              <td>0,60 $</td>
               <td><span class="tag tag-red">non conclusif</span> — troncature (max 256 tok)</td>
             </tr>
             <tr>
               <td><code>run_003</code></td>
               <td>3.5 Flash</td>
               <td><em>sentence_like</em></td>
-              <td>~1,5</td>
-              <td>~42 min</td>
-              <td>~0,52 $</td>
+              <td>1,5</td>
+              <td>42 min</td>
+              <td>0,52 $</td>
               <td><span class="tag tag-red">non conclusif</span> — troncature sévère</td>
             </tr>
             <tr>
               <td><code>run_004 (v2 initial)</code></td>
               <td>3.5 Flash</td>
               <td><em>utterance</em></td>
-              <td>~20,3</td>
+              <td>20,3</td>
               <td>—</td>
               <td>—</td>
-              <td><span class="tag tag-red">biaisé</span> — 2 outliers boucles sans garde-fous</td>
+              <td><span class="tag tag-red">biaisé</span> — 2 outliers boucles, sans post-traitement</td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="note">
-        <strong>Interprétation :</strong> Gemini 3.5 Flash v2 (<code>run_005</code>, ~41,1 BLEU) est le meilleur score global du projet. Mais les extraits m-TEDx étant accessibles en ligne, une partie de la performance peut refléter une familiarité avec le corpus. Comparer avec prudence aux systèmes entraînés uniquement sur m-TEDx.
+        <strong>Interprétation :</strong> Gemini 3.5 Flash v2 (<code>run_005</code>, 41,1 BLEU) est le meilleur score global du projet. Mais les extraits m-TEDx étant accessibles en ligne, une partie de la performance peut refléter une familiarité avec le corpus. Comparer avec prudence aux systèmes entraînés uniquement sur m-TEDx.
       </div>
     </div>
 
@@ -288,11 +321,11 @@
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
-          <div><strong>Affiner la consigne (prompt)</strong> : instruction explicite « anglais uniquement, sans commentaire, sans markdown, traduction complète de l’audio ». Tester plusieurs variantes de prompt et mesurer l’impact sur le BLEU.</div>
+          <div><strong>Affiner la consigne (prompt)</strong> : tester des variantes explicites (« anglais uniquement, sans commentaire, sans markdown, traduction complète de l’audio ») — le prompt actuel est minimal (voir <a href="#prompt">section Consigne</a>).</div>
         </li>
         <li>
           <span class="imp-num">2</span>
-          <div><strong>Toujours inclure les garde-fous anti-boucles</strong> dans le prompt — sans eux, des répétitions peuvent biaiser fortement le score BLEU (écart 20 pts entre <code>run_004</code> initial et final).</div>
+          <div><strong>Conserver le post-traitement anti-boucles</strong> dans <code>gemini_common.py</code> — sans lui, des répétitions peuvent biaiser fortement le BLEU (écart 20 pts entre <code>run_004</code> utterance initial et <code>run_005</code>).</div>
         </li>
         <li>
           <span class="imp-num">3</span>
@@ -314,6 +347,7 @@
       <h2><span class="icon">🔗</span> Liens</h2>
       <div class="links">
         <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/tree/main/3_Gemini" target="_blank" rel="noopener noreferrer">Code <code>3_Gemini/</code> ↗</a>
+        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/3_Gemini/configs/fr-en/gemini_flash_35_utterance_v2.yaml" target="_blank" rel="noopener noreferrer">Config utterance v2 ↗</a>
         <a class="btn" href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer">Google AI Studio ↗</a>
         <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/docs/PRD.md" target="_blank" rel="noopener noreferrer">PRD ↗</a>
       </div>
@@ -333,9 +367,10 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="index.html">Retour à l’accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 
+  <script src="theme.js"></script>
 </body>
 </html>
