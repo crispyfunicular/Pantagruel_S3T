@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Run 036 — baseline ST utterance L-14k v9 warmup 10k (amélioration run_026).
+# Run 036 — finir l'entraînement ST L-14k v9 warmup 10k (Modyco).
 #
-# Recette run_026 v5 + warmup_updates 10 000 (PRD §9).
-# Durée estimée : ~8–10 h GPU.
+# Usage :
+#   Reprise depuis last.pt / best.pt (recommandé si interruption récente) :
+#     nohup bash 1_Transformer/scripts/run_036_baseline_utterance_large_14k_v9_warmup10k_finish_nohup.sh \
+#       > logs/run_036_st_14k_v9_warmup10k_finish_wrapper.log 2>&1 &
 #
-# Lancement nohup (Modyco) :
-#   nohup bash 1_Transformer/scripts/run_036_baseline_utterance_large_14k_v9_warmup10k_nohup.sh \
-#     > logs/run_036_st_14k_v9_warmup10k_wrapper.log 2>&1 &
+#   Repartir de zéro (--overwrite, supprime les checkpoints existants) :
+#     RESUME=0 OVERWRITE=1 nohup bash ... &
 
 set -euo pipefail
 
@@ -25,6 +26,16 @@ LOG_DIR="${ROOT}/logs"
 mkdir -p "$LOG_DIR"
 LOG="${LOG_DIR}/${RUN}_spm_train_eval.log"
 SPM_MODEL="datasets/processed/spm/fr-en_1000.model"
+
+RESUME="${RESUME:-1}"
+OVERWRITE="${OVERWRITE:-0}"
+
+TRAIN_FLAGS=(--config "$CFG" --run-id "$RUN" -v)
+if [[ "$RESUME" == "1" ]]; then
+  TRAIN_FLAGS+=(--resume)
+elif [[ "$OVERWRITE" == "1" ]]; then
+  TRAIN_FLAGS+=(--overwrite)
+fi
 
 for split in train valid test; do
   if [[ ! -f "${MANIFESTS}/${split}.tsv" ]]; then
@@ -58,14 +69,8 @@ with manifest.open(encoding='utf-8') as handle_in, target.open('w', encoding='ut
     echo "=== $(date -Is) SPM existant : ${SPM_MODEL} ==="
   fi
 
-  RESUME_ARGS=()
-  if [[ -f "${ROOT}/runs/fr-en/${RUN}/checkpoints/last.pt" ]]; then
-    echo "=== $(date -Is) Checkpoint existant — reprise avec --resume ==="
-    RESUME_ARGS=(--resume)
-  fi
-
-  echo "=== $(date -Is) TRAIN ${RUN} (L-14k v9: warmup 10k + SpecAugment v5) ==="
-  python 1_Transformer/pipeline.py train --config "$CFG" --run-id "$RUN" "${RESUME_ARGS[@]}" -v
+  echo "=== $(date -Is) TRAIN ${RUN} (flags: resume=${RESUME}, overwrite=${OVERWRITE}) ==="
+  python 1_Transformer/pipeline.py train "${TRAIN_FLAGS[@]}"
 
   echo "=== $(date -Is) EVALUATE ${RUN} (beam 5) ==="
   python 1_Transformer/pipeline.py evaluate --config "$CFG" --run-id "$RUN" --beam-size 5 -v

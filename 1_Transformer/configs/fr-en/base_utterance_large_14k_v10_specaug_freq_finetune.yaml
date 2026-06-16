@@ -1,0 +1,56 @@
+# Finetune ST L-14k v10 — SpecAugment fréquentiel depuis run_026 (budget ~3,5 h GPU).
+#
+# Base : run_026 v5 (26,12 BLEU test) ; ajout masquage fréquentiel (comme run_038 L-114k).
+# Reprise : checkpoints/best.pt de run_026 (@ update ~44k) → max_updates 69k (~25k steps, ~3,5 h).
+#
+# Run cible : run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026
+
+experiment:
+  name: "fr-en_finetune_utterance_large_14k_v10_specaug_freq_from_run026"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  spm_model: "datasets/processed/spm/fr-en_1000.model"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  decoder_layers: 6
+  decoder_heads: 8
+  hidden_dim: 1024
+  dropout: 0.1
+
+spec_augment:
+  enabled: true
+  mask_time_prob: 0.05
+  mask_time_length: 10
+  mask_freq_prob: 0.05
+  mask_freq_length: 27
+
+train:
+  max_updates: 69000
+  warmup_updates: 4000
+  freeze_encoder_updates: 5000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.01
+  label_smoothing: 0.1
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 2000
+  max_eval_batches: null
+  max_target_tokens: 256
+  early_stopping_patience: 4
+
+decode:
+  beam_size: 5
+  max_len_b: 128

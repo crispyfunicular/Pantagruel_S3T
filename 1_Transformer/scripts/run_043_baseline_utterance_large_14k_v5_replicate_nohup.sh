@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# Run 036 — baseline ST utterance L-14k v9 warmup 10k (amélioration run_026).
+# Run 043 — réplication run_026 (ST L-14k v5 SpecAugment, validation 26,12 BLEU test).
 #
-# Recette run_026 v5 + warmup_updates 10 000 (PRD §9).
-# Durée estimée : ~8–10 h GPU.
+# Config identique à run_026 ; nouveau run_id pour comparaison indépendante.
+# Durée estimée : ~7–8 h GPU (early stop attendu @ ~50–55k updates, comme run_026).
 #
 # Lancement nohup (Modyco) :
-#   nohup bash 1_Transformer/scripts/run_036_baseline_utterance_large_14k_v9_warmup10k_nohup.sh \
-#     > logs/run_036_st_14k_v9_warmup10k_wrapper.log 2>&1 &
+#   cd ~/S3T && source .venv/bin/activate
+#   mkdir -p logs
+#   nohup bash 1_Transformer/scripts/run_043_baseline_utterance_large_14k_v5_replicate_nohup.sh \
+#     > logs/run_043_st_14k_v5_replicate_wrapper.log 2>&1 &
+#   tail -f logs/run_043_transformer_baseline_utterance_large_14k_v5_replicate_spm_train_eval.log
 
 set -euo pipefail
 
@@ -18,8 +21,8 @@ if [[ -f "${ROOT}/.venv/bin/activate" ]]; then
   source "${ROOT}/.venv/bin/activate"
 fi
 
-CFG="1_Transformer/configs/fr-en/base_utterance_large_14k_v9_warmup10k.yaml"
-RUN="run_036_transformer_baseline_utterance_large_14k_v9_warmup10k"
+CFG="1_Transformer/configs/fr-en/base_utterance_large_14k_v5_replicate.yaml"
+RUN="run_043_transformer_baseline_utterance_large_14k_v5_replicate"
 MANIFESTS="datasets/manifests/fr-en"
 LOG_DIR="${ROOT}/logs"
 mkdir -p "$LOG_DIR"
@@ -58,14 +61,8 @@ with manifest.open(encoding='utf-8') as handle_in, target.open('w', encoding='ut
     echo "=== $(date -Is) SPM existant : ${SPM_MODEL} ==="
   fi
 
-  RESUME_ARGS=()
-  if [[ -f "${ROOT}/runs/fr-en/${RUN}/checkpoints/last.pt" ]]; then
-    echo "=== $(date -Is) Checkpoint existant — reprise avec --resume ==="
-    RESUME_ARGS=(--resume)
-  fi
-
-  echo "=== $(date -Is) TRAIN ${RUN} (L-14k v9: warmup 10k + SpecAugment v5) ==="
-  python 1_Transformer/pipeline.py train --config "$CFG" --run-id "$RUN" "${RESUME_ARGS[@]}" -v
+  echo "=== $(date -Is) TRAIN ${RUN} (réplication run_026 v5 SpecAugment) ==="
+  python 1_Transformer/pipeline.py train --config "$CFG" --run-id "$RUN" -v
 
   echo "=== $(date -Is) EVALUATE ${RUN} (beam 5) ==="
   python 1_Transformer/pipeline.py evaluate --config "$CFG" --run-id "$RUN" --beam-size 5 -v
