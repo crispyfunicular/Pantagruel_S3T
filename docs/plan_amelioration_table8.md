@@ -2,7 +2,7 @@
 
 Document de référence pour rapprocher les scores du pipeline S3T de la **Table 8** du papier Pantagruel ([`docs/Pantagruel_2026.pdf`](Pantagruel_2026.pdf)) : ST fr→en/pt/es sur m-TEDx (utterance), NER, SLU, SER.
 
-**Baseline actuelle (juin 2026)** : meilleur ST local `run_026` v5 SpecAugment — **26,12 BLEU** test (Modyco, vocab 1k). L-114k : `run_028` **23,51** test (OVH). **`run_036`** warmup 10k **interrompu** (best dev ~24,1). **OVH** : `run_032` speechLLM **en cours** ; file **`run_033`** → **`run_038`** ; `run_030` v6 long **non planifié**.
+**Baseline actuelle (juin 2026)** : meilleur ST local `run_026` v5 SpecAugment — **26,12 BLEU** test (Modyco, vocab 1k). L-114k : `run_028` **23,51** test (OVH). **Modyco** : `run_036` **interrompu** (serveur partagé) ; `run_043` replicate run_026 **prêt** ; `run_041` finetune SpecAugment freq **selon état local**. **OVH** : **`run_033`** ST L-114k SPM 5k **en cours** (@ ~36,5k/80k, best dev **23,40**) ; **`run_038`** puis **`run_042`** **en file** (waiters actifs).
 
 **Runs piste 1 (batch 64)** :
 
@@ -105,13 +105,15 @@ spec_augment:
 
 | Run | Changement | Machine | Statut |
 |-----|------------|---------|--------|
-| `run_036` | `warmup_updates: 10000` | Modyco | **interrompu** (@ ~31k, best dev ~24,1) |
-| `run_037` | `mask_time_prob: 0.10` | Modyco | **annulé** |
-| `run_038` | SpecAugment temporel + fréquentiel L-114k | OVH | **en file** |
-| `run_039` | SpecAugment speechLLM L-14k | Modyco | **annulé** |
-| `run_040` | Speech_Text utterance (recette run_026) | Modyco | **annulé** |
+| `run_036` | `warmup_updates: 10000` | Modyco | **en cours** (`--resume` depuis ckpt ~2k, crash OOM antérieur) |
+| `run_037` | `mask_time_prob: 0.10` | Modyco | **en file** (waiter chaîne 036→037) |
+| `run_038` | SpecAugment temporel + fréquentiel L-114k | OVH | **en file** (waiter post run_033, chaîne 038→042) |
+| `run_042` | `warmup_updates: 10000` + SpecAugment L-114k | OVH | **en file** (après run_038) |
+| `run_039` | SpecAugment speechLLM L-14k | Modyco | **ok** — **13,84 / 14,59** test/dev (sous run_023 **14,23**) |
+| `run_040` | Speech_Text utterance (recette run_026) | Modyco | **échec** — modèle HF `Speech_Text_Base_fr_1K_4GB` introuvable (404) |
+| `run_041` | Finetune run_026 + SpecAugment freq L-14k (~3,5 h) | Modyco | **en cours** (@ ~44k/69k updates, best dev hérité **25,64**) |
 
-Scripts : [`run_modyco_wait_chain_post_035_improve_run026.sh`](../scripts/run_modyco_wait_chain_post_035_improve_run026.sh), [`run_ovh_wait_chain_post_032_033_st_specaug_freq.sh`](../scripts/run_ovh_wait_chain_post_032_033_st_specaug_freq.sh).
+Scripts : [`run_modyco_wait_chain_post_036_eval_then_039_040_037.sh`](../scripts/run_modyco_wait_chain_post_036_eval_then_039_040_037.sh) (terminée en erreur), [`run_modyco_st_14k_v10_specaug_freq_finetune.sh`](../scripts/run_modyco_st_14k_v10_specaug_freq_finetune.sh), [`run_ovh_wait_chain_post_032_033_st_specaug_freq.sh`](../scripts/run_ovh_wait_chain_post_032_033_st_specaug_freq.sh).
 
 ---
 
@@ -124,7 +126,7 @@ Scripts : [`run_modyco_wait_chain_post_035_improve_run026.sh`](../scripts/run_mo
 - Tester `--vocab-size 5000` puis `8000` via [`1_Transformer/3_spm.py`](../1_Transformer/3_spm.py).
 - Configs v7 SPM 5k (recette run_026 v5 + SpecAugment) :
   - L-14k : [`base_utterance_large_14k_v7_spm5k.yaml`](../1_Transformer/configs/fr-en/base_utterance_large_14k_v7_spm5k.yaml) → `run_031` (**ok** — 24,02 test, sous run_026)
-  - L-114k : [`base_utterance_large_114k_v7_spm5k.yaml`](../1_Transformer/configs/fr-en/base_utterance_large_114k_v7_spm5k.yaml) → `run_033` (**en file**, OVH)
+  - L-114k : [`base_utterance_large_114k_v7_spm5k.yaml`](../1_Transformer/configs/fr-en/base_utterance_large_114k_v7_spm5k.yaml) → `run_033` (**en cours** OVH, @ ~23,5k/80k, best dev ~21,9)
 - Config v8 SPM 8k :
   - L-14k : [`base_utterance_large_14k_v8_spm8k.yaml`](../1_Transformer/configs/fr-en/base_utterance_large_14k_v8_spm8k.yaml) → `run_034` (**ok** — 22,24 test, sous run_031)
   - Scripts : [`run_modyco_wait_st_then_st_14k_v8_spm8k.sh`](../scripts/run_modyco_wait_st_then_st_14k_v8_spm8k.sh)
@@ -198,14 +200,16 @@ Ces benchmarks de la Table 8 ne sont **pas encore** dans le pipeline S3T :
 | spec-augment-long | run_027 (14k 120k) | **ok** — **25,12** test (sous run_026) |
 | spm-vocab | SPM 5k run_031 Modyco | **ok** — **24,02** test (sous run_026) |
 | spm-vocab | SPM 8k run_034 Modyco | **ok** — **22,24** test (sous run_031) |
-| spm-vocab | SPM 5k run_033 OVH | **en file** |
-| speechllm-114k-replicate | run_032 OVH (48 tok) | **en cours** (@ ~18k/20k, best dev ~11,4) |
+| spm-vocab | SPM 5k run_033 OVH | **en cours** (@ ~36,5k/80k, best dev **23,40** @ 32k) |
+| speechllm-114k-replicate | run_032 OVH (48 tok) | **ok** — **14,15 / 15,14** test/dev (sous run_013 **15,24**) |
 | st-b1k-specaugment | run_035 Modyco (B-1k v5) | **ok** — **19,75** test |
-| improve-run026-warmup | run_036 Modyco (warmup 10k) | **interrompu** (best.pt sauvegardé) |
-| improve-run026-specaug-strong | run_037 Modyco (mask 0.10) | **annulé** |
-| improve-run026-specaug-freq | run_038 OVH (time + freq) | **en file** |
-| improve-run026-sllm-specaug | run_039 Modyco (speechLLM) | **annulé** |
-| improve-run026-speechtext | run_040 Modyco (Speech_Text utterance) | **annulé** |
+| improve-run026-warmup | run_036 Modyco (warmup 10k) | **en cours** (--resume post OOM) |
+| improve-run026-specaug-strong | run_037 Modyco (mask 0.10) | **en file** (après run_036) |
+| improve-run026-specaug-freq | run_038 OVH (time + freq L-114k) | **en file** (chaîne 038→042 post run_033) |
+| warmup-114k | run_042 OVH (warmup 10k + SpecAugment L-114k) | **en file** (après run_038) |
+| improve-run026-specaug-freq-finetune | run_041 Modyco (freq L-14k depuis run_026) | **en cours** |
+| improve-run026-sllm-specaug | run_039 Modyco (speechLLM) | **ok** — **13,84** test (sous run_023) |
+| improve-run026-speechtext | run_040 Modyco (Speech_Text utterance) | **échec** (404 HF) |
 | beam-consistency | `eval_beam_during_training` ou rééval beam | à faire (beam eval **ok**) |
 | multilingual-runs | Configs fr→es / fr→pt L-14k / L-114k | à faire |
 | downstream-tasks | NER / SLU / SER (Table 8 hors ST) | à planifier |
