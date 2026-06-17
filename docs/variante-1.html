@@ -180,7 +180,7 @@
         <a href="resultats.html">Résultats</a>
         <a href="evaluation.html">Évaluation</a>
         <a href="corpus.html">Corpus</a>
-        <a href="vocabulaire.html">Vocabulaire</a>
+        <a href="vocabulaire.html">Glossaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
         <label class="theme-switch" for="theme-toggle" title="Thème sombre">
@@ -348,7 +348,7 @@
               <td><em>utterance</em></td>
               <td><span class="result-best">26,1</span></td>
               <td>7,6 h</td>
-              <td class="col-notes"><span class="term">v5<span class="term-tip term-tip-left">Version 5 du fichier YAML de configuration (hyperparamètres, augmentations…) pour ce run.</span></span> <span class="term">SpecAugment<span class="term-tip term-tip-left">Masquage aléatoire de bandes temps/fréquence sur le spectrogramme pendant l’entraînement pour mieux généraliser. <a href="vocabulaire.html#specaugment">→ vocabulaire</a></span></span> ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé quand le score sur le jeu de validation cesse de progresser — on évite de continuer inutilement.</span></span> @55k ; dépasse <span class="term">papier<span class="term-tip term-tip-left">Résultat publié dans l’article Pantagruel (2026), référence scientifique du projet.</span></span> L-14k (24)</td>
+              <td class="col-notes"><span class="term">v5<span class="term-tip term-tip-left">Version 5 du fichier YAML de configuration (hyperparamètres, augmentations…) pour ce run.</span></span> <span class="term">SpecAugment<span class="term-tip term-tip-left">Masquage aléatoire de bandes temps/fréquence sur le spectrogramme pendant l’entraînement pour mieux généraliser. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé quand le score sur le jeu de validation cesse de progresser — on évite de continuer inutilement.</span></span> @55k ; dépasse <span class="term">papier<span class="term-tip term-tip-left">Résultat publié dans l’article Pantagruel (2026), référence scientifique du projet.</span></span> L-14k (24)</td>
             </tr>
             <tr>
               <td><code>run_027</code></td>
@@ -356,7 +356,7 @@
               <td><em>utterance</em></td>
               <td>25,1</td>
               <td>12–18 h</td>
-              <td class="col-notes"><span class="term">v6<span class="term-tip term-tip-left">Version 6 de la config : entraînement plus long (jusqu’à 120k mises à jour).</span></span> long 120k ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé quand le score de validation cesse de s’améliorer.</span></span> (14 juin) — sous <span class="term">run_026<span class="term-tip term-tip-left">Référence à un autre run du projet pour comparaison directe des scores. <a href="vocabulaire.html#run">→ vocabulaire</a></span></span></td>
+              <td class="col-notes"><span class="term">v6<span class="term-tip term-tip-left">Version 6 de la config : entraînement plus long (jusqu’à 120k mises à jour).</span></span> long 120k ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé quand le score de validation cesse de s’améliorer.</span></span> (14 juin) — sous <span class="term">run_026<span class="term-tip term-tip-left">Référence à un autre run du projet pour comparaison directe des scores. <a href="vocabulaire.html#run">→ glossaire</a></span></span></td>
             </tr>
             <tr>
               <td><code>run_031</code></td>
@@ -396,7 +396,7 @@
               <td><em>utterance</em></td>
               <td>0,60</td>
               <td>4 h</td>
-              <td class="col-notes"><span class="term">v9<span class="term-tip term-tip-left">Version 9 de la config.</span></span> <span class="term">warmup<span class="term-tip term-tip-left">Montée progressive du taux d’apprentissage en début d’entraînement pour éviter des mises à jour trop brusques. <a href="vocabulaire.html#warmup-lr">→ vocabulaire</a></span></span> 10k — interrompu @ 31k ; éval <span class="term">best.pt<span class="term-tip term-tip-left">Fichier « meilleur checkpoint » sauvegardé pendant l’entraînement — ici évalué alors que le run n’était pas terminé, d’où un score peu fiable.</span></span> non représentative</td>
+              <td class="col-notes"><span class="term">v9<span class="term-tip term-tip-left">Version 9 de la config.</span></span> <span class="term">warmup<span class="term-tip term-tip-left">Montée progressive du taux d’apprentissage en début d’entraînement pour éviter des mises à jour trop brusques. <a href="vocabulaire.html#warmup-lr">→ glossaire</a></span></span> 10k — interrompu @ 31k ; éval <span class="term">best.pt<span class="term-tip term-tip-left">Fichier « meilleur checkpoint » sauvegardé pendant l’entraînement — ici évalué alors que le run n’était pas terminé, d’où un score peu fiable.</span></span> non représentative</td>
             </tr>
             <tr>
               <td><code>run_039</code></td>
@@ -410,9 +410,17 @@
               <td><code>run_041</code></td>
               <td>L-14k</td>
               <td><em>utterance</em></td>
-              <td><em>en cours</em></td>
+              <td>25,95</td>
               <td>3,5 h</td>
-              <td class="col-notes"><span class="term">v10<span class="term-tip term-tip-left">Version 10 de la config.</span></span> <span class="term">finetune<span class="term-tip term-tip-left">Reprise d’entraînement à partir d’un modèle déjà entraîné (ici run_026) plutôt que depuis zéro.</span></span> run_026 + SpecAugment <span class="term">freq<span class="term-tip term-tip-left">Masquage de bandes de fréquences uniquement (sans masquage temporel) dans SpecAugment.</span></span></td>
+              <td class="col-notes"><span class="term">v10<span class="term-tip term-tip-left">Version 10 de la config.</span></span> <span class="term">finetune<span class="term-tip term-tip-left">Reprise d’entraînement à partir d’un modèle déjà entraîné (ici run_026) plutôt que depuis zéro.</span></span> run_026 + SpecAugment <span class="term">freq<span class="term-tip term-tip-left">Masquage de bandes de fréquences uniquement (sans masquage temporel) dans SpecAugment.</span></span> (16 juin — sous run_026)</td>
+            </tr>
+            <tr>
+              <td><code>run_043</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td>24,78</td>
+              <td>~7 h</td>
+              <td class="col-notes">v5 replicate run_026 (17 juin — écart ~1,3 vs <strong>26,12</strong>)</td>
             </tr>
             <tr>
               <td><code>run_038</code></td>
@@ -420,7 +428,7 @@
               <td><em>utterance</em></td>
               <td><em>en file</em></td>
               <td>9–12 h</td>
-              <td class="col-notes">v9 SpecAugment <span class="term">temporel + fréquentiel<span class="term-tip term-tip-left">Masquage à la fois dans le temps et dans les fréquences du spectrogramme — régularisation plus complète. <a href="vocabulaire.html#specaugment">→ vocabulaire</a></span></span> (post run_033)</td>
+              <td class="col-notes">v9 SpecAugment <span class="term">temporel + fréquentiel<span class="term-tip term-tip-left">Masquage à la fois dans le temps et dans les fréquences du spectrogramme — régularisation plus complète. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> (post run_033)</td>
             </tr>
             <tr>
               <td><code>run_020</code></td>
@@ -428,7 +436,7 @@
               <td><em>utterance</em></td>
               <td>21,2</td>
               <td>9–10 h</td>
-              <td class="col-notes"><span class="term">v3<span class="term-tip term-tip-left">Version 3 de la config.</span></span> ; <span class="term">gel 5k<span class="term-tip term-tip-left">Encodeur figé pendant les 5 000 premières mises à jour : seul le décodeur apprend au début. <a href="vocabulaire.html#gel">→ vocabulaire</a></span></span> ; <span class="term">eval dev<span class="term-tip term-tip-left">Évaluation sur le jeu de développement (données non vues à l’entraînement, utilisées pour suivre la progression).</span></span> complet</td>
+              <td class="col-notes"><span class="term">v3<span class="term-tip term-tip-left">Version 3 de la config.</span></span> ; <span class="term">gel 5k<span class="term-tip term-tip-left">Encodeur figé pendant les 5 000 premières mises à jour : seul le décodeur apprend au début. <a href="vocabulaire.html#gel">→ glossaire</a></span></span> ; <span class="term">eval dev<span class="term-tip term-tip-left">Évaluation sur le jeu de développement (données non vues à l’entraînement, utilisées pour suivre la progression).</span></span> complet</td>
             </tr>
             <tr>
               <td><code>run_019</code></td>
@@ -476,7 +484,7 @@
               <td><em>sentence_like</em></td>
               <td>15</td>
               <td>8 h</td>
-              <td class="col-notes">Protocole <span class="term">sentence_like<span class="term-tip term-tip-left">Découpage en pseudo-phrases plus longues — les scores ne se comparent pas aux runs utterance. <a href="vocabulaire.html#sentence-like">→ vocabulaire</a></span></span> (non comparable <span class="term">utterance<span class="term-tip term-tip-left">Un énoncé = un segment audio correspondant à une phrase parlée. <a href="vocabulaire.html#utterance">→ vocabulaire</a></span></span>)</td>
+              <td class="col-notes">Protocole <span class="term">sentence_like<span class="term-tip term-tip-left">Découpage en pseudo-phrases plus longues — les scores ne se comparent pas aux runs utterance. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span> (non comparable <span class="term">utterance<span class="term-tip term-tip-left">Un énoncé = un segment audio correspondant à une phrase parlée. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span>)</td>
             </tr>
             <tr style="color:var(--muted)">
               <td><em>Article (réf.)</em></td>
@@ -484,7 +492,7 @@
               <td><em>utterance</em></td>
               <td><strong style="color:var(--text)">25,2</strong></td>
               <td>—</td>
-              <td class="col-notes">Pantagruel Table 8 ; <span class="term">beam 5<span class="term-tip term-tip-left">Décodage qui explore 5 pistes de traduction en parallèle avant de choisir la meilleure. <a href="vocabulaire.html#beam-search">→ vocabulaire</a></span></span> ; <span class="term">fairseq<span class="term-tip term-tip-left">Bibliothèque d’entraînement utilisée dans l’article original (nous utilisons PyTorch/Hugging Face).</span></span></td>
+              <td class="col-notes">Pantagruel Table 8 ; <span class="term">beam 5<span class="term-tip term-tip-left">Décodage qui explore 5 pistes de traduction en parallèle avant de choisir la meilleure. <a href="vocabulaire.html#beam-search">→ glossaire</a></span></span> ; <span class="term">fairseq<span class="term-tip term-tip-left">Bibliothèque d’entraînement utilisée dans l’article original (nous utilisons PyTorch/Hugging Face).</span></span></td>
             </tr>
             <tr style="color:var(--muted)">
               <td><em>Article (réf.)</em></td>
@@ -492,7 +500,7 @@
               <td><em>utterance</em></td>
               <td><strong style="color:var(--text)">24,0</strong></td>
               <td>—</td>
-              <td class="col-notes">Pantagruel Table 8 ; <span class="term">beam 5<span class="term-tip term-tip-left">Décodage explorant 5 pistes de traduction en parallèle. <a href="vocabulaire.html#beam-search">→ vocabulaire</a></span></span> ; <span class="term">fairseq<span class="term-tip term-tip-left">Bibliothèque d’entraînement de l’article original (nous utilisons PyTorch/Hugging Face).</span></span></td>
+              <td class="col-notes">Pantagruel Table 8 ; <span class="term">beam 5<span class="term-tip term-tip-left">Décodage explorant 5 pistes de traduction en parallèle. <a href="vocabulaire.html#beam-search">→ glossaire</a></span></span> ; <span class="term">fairseq<span class="term-tip term-tip-left">Bibliothèque d’entraînement de l’article original (nous utilisons PyTorch/Hugging Face).</span></span></td>
             </tr>
             <tr style="color:var(--muted)">
               <td><em>Article (réf.)</em></td>
@@ -500,7 +508,7 @@
               <td><em>utterance</em></td>
               <td><strong style="color:var(--text)">17,5</strong></td>
               <td>—</td>
-              <td class="col-notes">Pantagruel Table 8 ; <span class="term">beam 5<span class="term-tip term-tip-left">Décodage explorant 5 pistes de traduction en parallèle. <a href="vocabulaire.html#beam-search">→ vocabulaire</a></span></span> ; <span class="term">fairseq<span class="term-tip term-tip-left">Bibliothèque d’entraînement de l’article original (nous utilisons PyTorch/Hugging Face).</span></span></td>
+              <td class="col-notes">Pantagruel Table 8 ; <span class="term">beam 5<span class="term-tip term-tip-left">Décodage explorant 5 pistes de traduction en parallèle. <a href="vocabulaire.html#beam-search">→ glossaire</a></span></span> ; <span class="term">fairseq<span class="term-tip term-tip-left">Bibliothèque d’entraînement de l’article original (nous utilisons PyTorch/Hugging Face).</span></span></td>
             </tr>
           </tbody>
         </table>
@@ -571,7 +579,7 @@
               <span class="tag tag-blue">runs en cours</span>
             </div>
             <p class="imp-detail">Masquage al&eacute;atoire de bandes de fr&eacute;quences ou d&rsquo;instants dans le spectrogramme audio &mdash; force le mod&egrave;le &agrave; &ecirc;tre robuste aux occultations partielles. Actif en masquage temporel + fr&eacute;quentiel pour la variante ST, temporel uniquement pour speechLLM.</p>
-            <p class="imp-note"><code>run_041</code> &mdash; finetune fr&eacute;quentiel (en cours) &middot; <code>run_038</code> &mdash; fr&eacute;quentiel L-114k (en file)</p>
+            <p class="imp-note"><code>run_043</code> &mdash; replicate run_026 (<strong>24,78</strong>) &middot; <code>run_033</code> &mdash; SPM 5k L-114k (en cours) &middot; <code>run_038</code> &mdash; fr&eacute;quentiel L-114k (en file)</p>
           </div>
         </li>
 
@@ -611,8 +619,12 @@
                 <div class="run-card-desc">SpecAugment v5 &middot; <strong>26,12</strong> BLEU test (vocab 1k) &mdash; meilleur ST local</div>
               </div>
               <div class="run-card">
-                <div class="run-card-id"><code>run_041</code> <span class="tag tag-blue" style="font-size:0.68rem;">&#8635; en cours</span></div>
-                <div class="run-card-desc">Finetune SpecAugment fr&eacute;quentiel depuis run_026</div>
+                <div class="run-card-id"><code>run_041</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
+                <div class="run-card-desc">Finetune SpecAugment fr&eacute;quentiel &middot; <strong>25,95</strong> BLEU test</div>
+              </div>
+              <div class="run-card">
+                <div class="run-card-id"><code>run_043</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
+                <div class="run-card-desc">Replicate run_026 &middot; <strong>24,78</strong> BLEU test</div>
               </div>
               <div class="run-card">
                 <div class="run-card-id"><code>run_028</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
@@ -624,7 +636,7 @@
               </div>
               <div class="run-card">
                 <div class="run-card-id"><code>run_033</code> <span class="tag tag-blue" style="font-size:0.68rem;">&#8635; en cours</span></div>
-                <div class="run-card-desc">L-114k &middot; SPM 5k &middot; 23&nbsp;500 steps</div>
+                <div class="run-card-desc">L-114k &middot; SPM 5k &middot; ~64&nbsp;500 / 80k steps (best dev 24,99)</div>
               </div>
               <div class="run-card">
                 <div class="run-card-id"><code>run_038</code> <span class="tag tag-gray" style="font-size:0.68rem;">&#9203; en file</span></div>
@@ -665,7 +677,7 @@
       <h2><span class="icon">🔗</span> Liens</h2>
       <div class="links">
         <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/tree/main/1_Transformer" target="_blank" rel="noopener noreferrer">Code <code>1_Transformer/</code> ↗</a>
-        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/docs/PRD.md" target="_blank" rel="noopener noreferrer">PRD §5 et §9 ↗</a>
+        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/documentation/PRD.md" target="_blank" rel="noopener noreferrer">PRD §5 et §9 ↗</a>
         <a class="btn" href="https://arxiv.org/abs/2601.05911" target="_blank" rel="noopener noreferrer">Article Pantagruel (2026) ↗</a>
         <a class="btn" href="https://arxiv.org/abs/2202.01855" target="_blank" rel="noopener noreferrer">data2vec (2022) ↗</a>
         <a class="btn" href="https://huggingface.co/PantagrueLLM" target="_blank" rel="noopener noreferrer">Modèles HuggingFace ↗</a>
@@ -686,7 +698,7 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Glossaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 

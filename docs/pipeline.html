@@ -265,7 +265,7 @@
         <a href="resultats.html">Résultats</a>
         <a href="evaluation.html">Évaluation</a>
         <a href="corpus.html">Corpus</a>
-        <a href="vocabulaire.html">Vocabulaire</a>
+        <a href="vocabulaire.html">Glossaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
         <label class="theme-switch" for="theme-toggle" title="Thème sombre">
@@ -288,7 +288,7 @@
     <h1>Le pipeline S3T, étape par étape</h1>
     <p class="lead">
       Cette page décrit comment on passe des fichiers audio bruts du corpus <strong>m‑TEDx</strong>
-      à des scores <span class="term">BLEU<span class="term-tip">Score standard mesurant la qualité d’une traduction (0–100, plus c’est élevé, mieux c’est). <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span>
+      à des scores <span class="term">BLEU<span class="term-tip">Score standard mesurant la qualité d’une traduction (0–100, plus c’est élevé, mieux c’est). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span>
       et à des traductions, avec une partie <strong>commune</strong> à toutes les variantes
       (dans <code>scripts_communs/</code>) et une partie <strong>spécifique</strong> selon l’approche choisie.
     </p>
@@ -301,7 +301,7 @@
       <h2><span class="icon">🎙️</span> Pantagruel, en bref</h2>
       <div class="prose">
         <p>
-          <strong>Pantagruel</strong> est l’<span class="term">encodeur acoustique<span class="term-tip">Partie du modèle qui convertit le signal audio en vecteurs numériques — l’«&nbsp;oreille&nbsp;» du système. <a href="vocabulaire.html#encodeur">→ vocabulaire</a></span></span>
+          <strong>Pantagruel</strong> est l’<span class="term">encodeur acoustique<span class="term-tip">Partie du modèle qui convertit le signal audio en vecteurs numériques — l’«&nbsp;oreille&nbsp;» du système. <a href="vocabulaire.html#encodeur">→ glossaire</a></span></span>
           au cœur de ce projet. Développé au
           <a href="http://lig-getalp.imag.fr/fr/accueil/" target="_blank" rel="noopener noreferrer">LIG-GETALP</a>
           (Université Grenoble Alpes), il transforme un signal audio français en
@@ -309,9 +309,9 @@
           — une sorte de «&nbsp;résumé mathématique&nbsp;» de ce qui est dit dans l’enregistrement.
         </p>
         <p>
-          Il est <span class="term">pré-entraîné<span class="term-tip">Entraîné une première fois sur un très grand corpus avant ce projet ; on charge ses poids déjà appris plutôt que de repartir de zéro. <a href="vocabulaire.html#pantagruel">→ vocabulaire</a></span></span>
+          Il est <span class="term">pré-entraîné<span class="term-tip">Entraîné une première fois sur un très grand corpus avant ce projet ; on charge ses poids déjà appris plutôt que de repartir de zéro. <a href="vocabulaire.html#pantagruel">→ glossaire</a></span></span>
           sur de très grandes quantités de parole française (jusqu’à 114&nbsp;000&nbsp;heures
-          d’archives INA), <em>sans transcription</em>&nbsp;: il apprend à comprendre le son par lui-même
+          d’<a href="corpus.html#ina">archives INA</a>), <em>sans transcription</em>&nbsp;: il apprend à comprendre le son par lui-même
           (<span class="term">auto-supervision<span class="term-tip">Le modèle apprend à partir du signal seul, sans étiquettes humaines (pas de texte aligné sur l’audio).</span></span>,
           cadre <span class="term">JEPA<span class="term-tip">Joint Embedding Predictive Architecture&nbsp;: prédire des représentations internes plutôt que reconstruire l’audio brut. Cadre théorique de LeCun (2022), implémenté ici par data2vec&nbsp;2.0. <a href="https://openreview.net/forum?id=BZ5a1r-kVsf" target="_blank" rel="noopener noreferrer">→ article LeCun (2022)</a></span></span>).
           Trois tailles sont disponibles&nbsp;:
@@ -405,7 +405,7 @@
             </div>
           </div>
           <div class="prose">
-            <p>On évite de perdre des heures de <span class="term">GPU<span class="term-tip">Processeur graphique utilisé pour l’entraînement des réseaux de neurones. <a href="vocabulaire.html#gpu">→ vocabulaire</a></span></span> à cause d’un problème simple (Python trop vieux, <span class="term">CUDA<span class="term-tip">Couche logicielle NVIDIA qui permet à PyTorch d’utiliser le GPU pour les calculs.</span></span> absent, disque plein, réseau indisponible).</p>
+            <p>On évite de perdre des heures de <span class="term">GPU<span class="term-tip">Processeur graphique utilisé pour l’entraînement des réseaux de neurones. <a href="vocabulaire.html#gpu">→ glossaire</a></span></span> à cause d’un problème simple (Python trop vieux, <span class="term">CUDA<span class="term-tip">Couche logicielle NVIDIA qui permet à PyTorch d’utiliser le GPU pour les calculs.</span></span> absent, disque plein, réseau indisponible).</p>
           </div>
           <div class="kv">
             <strong>Commande</strong><div><code>python scripts_communs/pipeline.py preflight</code></div>
@@ -446,7 +446,7 @@
               fichiers <span class="term">manifest<span class="term-tip">Fichier TSV : une ligne par segment audio, avec chemins WAV, texte source (FR) et cible (EN).</span></span> TSV utilisés ensuite par l’entraînement et l’évaluation.
             </p>
             <p>
-              Deux modes existent : <code><span class="term">utterance<span class="term-tip">Découpage par énoncé : chaque segment = une phrase parlée. <a href="vocabulaire.html#utterance">→ vocabulaire</a></span></span></code> (segments natifs m‑TEDx) et <code><span class="term">sentence_like<span class="term-tip">Segments fusionnés en pseudo-phrases plus longues — scores non comparables à utterance. <a href="vocabulaire.html#sentence-like">→ vocabulaire</a></span></span></code> (segments fusionnés).
+              Deux modes existent : <code><span class="term">utterance<span class="term-tip">Découpage par énoncé : chaque segment = une phrase parlée. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></code> (segments natifs m‑TEDx) et <code><span class="term">sentence_like<span class="term-tip">Segments fusionnés en pseudo-phrases plus longues — scores non comparables à utterance. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></code> (segments fusionnés).
             </p>
           </div>
           <div class="kv">
@@ -481,7 +481,7 @@
     <div class="card">
       <h2><span class="icon">📦</span> Bibliothèques partagées (ce qui est réutilisé)</h2>
       <p class="section-intro">
-        Les variantes s’appuient sur quelques modules centraux pour rester cohérentes : même format de données, même protocole <span class="term">BLEU<span class="term-tip">Score de qualité de traduction comparé aux références humaines. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span>, mêmes chemins de sortie.
+        Les variantes s’appuient sur quelques modules centraux pour rester cohérentes : même format de données, même protocole <span class="term">BLEU<span class="term-tip">Score de qualité de traduction comparé aux références humaines. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span>, mêmes chemins de sortie.
       </p>
       <div class="note note-info">
         <strong>Deux niveaux de partage — ne pas confondre :</strong>
@@ -503,13 +503,13 @@
             <tr>
               <td><code>scripts_communs/st_common.py</code></td>
               <td><span class="tag tag-blue">toutes</span> · dans <code>scripts_communs/</code></td>
-              <td>« boîte à outils » du Transformer : lecture manifests, <span class="term">décodage<span class="term-tip">Génération de la traduction anglaise à partir des vecteurs audio (greedy ou beam search). <a href="vocabulaire.html#beam-search">→ vocabulaire</a></span></span>, <span class="term">SpecAugment<span class="term-tip">Masquage aléatoire temps/fréquence sur le spectrogramme pendant l’entraînement. <a href="vocabulaire.html#specaugment">→ vocabulaire</a></span></span>, utilitaires audio</td>
+              <td>« boîte à outils » du Transformer : lecture manifests, <span class="term">décodage<span class="term-tip">Génération de la traduction anglaise à partir des vecteurs audio (greedy ou beam search). <a href="vocabulaire.html#beam-search">→ glossaire</a></span></span>, <span class="term">SpecAugment<span class="term-tip">Masquage aléatoire temps/fréquence sur le spectrogramme pendant l’entraînement. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span>, utilitaires audio</td>
               <td><span class="tag tag-gray">V1</span> + wrappers V5</td>
             </tr>
             <tr>
               <td><code>2_speechLLM/speechllm_lib.py</code></td>
               <td><span class="tag tag-gray">V2</span> uniquement</td>
-              <td>définit l’architecture speechLLM (<span class="term">projecteur<span class="term-tip">Petit adaptateur entre l’encodeur audio et le LLM — seul composant entraîné en mode B1. <a href="vocabulaire.html#projecteur">→ vocabulaire</a></span></span> + <span class="term">LLM<span class="term-tip">Grand modèle de langue pré-entraîné qui génère la traduction. <a href="vocabulaire.html#llm">→ vocabulaire</a></span></span>), les prompts et le chargement des configs</td>
+              <td>définit l’architecture speechLLM (<span class="term">projecteur<span class="term-tip">Petit adaptateur entre l’encodeur audio et le LLM — seul composant entraîné en mode B1. <a href="vocabulaire.html#projecteur">→ glossaire</a></span></span> + <span class="term">LLM<span class="term-tip">Grand modèle de langue pré-entraîné qui génère la traduction. <a href="vocabulaire.html#llm">→ glossaire</a></span></span>), les prompts et le chargement des configs</td>
               <td><span class="tag tag-gray">V2</span> (+ utils config Gemini/Cascade)</td>
             </tr>
             <tr>
@@ -535,7 +535,7 @@
       </div>
 
       <div class="note">
-        <strong>Pourquoi c’est important :</strong> la comparaison n’a de sens que si tout le monde lit les mêmes données et calcule le <span class="term">BLEU<span class="term-tip term-tip-left">Même métrique SacreBLEU pour toutes les variantes — sinon les scores ne seraient pas comparables. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span> de la même façon.
+        <strong>Pourquoi c’est important :</strong> la comparaison n’a de sens que si tout le monde lit les mêmes données et calcule le <span class="term">BLEU<span class="term-tip term-tip-left">Même métrique SacreBLEU pour toutes les variantes — sinon les scores ne seraient pas comparables. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> de la même façon.
       </div>
     </div>
 
@@ -609,7 +609,7 @@
         En plus des scripts Python, le dépôt contient des scripts shell qui automatisent des lancements (nohup, SSH, synchronisation).
       </p>
       <div class="prose">
-        <p><strong>Exemples :</strong> <code>scripts_communs/bootstrap.sh</code> (créer un environnement Python), <code>scripts/sync_web_pages.sh</code> (copier <code>web/</code> vers <code>docs/</code>), et des scripts <code>run_modyco_*.sh</code>/<code>run_ovh_*.sh</code> qui enchaînent des expériences sur des machines <span class="term">GPU<span class="term-tip">Serveurs distants équipés de cartes graphiques pour l’entraînement. <a href="vocabulaire.html#gpu">→ vocabulaire</a></span></span>.</p>
+        <p><strong>Exemples :</strong> <code>scripts_communs/bootstrap.sh</code> (créer un environnement Python), <code>scripts/extract_web_audio.py</code> (extraire les WAV d’exemples vers <code>docs/audio/</code>), et des scripts <code>run_modyco_*.sh</code>/<code>run_ovh_*.sh</code> qui enchaînent des expériences sur des machines <span class="term">GPU<span class="term-tip">Serveurs distants équipés de cartes graphiques pour l’entraînement. <a href="vocabulaire.html#gpu">→ glossaire</a></span></span>.</p>
         <p>Ils facilitent l’exécution, mais <strong>la logique du pipeline</strong> (ce qui est produit à chaque étape) est dans les scripts Python listés ci‑dessus. Les lancements en arrière-plan utilisent souvent <span class="term">nohup<span class="term-tip">Commande Unix qui laisse un script tourner après fermeture du terminal — pratique pour des entraînements de plusieurs heures.</span></span>.</p>
       </div>
     </div>
@@ -628,7 +628,7 @@
     </section>
 
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Glossaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 

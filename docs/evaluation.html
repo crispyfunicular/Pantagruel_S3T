@@ -366,7 +366,7 @@
         <a href="resultats.html">Résultats</a>
         <a href="evaluation.html" class="active">Évaluation</a>
         <a href="corpus.html">Corpus</a>
-        <a href="vocabulaire.html">Vocabulaire</a>
+        <a href="vocabulaire.html">Glossaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
         <label class="theme-switch" for="theme-toggle" title="Thème sombre">
@@ -387,7 +387,7 @@
 
   <header class="hero">
     <h1>Évaluation des traductions</h1>
-    <p class="lead">Comment interpréter le <span class="term">BLEU<span class="term-tip">Score automatique de proximité lexicale entre une traduction machine et une ou plusieurs références humaines. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span>, pourquoi deux découpages (<span class="term"><em>utterance</em><span class="term-tip term-tip-down">Segment natif du corpus — une prise de parole courte. <a href="vocabulaire.html#utterance">→ vocabulaire</a></span></span> vs <span class="term"><em>sentence_like</em><span class="term-tip term-tip-down">Fusion de segments voisins en pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ vocabulaire</a></span></span>), et ce que les chiffres cachent — avec des exemples audio tirés du corpus <span class="term">m-TEDx<span class="term-tip term-tip-down">Corpus TEDx multilingue avec sous-titres alignés — terrain d’entraînement ST du projet. <a href="corpus.html#mtedx">→ corpus</a></span></span>.</p>
+    <p class="lead">Comment interpréter le <span class="term">BLEU<span class="term-tip">Score automatique de proximité lexicale entre une traduction machine et une ou plusieurs références humaines. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span>, pourquoi deux découpages (<span class="term"><em>utterance</em><span class="term-tip term-tip-down">Segment natif du corpus — une prise de parole courte. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span> vs <span class="term"><em>sentence_like</em><span class="term-tip term-tip-down">Fusion de segments voisins en pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span>), et ce que les chiffres cachent — avec des exemples audio tirés du corpus <span class="term">m-TEDx<span class="term-tip term-tip-down">Corpus TEDx multilingue avec sous-titres alignés — terrain d’entraînement ST du projet. <a href="corpus.html#mtedx">→ corpus</a></span></span>.</p>
   </header>
 
   <main class="container">
@@ -397,6 +397,7 @@
         <a href="#bleu">BLEU / SacreBLEU</a>
         <a href="#segmentation">Utterance vs sentence_like</a>
         <a href="#niveaux">Échelle de scores</a>
+        <a href="#alternatives">Autres métriques</a>
         <a href="#exemples">Exemples traduits</a>
       </div>
     </div>
@@ -406,8 +407,8 @@
     <div class="card" id="bleu">
       <h2><span class="icon">📐</span> BLEU et SacreBLEU</h2>
       <div class="prose">
-        <p>Le <span class="term"><strong>BLEU</strong><span class="term-tip"><em>Bilingual Evaluation Understudy</em> — compare la traduction candidate aux références via les recouvrements de mots. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span> a été proposé par <a href="https://aclanthology.org/P02-1040/" target="_blank" rel="noopener noreferrer">Papineni et al. (2002)</a> pour estimer automatiquement la proximité d’une traduction candidate avec une ou plusieurs <span class="term">références humaines<span class="term-tip">Traductions de référence produites par des humains — le BLEU mesure la proximité lexicale avec elles, pas la «&nbsp;vérité&nbsp;» absolue.</span></span>. L’idée centrale : <em>plus une sortie machine recoupe lexicalement les références, meilleure elle est jugée</em> — via la moyenne géométrique des précisions modifiées sur les <span class="term">n-grammes<span class="term-tip">Séquences de <em>n</em> mots consécutifs (ici jusqu’à 4-grammes par défaut).</span></span> (jusqu’à 4-grammes par défaut), multipliée par une pénalité de brièveté si la traduction est trop courte.</p>
-        <p>Dans ce projet, les scores sont calculés avec <span class="term"><strong>SacreBLEU</strong><span class="term-tip">Implémentation standardisée du BLEU (protocole WMT) — tokenisation figée pour des comparaisons reproductibles entre runs. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span> (<a href="https://aclanthology.org/W18-6319/" target="_blank" rel="noopener noreferrer">Post, 2018</a>) : tokenisation et prétraitement figés (protocole WMT), ce qui rend les chiffres reproductibles et comparables entre <span class="term">runs<span class="term-tip">Une expérience complète (entraînement + évaluation) identifiée par un <code>run_XXX</code> dans le dépôt.</span></span> du dépôt. L’outil affiche le BLEU sur une échelle <strong>0–100</strong> (équivalent à la formule originale 0–1 × 100).</p>
+        <p>Le <span class="term"><strong>BLEU</strong><span class="term-tip"><em>Bilingual Evaluation Understudy</em> — compare la traduction candidate aux références via les recouvrements de mots. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> a été proposé par <a href="https://aclanthology.org/P02-1040/" target="_blank" rel="noopener noreferrer">Papineni et al. (2002)</a> pour estimer automatiquement la proximité d’une traduction candidate avec une ou plusieurs <span class="term">références humaines<span class="term-tip">Traductions de référence produites par des humains — le BLEU mesure la proximité lexicale avec elles, pas la «&nbsp;vérité&nbsp;» absolue.</span></span>. L’idée centrale : <em>plus une sortie machine recoupe lexicalement les références, meilleure elle est jugée</em> — via la moyenne géométrique des précisions modifiées sur les <span class="term">n-grammes<span class="term-tip">Séquences de <em>n</em> mots consécutifs (ici jusqu’à 4-grammes par défaut).</span></span> (jusqu’à 4-grammes par défaut), multipliée par une pénalité de brièveté si la traduction est trop courte.</p>
+        <p>Dans ce projet, les scores sont calculés avec <span class="term"><strong>SacreBLEU</strong><span class="term-tip">Implémentation standardisée du BLEU (protocole WMT) — tokenisation figée pour des comparaisons reproductibles entre runs. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> (<a href="https://aclanthology.org/W18-6319/" target="_blank" rel="noopener noreferrer">Post, 2018</a>) : tokenisation et prétraitement figés (protocole WMT), ce qui rend les chiffres reproductibles et comparables entre <span class="term">runs<span class="term-tip">Une expérience complète (entraînement + évaluation) identifiée par un <code>run_XXX</code> dans le dépôt.</span></span> du dépôt. L’outil affiche le BLEU sur une échelle <strong>0–100</strong> (équivalent à la formule originale 0–1 × 100).</p>
 
         <h3>Comment lire un score ?</h3>
         <p>Papineni et al. insistent sur trois points souvent oubliés :</p>
@@ -417,7 +418,7 @@
           <li><strong>Mesure de surface, pas de sens.</strong> Une paraphrase correcte peut être pénalisée si elle n’emploie pas les mêmes mots que la référence ; d’où l’intérêt des <a href="#exemples">lectures qualitatives</a> ci-dessous.</li>
         </ul>
 
-        <h3 id="niveaux">Repères sur m-TEDx fr→en (<span class="term"><em>utterance</em><span class="term-tip term-tip-down">Découpage par énoncé natif du corpus — protocole de l’article Pantagruel. <a href="vocabulaire.html#utterance">→ vocabulaire</a></span></span>)</h3>
+        <h3 id="niveaux">Repères sur m-TEDx fr→en (<span class="term"><em>utterance</em><span class="term-tip term-tip-down">Découpage par énoncé natif du corpus — protocole de l’article Pantagruel. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span>)</h3>
         <p class="section-note">Illustrations tirées de nos runs — même intervention TED (<code>9fxo9YJhnG8</code>), split <span class="term"><code>valid</code><span class="term-tip term-tip-down">Jeu de développement (souvent appelé <em>dev</em>) — sert au suivi pendant l’entraînement et à la sélection du meilleur checkpoint.</span></span>. Le BLEU <span class="term">corpus<span class="term-tip term-tip-down">Score agrégé sur l’ensemble des segments du split — une phrase isolée peut être bonne malgré un score modeste.</span></span> agrège des centaines de segments ; une phrase peut être correcte malgré un score modeste.</p>
         <div class="score-ladder">
           <div class="score-tier">
@@ -449,7 +450,7 @@
               <span class="score-tier__badge">~21–26 BLEU</span>
               <span class="score-tier__label">Meilleurs modèles entraînés localement</span>
             </div>
-            <p class="score-tier__body">Baseline <span class="term">L-14k<span class="term-tip term-tip-left">Encodeur Pantagruel pré-entraîné sur 14&nbsp;000&nbsp;h de parole française (LeBenchmark / INA).</span></span> (<code>run_020</code>, 21,2) puis <span class="term">SpecAugment<span class="term-tip term-tip-left">Masquage aléatoire du signal audio pendant l’entraînement — levier clé du <code>run_026</code> (26,1 BLEU). <a href="vocabulaire.html#specaugment">→ vocabulaire</a></span></span> (<code>run_026</code>, <strong>26,1</strong> test — niveau article Pantagruel Table 8). Lexique solide, quelques tournures maladroites.</p>
+            <p class="score-tier__body">Baseline <span class="term">L-14k<span class="term-tip term-tip-left">Encodeur Pantagruel pré-entraîné sur 14&nbsp;000&nbsp;h de parole française (LeBenchmark / INA).</span></span> (<code>run_020</code>, 21,2) puis <span class="term">SpecAugment<span class="term-tip term-tip-left">Masquage aléatoire du signal audio pendant l’entraînement — levier clé du <code>run_026</code> (26,1 BLEU). <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> (<code>run_026</code>, <strong>26,1</strong> test — niveau article Pantagruel Table 8). Lexique solide, quelques tournures maladroites.</p>
             <div class="score-tier__example">
               <strong>FR</strong> — Aujourd’hui encore, quand je me lève le matin, je regarde mon homme à côté de moi…<br>
               <strong>Réf.</strong> — « Still today, when I wake up in the morning, I watch my man lying next to me and I am still amazed. »<br>
@@ -488,11 +489,59 @@
       <div class="prose">
         <p>Le corpus <span class="term">m-TEDx<span class="term-tip">Corpus TEDx multilingue (OpenSLR 100) — audio français aligné avec traductions anglaises de référence. <a href="corpus.html#mtedx">→ corpus</a></span></span> fournit des segments alignés audio–texte. Deux découpages coexistent dans le protocole S3T :</p>
         <ul>
-          <li><strong><span class="term"><em>utterance</em><span class="term-tip term-tip-left">Découpage par énoncé&nbsp;: chaque segment = une phrase parlée native du corpus. <a href="vocabulaire.html#utterance">→ vocabulaire</a></span></span></strong> — segments natifs du corpus (une prise de parole courte, souvent une phrase ou un fragment). C’est le découpage de l’article Pantagruel et celui des tableaux « meilleur run » sur la page <a href="resultats.html">Résultats</a>.</li>
-          <li><strong><span class="term"><em>sentence_like</em><span class="term-tip term-tip-left">Fusion de segments voisins en pseudo-phrases plus longues — scores non comparables à <em>utterance</em>. <a href="vocabulaire.html#sentence-like">→ vocabulaire</a></span></span></strong> — fusion de segments voisins pour former des unités plus longues, proches d’une phrase complète. Utile pour certaines variantes (notamment speechLLM dégelé et <span class="term">Speech_Text<span class="term-tip term-tip-left">Variante 5&nbsp;: modèle multimodal Pantagruel (audio + texte). <a href="variante-5.html">→ variante 5</a></span></span>), mais les scores <strong>ne sont pas directement comparables</strong> à ceux en <em>utterance</em>.</li>
+          <li><strong><span class="term"><em>utterance</em><span class="term-tip term-tip-left">Découpage par énoncé&nbsp;: chaque segment = une phrase parlée native du corpus. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></strong> — segments natifs du corpus (une prise de parole courte, souvent une phrase ou un fragment). C’est le découpage de l’article Pantagruel et celui des tableaux « meilleur run » sur la page <a href="resultats.html">Résultats</a>.</li>
+          <li><strong><span class="term"><em>sentence_like</em><span class="term-tip term-tip-left">Fusion de segments voisins en pseudo-phrases plus longues — scores non comparables à <em>utterance</em>. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></strong> — fusion de segments voisins pour former des unités plus longues, proches d’une phrase complète. Utile pour certaines variantes (notamment speechLLM dégelé et <span class="term">Speech_Text<span class="term-tip term-tip-left">Variante 5&nbsp;: modèle multimodal Pantagruel (audio + texte). <a href="variante-5.html">→ variante 5</a></span></span>), mais les scores <strong>ne sont pas directement comparables</strong> à ceux en <em>utterance</em>.</li>
         </ul>
         <p>Comparer un BLEU <em>utterance</em> et un BLEU <em>sentence_like</em> sans précaution est trompeur : les références changent de <span class="term">granularité<span class="term-tip">Taille des unités évaluées — une phrase fusionnée n’a pas la même référence qu’un énoncé court isolé.</span></span>, et les modèles cloud ou en <span class="term">cascade<span class="term-tip">Variante 4&nbsp;: ASR (Whisper) puis traduction texte (Marian) — la parole est d’abord transcrite en français. <a href="variante-4.html">→ variante 4</a></span></span> peuvent ne pas avoir été évalués sur les deux découpages.</p>
         <p>Définitions détaillées : <a href="vocabulaire.html#utterance">utterance</a> · <a href="vocabulaire.html#sentence-like">sentence_like</a> · <a href="vocabulaire.html#segmentation">segmentation</a>.</p>
+      </div>
+    </div>
+
+    <div class="card" id="alternatives">
+      <h2><span class="icon">🔬</span> Autres métriques envisagées</h2>
+      <div class="prose">
+        <p><span class="term">SacreBLEU<span class="term-tip">Implémentation standardisée du BLEU (protocole WMT) — tokenisation figée pour des comparaisons reproductibles. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> a été retenu comme métrique principale du projet pour garantir la comparabilité directe avec la Table&nbsp;8 de l'article <a href="https://arxiv.org/abs/2601.05911" target="_blank" rel="noopener noreferrer">Pantagruel (2026)</a>. Quatre familles de métriques alternatives ont été considérées et écartées comme indicateur primaire — voici pourquoi.</p>
+
+        <h3>chrF — <em>Character F-score</em></h3>
+        <p><a href="https://aclanthology.org/W15-3049/" target="_blank" rel="noopener noreferrer">Popović (2015)</a> mesure la précision et le rappel sur des <span class="term">n-grammes de caractères<span class="term-tip">Sous-séquences de <em>n</em> caractères consécutifs — insensibles à la morphologie et à la tokenisation.</span></span> entre candidate et référence. La métrique est moins sensible à la tokenisation et aux variantes morphologiques que le BLEU ; elle est populaire dans les évaluations WMT depuis 2017.</p>
+        <p><strong>Pourquoi pas retenu comme métrique primaire ?</strong> SacreBLEU calcule déjà le chrF2 pour chaque run (visible dans <code>eval/sacrebleu_*.txt</code> et <code>experiments_tracking.csv</code>) — la mesure est donc <em>présente dans les données</em>, mais en secondaire. L'article Pantagruel publie uniquement le BLEU en Table&nbsp;8 ; utiliser chrF comme indicateur principal empêcherait toute comparaison directe avec les scores de référence.</p>
+
+        <h3>COMET — métriques neuronales calibrées sur les jugements humains</h3>
+        <p><a href="https://aclanthology.org/2020.emnlp-main.213/" target="_blank" rel="noopener noreferrer">Rei et al. (2020, 2022)</a> — famille de métriques entraînées sur des annotations humaines (<span class="term">DA<span class="term-tip">Direct Assessment — annotation humaine de la qualité globale d'une traduction sur une échelle continue.</span></span> et <span class="term">MQM<span class="term-tip">Multidimensional Quality Metrics — annotation fine des erreurs (adéquation, fluidité, terminologie…). Standard dans les évaluations WMT récentes.</span></span>). COMET-22 est orienté référence ; <span class="term">CometKiwi<span class="term-tip">Variante <em>quality estimation</em> de COMET — évalue sans référence humaine, utile pour les langues peu dotées ou les corpus sans traductions de référence.</span></span> fonctionne sans référence (<em>quality estimation</em>). Ces métriques ont aujourd'hui une corrélation avec les jugements humains nettement supérieure à celle du BLEU.</p>
+        <p><strong>Pourquoi pas retenu ?</strong></p>
+        <ul>
+          <li><strong>Réplicabilité limitée.</strong> Les scores COMET dépendent de la version exacte du modèle (COMET-20, COMET-22, CometKiwi-22, CometKiwi-23…), du checkpoint Hugging Face chargé, de la version de <code>unbabel-comet</code> et du prétraitement interne. Le modèle «&nbsp;recommandé&nbsp;» change à chaque campagne WMT&nbsp;: deux équipes qui publient un score COMET sans figer ces éléments ne sont pas nécessairement comparables, et un lecteur ne peut pas reproduire le chiffre à partir du seul protocole décrit dans l’article.</li>
+          <li><strong>Pas de signature figée.</strong> Contrairement à SacreBLEU — qui enregistre une <em>signature</em> (tokenisation, lissage, version) dans chaque fichier <code>eval/sacrebleu_*.txt</code> — COMET ne fournit pas d’équivalent standardisé permettant de vérifier a posteriori qu’un score a été calculé avec exactement les mêmes hypothèses.</li>
+          <li><strong>Pas de référence Pantagruel.</strong> La Table&nbsp;8 n’indique aucun score COMET&nbsp;; adopter cette métrique comme primaire ne permettrait pas de situer nos runs par rapport à l’article, tout en ajoutant une source d’écart méthodologique supplémentaire.</li>
+        </ul>
+
+        <h3>LLM as a judge — GEMBA et variants</h3>
+        <p><a href="https://arxiv.org/abs/2302.14520" target="_blank" rel="noopener noreferrer">Kocmi &amp; Federmann (2023)</a> ont montré que soumettre source, traduction et éventuellement référence à un LLM (GPT-4, Gemini…) avec un prompt calibré produit des scores (<em>GEMBA-MQM</em>) dont la corrélation avec les annotations MQM humaines surpasse COMET sur WMT&nbsp;22.</p>
+        <p><strong>Pourquoi pas retenu ?</strong></p>
+        <ul>
+          <li><strong>Réplicabilité très faible.</strong> Les sorties d’un LLM-juge sont stochastiques (température, échantillonnage) et les modèles API sont mis à jour sans version figée ni garantie de rétrocompatibilité&nbsp;: recalculer un score quelques mois plus tard, avec un autre identifiant de modèle ou une autre date d’appel, peut produire des chiffres différents sans que l’expérience d’entraînement ait changé. Pour la recherche académique, un protocole d’évaluation doit pouvoir être reproduit à l’identique par un tiers&nbsp;; ce n’est pas le cas ici.</li>
+          <li><strong>Sensibilité au prompt.</strong> Le score dépend du libellé exact du prompt, de l’ordre des champs (source, candidate, référence), du format de sortie attendu et parfois du langage de consigne — autant de choix non standardisés qui ne figurent pas dans les publications comparables et qui font varier les résultats d’une implémentation à l’autre.</li>
+          <li><strong>Biais méthodologique.</strong> Évaluer les traductions de la variante Gemini (<a href="variante-3.html">variante&nbsp;3</a>) avec un autre modèle de la même famille comme juge introduit un biais difficile à quantifier et à documenter de façon reproductible.</li>
+        </ul>
+
+        <h3>TER et BERTScore</h3>
+        <p><span class="term">TER<span class="term-tip">Translation Error Rate (Snover et al., 2006) — distance d'édition au mot (substitutions, insertions, suppressions, déplacements) normalisée par la longueur de la référence. Plus bas = meilleur.</span></span> (<a href="https://aclanthology.org/2006.amta-papers.25/" target="_blank" rel="noopener noreferrer">Snover et al., 2006</a>) est une distance d'édition au mot, déjà calculée par SacreBLEU et présente dans <code>experiments_tracking.csv</code>. Elle est moins utilisée pour la ST que pour la traduction texte et son sens inversé (plus bas = mieux) crée de la confusion dans les tableaux comparatifs.</p>
+        <p><span class="term">BERTScore<span class="term-tip">Zhang et al. (2020) — similarité cosinus entre embeddings BERT de la candidate et de la référence. Capture les paraphrases mieux que le BLEU, mais dépend du modèle BERT choisi.</span></span> (<a href="https://arxiv.org/abs/1904.09675" target="_blank" rel="noopener noreferrer">Zhang et al., 2020</a>) capture mieux les paraphrases correctes que le BLEU, mais sa valeur absolue dépend fortement du modèle d'embedding retenu — ce qui rend la comparaison externe difficile — et il n'est pas calculé par SacreBLEU. Comme COMET, il aurait exigé une dépendance GPU supplémentaire et n'offre aucune référence dans le papier Pantagruel.</p>
+
+        <div class="callout">
+          <strong>En résumé :</strong> BLEU + SacreBLEU est retenu parce qu’il est la métrique de la Table&nbsp;8 Pantagruel (<em>seul point de comparaison externe disponible</em>), qu’il offre un protocole figé et vérifiable (signature SacreBLEU dans chaque run), et qu’il est calculé automatiquement en fin de chaque expérience. chrF2 et TER sont présents dans les artifacts mais non mis en avant. COMET, LLM-as-a-judge et BERTScore restent des pistes pertinentes pour une étude complémentaire, à condition de figer explicitement modèle, version, prompt et dépendances — exigence que ce projet n’a pas pu garantir dans le cadre d’une comparaison reproductible avec le papier de référence.
+        </div>
+
+        <div class="references">
+          <strong>Références</strong>
+          <ol>
+            <li>Popović, M. (2015). <em>chrF: character n-gram F-score for automatic MT evaluation</em>. WMT. <a href="https://aclanthology.org/W15-3049/" target="_blank" rel="noopener noreferrer">aclanthology.org/W15-3049 ↗</a></li>
+            <li>Rei, R., Stewart, C., Farinha, A. C., &amp; Lavie, A. (2020). <em>COMET: A neural framework for MT evaluation</em>. EMNLP. <a href="https://aclanthology.org/2020.emnlp-main.213/" target="_blank" rel="noopener noreferrer">aclanthology.org/2020.emnlp-main.213 ↗</a></li>
+            <li>Kocmi, T., &amp; Federmann, C. (2023). <em>Large language models are state-of-the-art evaluators of translation quality</em>. EAMT. <a href="https://arxiv.org/abs/2302.14520" target="_blank" rel="noopener noreferrer">arXiv:2302.14520 ↗</a></li>
+            <li>Zhang, T., Kishore, V., Wu, F., Weinberger, K. Q., &amp; Artzi, Y. (2020). <em>BERTScore: Evaluating text generation with BERT</em>. ICLR. <a href="https://arxiv.org/abs/1904.09675" target="_blank" rel="noopener noreferrer">arXiv:1904.09675 ↗</a></li>
+            <li>Snover, M., Dorr, B., Schwartz, R., Micciulla, L., &amp; Makhoul, J. (2006). <em>A study of translation edit rate with targeted human annotation</em>. AMTA. <a href="https://aclanthology.org/2006.amta-papers.25/" target="_blank" rel="noopener noreferrer">aclanthology.org/2006.amta-papers.25 ↗</a></li>
+          </ol>
+        </div>
       </div>
     </div>
 
@@ -534,7 +583,7 @@
     </section>
 
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="evaluation.html">Évaluation</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="evaluation.html">Évaluation</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Glossaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 

@@ -276,6 +276,17 @@
 
     .model-name strong { font-weight: inherit; color: inherit; }
 
+    .model-name a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .model-name a:hover,
+    .model-name a:focus-visible {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
     .chart-value {
       font-family: var(--mono);
       font-size: 0.85rem;
@@ -474,7 +485,7 @@
         <a href="resultats.html">Résultats</a>
         <a href="evaluation.html">Évaluation</a>
         <a href="corpus.html">Corpus</a>
-        <a href="vocabulaire.html">Vocabulaire</a>
+        <a href="vocabulaire.html">Glossaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
         <label class="theme-switch" for="theme-toggle" title="Thème sombre">
@@ -598,7 +609,7 @@
     </section>
 
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="evaluation.html">Évaluation</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="evaluation.html">Évaluation</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Glossaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 
@@ -614,6 +625,7 @@
           {
             id: 3,
             color: 'v3',
+            href: 'variante-3.html',
             chartLabel: '3 · Gemini 3.5 Flash',
             tableLabel: 'Gemini 3.5 Flash v2',
             score: 41.1,
@@ -622,6 +634,7 @@
           {
             id: 4,
             color: 'v4',
+            href: 'variante-4.html',
             chartLabel: '4 · Cascade',
             tableLabel: 'Cascade ASR→MT',
             score: 37,
@@ -630,6 +643,7 @@
           {
             id: '—',
             color: 'ref',
+            href: 'https://arxiv.org/abs/2601.05911',
             chartLabel: 'Article Pantagruel-L-114k',
             tableLabel: 'Pantagruel-L-114k (article)',
             score: 25.2,
@@ -639,6 +653,7 @@
           {
             id: 1,
             color: 'v1',
+            href: 'variante-1.html',
             chartLabel: '1 · Transformer',
             tableLabel: 'Transformer ST',
             score: 26.1,
@@ -647,6 +662,7 @@
           {
             id: 2,
             color: 'v2',
+            href: 'variante-2.html',
             chartLabel: '2 · speechLLM',
             tableLabel: 'speechLLM B1',
             score: 15.2,
@@ -664,6 +680,7 @@
           {
             id: 3,
             color: 'v3',
+            href: 'variante-3.html',
             chartLabel: '3 · Gemini 3.5 Flash',
             tableLabel: 'Gemini 3.5 Flash v2',
             score: 36.8,
@@ -672,6 +689,7 @@
           {
             id: 2,
             color: 'v2',
+            href: 'variante-2.html',
             chartLabel: '2 · speechLLM',
             tableLabel: 'speechLLM B1',
             score: 19,
@@ -680,6 +698,7 @@
           {
             id: 1,
             color: 'v1',
+            href: 'variante-1.html',
             chartLabel: '1 · Transformer',
             tableLabel: 'Transformer ST',
             score: 15,
@@ -688,6 +707,7 @@
           {
             id: 5,
             color: 'v5',
+            href: 'variante-5.html',
             chartLabel: '5 · Speech_Text',
             tableLabel: 'Speech_Text + ST',
             score: 8,
@@ -701,6 +721,17 @@
 
     function formatScore(score) {
       return Number.isInteger(score) ? String(score) : score.toFixed(1).replace('.', ',');
+    }
+
+    function scoreLinkHtml(row, text) {
+      const cls = 'model-name model-name--' + row.color;
+      if (!row.href) {
+        return '<span class="' + cls + '">' + text + '</span>';
+      }
+      const external = row.href.startsWith('http')
+        ? ' target="_blank" rel="noopener noreferrer"'
+        : '';
+      return '<a class="' + cls + '" href="' + row.href + '"' + external + '>' + text + '</a>';
     }
 
     function renderSegment(segmentKey) {
@@ -720,9 +751,7 @@
           return (
             '<div class="chart-row">' +
               '<div class="chart-label">' +
-                '<span class="model-name model-name--' + row.color + '">' +
-                  row.chartLabel +
-                '</span>' +
+                scoreLinkHtml(row, row.chartLabel) +
                 sublabel +
               '</div>' +
               '<div class="chart-bar-wrap">' +
@@ -738,7 +767,7 @@
         .map((row) => (
           '<tr>' +
             '<td>' + row.id + '</td>' +
-            '<td><span class="model-name model-name--' + row.color + '">' + row.tableLabel + '</span></td>' +
+            '<td>' + scoreLinkHtml(row, row.tableLabel) + '</td>' +
             '<td>' + formatScore(row.score) + '</td>' +
             '<td>' + row.params + '</td>' +
           '</tr>'

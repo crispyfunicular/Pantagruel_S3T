@@ -402,7 +402,7 @@
         <a href="resultats.html">Résultats</a>
         <a href="evaluation.html">Évaluation</a>
         <a href="corpus.html" aria-current="page">Corpus</a>
-        <a href="vocabulaire.html">Vocabulaire</a>
+        <a href="vocabulaire.html">Glossaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
         <label class="theme-switch" for="theme-toggle" title="Thème sombre">
@@ -425,7 +425,7 @@
     <h1>Les corpus du projet</h1>
     <p class="lead">
       Deux corpus articulent le pipeline S3T : l’un fournit la base acoustique de l’encodeur
-      <span class="term">Pantagruel<span class="term-tip">Encodeur acoustique français développé au LIG-GETALP — l’«&nbsp;oreille&nbsp;» du système. <a href="vocabulaire.html#pantagruel">→ vocabulaire</a></span></span>,
+      <span class="term">Pantagruel<span class="term-tip">Encodeur acoustique français développé au LIG-GETALP — l’«&nbsp;oreille&nbsp;» du système. <a href="vocabulaire.html#pantagruel">→ glossaire</a></span></span>,
       l’autre sert de terrain d’<span class="term">entraînement<span class="term-tip">Fine-tuning&nbsp;: ajustement du modèle sur un corpus cible (ici m-TEDx) après le pré-entraînement de l’encodeur.</span></span>
       et d’évaluation pour la <span class="term">traduction de la parole<span class="term-tip">Speech Translation (ST)&nbsp;: passer directement de l’audio source à du texte traduit, sans étape de transcription intermédiaire visible.</span></span>
       français&nbsp;→&nbsp;anglais.
@@ -441,11 +441,11 @@
       <p class="section-intro">
         Enregistrements radio et télévisés français collectés par l’<strong>Institut National de l’Audiovisuel (INA)</strong>,
         constituant la base de données audio du projet <strong>LeBenchmark 2.0</strong>.
-        Ces données ont servi à <span class="term">pré-entraîner<span class="term-tip">Première phase d’apprentissage sur un très grand volume de parole, avant le fine-tuning sur m-TEDx. <a href="vocabulaire.html#pantagruel">→ vocabulaire</a></span></span>
+        Ces données ont servi à <span class="term">pré-entraîner<span class="term-tip">Première phase d’apprentissage sur un très grand volume de parole, avant le fine-tuning sur m-TEDx. <a href="vocabulaire.html#pantagruel">→ glossaire</a></span></span>
         les modèles Pantagruel en <span class="term">auto-supervision<span class="term-tip">Le modèle apprend à partir du signal audio seul, sans transcriptions ni étiquettes humaines.</span></span>
         (cadre <span class="term">JEPA<span class="term-tip">Joint Embedding Predictive Architecture&nbsp;: prédire des représentations internes plutôt que reconstruire l’audio brut. <a href="https://openreview.net/forum?id=BZ5a1r-kVsf" target="_blank" rel="noopener noreferrer">→ article LeCun (2022)</a></span></span>
         / <span class="term">data2vec 2.0<span class="term-tip">Implémentation concrète du cadre JEPA utilisée pour entraîner Pantagruel sur la parole.</span></span>)&nbsp;:
-        l’<span class="term">encodeur acoustique<span class="term-tip">Partie du modèle qui convertit le signal audio en vecteurs numériques. <a href="vocabulaire.html#encodeur">→ vocabulaire</a></span></span>
+        l’<span class="term">encodeur acoustique<span class="term-tip">Partie du modèle qui convertit le signal audio en vecteurs numériques. <a href="vocabulaire.html#encodeur">→ glossaire</a></span></span>
         apprend des représentations de la parole française
         <em>sans aucune transcription ni supervision externe</em>.
       </p>
@@ -503,7 +503,7 @@
       <div class="role-block">
         <strong>Rôle dans le pipeline S3T :</strong>
         l’encodeur Pantagruel pré-entraîné sur INA est chargé en début de pipeline (étape 0) et utilisé comme
-        extracteur de caractéristiques acoustiques <span class="term">figé<span class="term-tip term-tip-down">Gelé&nbsp;: les poids de l’encodeur ne sont pas mis à jour pendant l’entraînement (sauf dégel partiel optionnel). <a href="vocabulaire.html#gel">→ vocabulaire</a></span></span>
+        extracteur de caractéristiques acoustiques <span class="term">figé<span class="term-tip term-tip-down">Gelé&nbsp;: les poids de l’encodeur ne sont pas mis à jour pendant l’entraînement (sauf dégel partiel optionnel). <a href="vocabulaire.html#gel">→ glossaire</a></span></span>
         (ou partiellement <span class="term">dégelé<span class="term-tip term-tip-down">Dégelé&nbsp;: certains poids de l’encodeur continuent d’apprendre pendant le fine-tuning sur m-TEDx.</span></span>)
         pour toutes les variantes du projet.
         Le corpus INA n’est jamais re-téléchargé : seuls les <span class="term">poids<span class="term-tip term-tip-down">Paramètres internes du réseau de neurones, sauvegardés dans un checkpoint.</span></span>
@@ -574,9 +574,9 @@
           <tr>
             <td><strong>Découpage</strong></td>
             <td>
-              <span class="term">utterance<span class="term-tip term-tip-left">Découpage par énoncé&nbsp;: chaque segment = une phrase parlée native du corpus. <a href="vocabulaire.html#utterance">→ vocabulaire</a></span></span>
+              <span class="term">utterance<span class="term-tip term-tip-left">Découpage par énoncé&nbsp;: chaque segment = une phrase parlée native du corpus. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span>
               (segments natifs m-TEDx, protocole article) et
-              <span class="term">sentence_like<span class="term-tip term-tip-left">Fusion de segments voisins en pseudo-phrases plus longues — scores non comparables à utterance. <a href="vocabulaire.html#sentence-like">→ vocabulaire</a></span></span>
+              <span class="term">sentence_like<span class="term-tip term-tip-left">Fusion de segments voisins en pseudo-phrases plus longues — scores non comparables à utterance. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span>
               (fusion de segments voisins, variante S3T)
             </td>
           </tr>
@@ -602,7 +602,7 @@
         <span class="term">SentencePiece<span class="term-tip term-tip-down">Vocabulaire de sous-mots appris sur les traductions anglaises (~1&nbsp;000 unités) avant l’entraînement du décodeur.</span></span>
         (<code>3_spm.py</code>),
         entraînement du décodeur (<code>4_train.py</code>) et évaluation
-        <span class="term">SacreBLEU<span class="term-tip term-tip-down">Implémentation standardisée du score BLEU — même métrique pour toutes les variantes. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span>
+        <span class="term">SacreBLEU<span class="term-tip term-tip-down">Implémentation standardisée du score BLEU — même métrique pour toutes les variantes. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span>
         (<code>5_evaluate.py</code>).
         C’est le seul corpus de fine-tuning ST du projet ; toutes les variantes (Transformer, speechLLM, Cascade, Speech_Text)
         partagent les mêmes manifests normalisés. Voir aussi la <a href="pipeline.html">page Pipeline</a>.
@@ -628,7 +628,7 @@
     </section>
 
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Glossaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 

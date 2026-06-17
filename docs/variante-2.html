@@ -156,7 +156,7 @@
       right: 12px;
       transform: none;
     }
-    /* Lien « → vocabulaire » dans la bulle */
+    /* Lien « → glossaire » dans la bulle */
     .term-tip a {
       color: #a78bfa;
       display: inline-block;
@@ -182,7 +182,7 @@
         <a href="resultats.html">Résultats</a>
         <a href="evaluation.html">Évaluation</a>
         <a href="corpus.html">Corpus</a>
-        <a href="vocabulaire.html">Vocabulaire</a>
+        <a href="vocabulaire.html">Glossaire</a>
         <a href="https://github.com/crispyfunicular/Pantagruel_S3T" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </div>
         <label class="theme-switch" for="theme-toggle" title="Thème sombre">
@@ -205,10 +205,10 @@
     <div class="variant-badge">Variante 2 / 5</div>
     <h1>speechLLM</h1>
     <p class="lead">
-      Connecter l’<span class="term">encodeur Pantagruel<span class="term-tip">Modèle de traitement audio développé au LIG-GETALP. Il convertit le signal audio en vecteurs numériques représentant le contenu de la parole. <a href="vocabulaire.html#encodeur">→ vocabulaire</a></span></span>
-      à un <span class="term">grand modèle de langue (<abbr title="Large Language Model">LLM</abbr>)<span class="term-tip">Grand modèle de langue pré-entraîné sur des milliards de mots. Ici, il reçoit les vecteurs audio et génère la traduction en anglais. <a href="vocabulaire.html#llm">→ vocabulaire</a></span></span>
-      via un <span class="term">projecteur<span class="term-tip">Petit adaptateur (quelques couches linéaires) qui « traduit » les vecteurs audio dans le format attendu par le LLM. C’est le seul composant entraîné. <a href="vocabulaire.html#projecteur">→ vocabulaire</a></span></span>
-      minimal. Seul le projecteur est entraîné — le LLM reste <span class="term">gelé<span class="term-tip">Gelé = ses paramètres internes sont bloqués pendant l’entraînement : il traite les données mais n’apprend pas. <a href="vocabulaire.html#gel">→ vocabulaire</a></span></span>.
+      Connecter l’<span class="term">encodeur Pantagruel<span class="term-tip">Modèle de traitement audio développé au LIG-GETALP. Il convertit le signal audio en vecteurs numériques représentant le contenu de la parole. <a href="vocabulaire.html#encodeur">→ glossaire</a></span></span>
+      à un <span class="term">grand modèle de langue (<abbr title="Large Language Model">LLM</abbr>)<span class="term-tip">Grand modèle de langue pré-entraîné sur des milliards de mots. Ici, il reçoit les vecteurs audio et génère la traduction en anglais. <a href="vocabulaire.html#llm">→ glossaire</a></span></span>
+      via un <span class="term">projecteur<span class="term-tip">Petit adaptateur (quelques couches linéaires) qui « traduit » les vecteurs audio dans le format attendu par le LLM. C’est le seul composant entraîné. <a href="vocabulaire.html#projecteur">→ glossaire</a></span></span>
+      minimal. Seul le projecteur est entraîné — le LLM reste <span class="term">gelé<span class="term-tip">Gelé = ses paramètres internes sont bloqués pendant l’entraînement : il traite les données mais n’apprend pas. <a href="vocabulaire.html#gel">→ glossaire</a></span></span>.
     </p>
     <p class="tagline">« On ne réentraîne presque rien, seulement un petit adaptateur entre l’oreille et un modèle de texte déjà très capable. »</p>
     <p class="notes-hint">Survolez les termes <span class="term" style="border-bottom-color:#94a3b8;">soulignés en pointillés<span class="term-tip">Explication courte affichée au survol de la souris.</span></span> pour une définition en langage courant. Si la bulle contient un lien, <strong>cliquez d’abord sur le terme</strong> pour la maintenir affichée, puis sur le lien — sinon elle disparaît dès que la souris s’éloigne.</p>
@@ -269,13 +269,13 @@
       </div>
       <div class="prose">
         <p>
-          <strong>Projecteur :</strong> quelques couches linéaires qui projettent les vecteurs acoustiques de l’encodeur dans l’espace d’entrée du <span class="term">LLM<span class="term-tip">Grand modèle de langue (Large Language Model) : pré-entraîné sur des milliards de mots, il génère ici la traduction anglaise. <a href="vocabulaire.html#llm">→ vocabulaire</a></span></span>. C’est le seul composant entraîné (mode B1). L’entraînement est rapide (20k updates, 1–6 h).
+          <strong>Projecteur :</strong> quelques couches linéaires qui projettent les vecteurs acoustiques de l’encodeur dans l’espace d’entrée du <span class="term">LLM<span class="term-tip">Grand modèle de langue (Large Language Model) : pré-entraîné sur des milliards de mots, il génère ici la traduction anglaise. <a href="vocabulaire.html#llm">→ glossaire</a></span></span>. C’est le seul composant entraîné (mode B1). L’entraînement est rapide (20k updates, 1–6 h).
         </p>
         <p>
-          <strong>Format dialogue :</strong> le modèle est entraîné avec une <span class="term">consigne (prompt)<span class="term-tip">Texte d’instruction passé au LLM avant l’audio pour guider sa réponse : traduire en anglais, ne pas commenter, etc. <a href="vocabulaire.html#prompt">→ vocabulaire</a></span></span> côté USER et la traduction attendue côté ASSISTANT. Le LLM génère l’anglais comme dans une conversation. La consigne est un hyperparamètre important.
+          <strong>Format dialogue :</strong> le modèle est entraîné avec une <span class="term">consigne (prompt)<span class="term-tip">Texte d’instruction passé au LLM avant l’audio pour guider sa réponse : traduire en anglais, ne pas commenter, etc. <a href="vocabulaire.html#prompt">→ glossaire</a></span></span> côté USER et la traduction attendue côté ASSISTANT. Le LLM génère l’anglais comme dans une conversation. La consigne est un hyperparamètre important.
         </p>
         <p>
-          <strong>Contrainte de longueur :</strong> <code><span class="term">max_new_tokens<span class="term-tip">Nombre maximal de sous-mots (tokens) que le modèle peut générer. Trop élevé → traduction trop longue → score BLEU chute malgré une traduction correcte. <a href="vocabulaire.html#max-new-tokens">→ vocabulaire</a></span></span>: 48</code> est le réglage qui donne 15 <span class="term">BLEU<span class="term-tip">Score standard mesurant la qualité d’une traduction (0–100, plus c’est élevé, mieux c’est). <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span> utterance (<code>run_012</code>, <code>run_013</code>). Les configs à 128 tokens produisent des hypothèses 3× trop longues et chutent à 5–6 BLEU (<code>run_017</code>, <code>run_021</code>).
+          <strong>Contrainte de longueur :</strong> <code><span class="term">max_new_tokens<span class="term-tip">Nombre maximal de sous-mots (tokens) que le modèle peut générer. Trop élevé → traduction trop longue → score BLEU chute malgré une traduction correcte. <a href="vocabulaire.html#max-new-tokens">→ glossaire</a></span></span>: 48</code> est le réglage qui donne 15 <span class="term">BLEU<span class="term-tip">Score standard mesurant la qualité d’une traduction (0–100, plus c’est élevé, mieux c’est). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> utterance (<code>run_012</code>, <code>run_013</code>). Les configs à 128 tokens produisent des hypothèses 3× trop longues et chutent à 5–6 BLEU (<code>run_017</code>, <code>run_021</code>).
         </p>
       </div>
     </div>
@@ -297,7 +297,7 @@
           <tbody>
             <tr>
               <td>
-                <strong><span class="term">max_new_tokens<span class="term-tip">Nombre maximal de sous-mots (tokens) que le modèle peut générer par traduction. <a href="vocabulaire.html#max-new-tokens">→ vocabulaire</a></span></span></strong>
+                <strong><span class="term">max_new_tokens<span class="term-tip">Nombre maximal de sous-mots (tokens) que le modèle peut générer par traduction. <a href="vocabulaire.html#max-new-tokens">→ glossaire</a></span></span></strong>
               </td>
               <td class="col-expl">Limite la longueur de la traduction produite. Trop haute → le modèle « déborde » et génère du texte inutile, ce qui fait chuter le score.</td>
               <td><code>48</code> (recommandé) / <code>128</code> (à éviter)</td>
@@ -306,7 +306,7 @@
             </tr>
             <tr>
               <td>
-                <strong>Taille de l’<span class="term">encodeur<span class="term-tip">Modèle audio qui convertit le signal sonore en vecteurs numériques. Plus il est grand, meilleure est la représentation — mais plus lent. <a href="vocabulaire.html#encodeur">→ vocabulaire</a></span></span></strong>
+                <strong>Taille de l’<span class="term">encodeur<span class="term-tip">Modèle audio qui convertit le signal sonore en vecteurs numériques. Plus il est grand, meilleure est la représentation — mais plus lent. <a href="vocabulaire.html#encodeur">→ glossaire</a></span></span></strong>
               </td>
               <td class="col-expl">Quelle version du modèle audio utiliser. Les versions plus grandes capturent plus de détails de la parole mais consomment plus de mémoire et de temps de calcul.</td>
               <td><code>B-1k</code> / <code>L-14k</code> / <code>L-114k</code></td>
@@ -315,7 +315,7 @@
             </tr>
             <tr>
               <td>
-                <strong><span class="term">Gel / dégel<span class="term-tip">Gelé = poids du modèle figés pendant l’entraînement (il ne modifie pas ses paramètres). Dégelé = il peut s’adapter. <a href="vocabulaire.html#gel">→ vocabulaire</a></span></span> de l’encodeur</strong>
+                <strong><span class="term">Gel / dégel<span class="term-tip">Gelé = poids du modèle figés pendant l’entraînement (il ne modifie pas ses paramètres). Dégelé = il peut s’adapter. <a href="vocabulaire.html#gel">→ glossaire</a></span></span> de l’encodeur</strong>
               </td>
               <td class="col-expl">Pendant l’entraînement du projecteur, autorise-t-on le modèle audio à modifier ses paramètres internes ? Geler stabilise l’entraînement ; dégeler peut améliorer les performances mais est risqué.</td>
               <td><code>frozen</code> (défaut) / <code>unfrozen</code></td>
@@ -324,7 +324,7 @@
             </tr>
             <tr>
               <td>
-                <strong>Choix du <span class="term">LLM<span class="term-tip">Grand modèle de langue (Large Language Model) qui génère la traduction en anglais à partir des vecteurs audio. <a href="vocabulaire.html#llm">→ vocabulaire</a></span></span></strong>
+                <strong>Choix du <span class="term">LLM<span class="term-tip">Grand modèle de langue (Large Language Model) qui génère la traduction en anglais à partir des vecteurs audio. <a href="vocabulaire.html#llm">→ glossaire</a></span></span></strong>
               </td>
               <td class="col-expl">Quel modèle de texte génératif utiliser pour produire la traduction. Chacun a ses forces et ses faiblesses selon la tâche.</td>
               <td>Phi-2 (défaut) · Mistral · Qwen2.5-3B</td>
@@ -333,7 +333,7 @@
             </tr>
             <tr>
               <td>
-                <strong><span class="term">Beam search<span class="term-tip">Lors de la génération, nombre de pistes de traduction explorées en parallèle avant de choisir la meilleure. Beam trop grand → répétitions. <a href="vocabulaire.html#beam-search">→ vocabulaire</a></span></span></strong>
+                <strong><span class="term">Beam search<span class="term-tip">Lors de la génération, nombre de pistes de traduction explorées en parallèle avant de choisir la meilleure. Beam trop grand → répétitions. <a href="vocabulaire.html#beam-search">→ glossaire</a></span></span></strong>
               </td>
               <td class="col-expl">Combien d’hypothèses de traduction le modèle explore-t-il simultanément ? Un beam plus grand est plus lent et peut créer des boucles de répétition avec ce modèle.</td>
               <td><code>beam ≤ 3</code> (beam ≥ 4 → boucles de répétition)</td>
@@ -342,7 +342,7 @@
             </tr>
             <tr>
               <td>
-                <strong><span class="term">Consigne (prompt)<span class="term-tip">Texte d’instruction donné au LLM pour guider sa réponse : « traduis en anglais », « ne commente pas », etc. <a href="vocabulaire.html#prompt">→ vocabulaire</a></span></span></strong>
+                <strong><span class="term">Consigne (prompt)<span class="term-tip">Texte d’instruction donné au LLM pour guider sa réponse : « traduis en anglais », « ne commente pas », etc. <a href="vocabulaire.html#prompt">→ glossaire</a></span></span></strong>
               </td>
               <td class="col-expl">Texte d’instruction qu’on place avant l’audio pour dire au modèle ce qu’on attend de lui. Une mauvaise consigne peut faire produire du français ou du texte hors-sujet.</td>
               <td>Format USER/ASSISTANT — texte libre</td>
@@ -351,7 +351,7 @@
             </tr>
             <tr>
               <td>
-                <strong><span class="term">Warmup LR<span class="term-tip">Le taux d’apprentissage monte progressivement en début d’entraînement pour éviter des mises à jour trop brusques. <a href="vocabulaire.html#warmup-lr">→ vocabulaire</a></span></span></strong>
+                <strong><span class="term">Warmup LR<span class="term-tip">Le taux d’apprentissage monte progressivement en début d’entraînement pour éviter des mises à jour trop brusques. <a href="vocabulaire.html#warmup-lr">→ glossaire</a></span></span></strong>
               </td>
               <td class="col-expl">La « vitesse d’apprentissage » monte doucement au début de l’entraînement pour éviter des ajustements trop violents qui déstabiliseraient le modèle.</td>
               <td>Déjà implémenté dans <code>2_speechLLM/train.py</code></td>
@@ -380,19 +380,19 @@
           <thead>
             <tr>
               <th>
-                <span class="term" style="border-bottom-color:#94a3b8;">Run<span class="term-tip term-tip-down">Identifiant d’une expérience. Chaque run teste une combinaison précise de paramètres (encodeur, segmentation, LLM…). <a href="vocabulaire.html#run">→ vocabulaire</a></span></span>
+                <span class="term" style="border-bottom-color:#94a3b8;">Run<span class="term-tip term-tip-down">Identifiant d’une expérience. Chaque run teste une combinaison précise de paramètres (encodeur, segmentation, LLM…). <a href="vocabulaire.html#run">→ glossaire</a></span></span>
               </th>
               <th>
-                <span class="term" style="border-bottom-color:#94a3b8;">Encodeur<span class="term-tip term-tip-down">Modèle audio utilisé (B-1k / L-14k / L-114k) et si ses poids étaient gelés ou dégelés pendant l’entraînement. <a href="vocabulaire.html#encodeur">→ vocabulaire</a></span></span>
+                <span class="term" style="border-bottom-color:#94a3b8;">Encodeur<span class="term-tip term-tip-down">Modèle audio utilisé (B-1k / L-14k / L-114k) et si ses poids étaient gelés ou dégelés pendant l’entraînement. <a href="vocabulaire.html#encodeur">→ glossaire</a></span></span>
               </th>
               <th>
-                <span class="term" style="border-bottom-color:#94a3b8;">Segmentation<span class="term-tip term-tip-down">Comment l’audio de test a été découpé : par énoncé (utterance) ou en pseudo-phrases (sentence_like). Les deux modes ne se comparent pas directement. <a href="vocabulaire.html#segmentation">→ vocabulaire</a></span></span>
+                <span class="term" style="border-bottom-color:#94a3b8;">Segmentation<span class="term-tip term-tip-down">Comment l’audio de test a été découpé : par énoncé (utterance) ou en pseudo-phrases (sentence_like). Les deux modes ne se comparent pas directement. <a href="vocabulaire.html#segmentation">→ glossaire</a></span></span>
               </th>
               <th>
-                <span class="term" style="border-bottom-color:#94a3b8;">BLEU test<span class="term-tip term-tip-down">Score BLEU mesuré sur le jeu de test. 0–100 ; plus c’est élevé, meilleure est la traduction. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span>
+                <span class="term" style="border-bottom-color:#94a3b8;">BLEU test<span class="term-tip term-tip-down">Score BLEU mesuré sur le jeu de test. 0–100 ; plus c’est élevé, meilleure est la traduction. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span>
               </th>
               <th>
-                <span class="term" style="border-bottom-color:#94a3b8;">Durée GPU<span class="term-tip term-tip-down">Temps de calcul sur carte graphique (entraînement + évaluation). <a href="vocabulaire.html#gpu">→ vocabulaire</a></span></span>
+                <span class="term" style="border-bottom-color:#94a3b8;">Durée GPU<span class="term-tip term-tip-down">Temps de calcul sur carte graphique (entraînement + évaluation). <a href="vocabulaire.html#gpu">→ glossaire</a></span></span>
               </th>
               <th>Notes</th>
             </tr>
@@ -400,16 +400,16 @@
           <tbody>
             <tr>
               <td><code>run_005</code></td>
-              <td>B-1k (<span class="term">dégelé<span class="term-tip term-tip-left">L’encodeur a pu modifier ses paramètres pendant l’entraînement. <a href="vocabulaire.html#gel">→ vocabulaire</a></span></span>)</td>
-              <td><em><span class="term">sentence_like<span class="term-tip">Segmentation qui regroupe plusieurs énoncés en pseudo-phrases plus longues. Les scores ne se comparent pas directement aux scores utterance. <a href="vocabulaire.html#sentence-like">→ vocabulaire</a></span></span></em></td>
+              <td>B-1k (<span class="term">dégelé<span class="term-tip term-tip-left">L’encodeur a pu modifier ses paramètres pendant l’entraînement. <a href="vocabulaire.html#gel">→ glossaire</a></span></span>)</td>
+              <td><em><span class="term">sentence_like<span class="term-tip">Segmentation qui regroupe plusieurs énoncés en pseudo-phrases plus longues. Les scores ne se comparent pas directement aux scores utterance. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em></td>
               <td><span class="result-best">19</span></td>
               <td>2 h</td>
               <td>Meilleur global B1 ; encodeur dégelé</td>
             </tr>
             <tr>
               <td><code>run_013</code></td>
-              <td>L-114k (<span class="term">gelé<span class="term-tip term-tip-left">L’encodeur n’a pas modifié ses paramètres : seul le projecteur a été entraîné. <a href="vocabulaire.html#gel">→ vocabulaire</a></span></span>)</td>
-              <td><em><span class="term">utterance<span class="term-tip">Segmentation par énoncé : chaque segment correspond à une phrase parlée complète. <a href="vocabulaire.html#utterance">→ vocabulaire</a></span></span></em></td>
+              <td>L-114k (<span class="term">gelé<span class="term-tip term-tip-left">L’encodeur n’a pas modifié ses paramètres : seul le projecteur a été entraîné. <a href="vocabulaire.html#gel">→ glossaire</a></span></span>)</td>
+              <td><em><span class="term">utterance<span class="term-tip">Segmentation par énoncé : chaque segment correspond à une phrase parlée complète. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em></td>
               <td><span class="result-best">15,2</span></td>
               <td>4–6 h</td>
               <td><strong>48 tok</strong> ; meilleur utterance</td>
@@ -474,7 +474,7 @@
         </table>
       </div>
       <div class="note">
-        <strong>Règle empirique :</strong> utiliser <code>max_new_tokens: 48</code> (comme <code>run_012</code> et <code>run_013</code>). Les configs à 128 tokens produisent des hypothèses beaucoup trop longues et font chuter le <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). Une hypothèse trop longue est pénalisée même si le début est correct. <a href="vocabulaire.html#bleu">→ vocabulaire</a></span></span> à 5–6. Les scores <em>utterance</em> et <em>sentence_like</em> ne sont pas directement comparables.
+        <strong>Règle empirique :</strong> utiliser <code>max_new_tokens: 48</code> (comme <code>run_012</code> et <code>run_013</code>). Les configs à 128 tokens produisent des hypothèses beaucoup trop longues et font chuter le <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). Une hypothèse trop longue est pénalisée même si le début est correct. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> à 5–6. Les scores <em>utterance</em> et <em>sentence_like</em> ne sont pas directement comparables.
       </div>
     </div>
 
@@ -496,7 +496,7 @@
         </li>
         <li>
           <span class="imp-num">4</span>
-          <div><strong>Affiner la consigne (<span class="term">prompt<span class="term-tip">Texte d’instruction donné au LLM pour guider sa réponse. <a href="vocabulaire.html#prompt">→ vocabulaire</a></span></span>)</strong> : instruction explicite pour produire de l’anglais uniquement, sans commentaire, longueur cible. Tester plusieurs variantes de prompt.</div>
+          <div><strong>Affiner la consigne (<span class="term">prompt<span class="term-tip">Texte d’instruction donné au LLM pour guider sa réponse. <a href="vocabulaire.html#prompt">→ glossaire</a></span></span>)</strong> : instruction explicite pour produire de l’anglais uniquement, sans commentaire, longueur cible. Tester plusieurs variantes de prompt.</div>
         </li>
         <li>
           <span class="imp-num">5</span>
@@ -505,7 +505,7 @@
         <li>
           <span class="imp-num">6</span>
           <div><strong>Réplication de <code>run_013</code></strong> (<code>run_032</code>, <strong>ok</strong> — <strong>14,15</strong> test, 48 tok — sous run_013).</div>
-          <div><strong><span class="term">SpecAugment<span class="term-tip">Technique d’augmentation de données audio : on masque aléatoirement des bandes de fréquences ou des intervalles de temps dans le spectrogramme pendant l’entraînement. <a href="vocabulaire.html#specaugment">→ vocabulaire</a></span></span> L-14k</strong> (<code>run_039</code>, <strong>ok</strong> — <strong>13,84</strong> test, sous run_023).</div>
+          <div><strong><span class="term">SpecAugment<span class="term-tip">Technique d’augmentation de données audio : on masque aléatoirement des bandes de fréquences ou des intervalles de temps dans le spectrogramme pendant l’entraînement. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> L-14k</strong> (<code>run_039</code>, <strong>ok</strong> — <strong>13,84</strong> test, sous run_023).</div>
         </li>
       </ul>
     </div>
@@ -517,8 +517,8 @@
         <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/tree/main/2_speechLLM" target="_blank" rel="noopener noreferrer">Code <code>2_speechLLM/</code> ↗</a>
         <a class="btn" href="https://arxiv.org/abs/2402.08846" target="_blank" rel="noopener noreferrer">SLAM-ASR (Ma et al., 2024) ↗</a>
         <a class="btn" href="https://huggingface.co/microsoft/phi-2" target="_blank" rel="noopener noreferrer">Phi-2 (HuggingFace) ↗</a>
-        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/docs/PRD.md" target="_blank" rel="noopener noreferrer">PRD ↗</a>
-        <a class="btn" href="vocabulaire.html">Vocabulaire / Glossaire</a>
+        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/documentation/PRD.md" target="_blank" rel="noopener noreferrer">PRD ↗</a>
+        <a class="btn" href="vocabulaire.html">Glossaire</a>
       </div>
     </div>
 
@@ -536,7 +536,7 @@
 
   <div class="page-end">
     <footer class="container">
-      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Vocabulaire</a> · <a href="index.html">Accueil</a></p>
+      <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Glossaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
 
