@@ -1,0 +1,54 @@
+# speechLLM B1 — fr-en, utterance, Pantagruel-L-114k + SpecAugment (run_044).
+#
+# Base : run_032 replicate (14,15 test) + masquage temporel SpecAugment (recette run_039 / run_026).
+# Durée attendue : ~2–3 h GPU (Modyco).
+#
+# Run cible : run_044_speechllm_b1_utterance_large_114k_v5_specaug (Modyco)
+
+experiment:
+  name: "fr-en_speechllm_b1_utterance_large_114k_v5_specaug"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_044_speechllm_b1_utterance_large_114k_v5_specaug"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-114K"
+  trust_remote_code: true
+  llm_name: "microsoft/phi-2"
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+
+prompt:
+  template: "Translate the French speech to English."
+
+spec_augment:
+  enabled: true
+  mask_time_prob: 0.05
+  mask_time_length: 10
+
+train:
+  max_updates: 20000
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48
