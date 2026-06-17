@@ -217,7 +217,7 @@ Ordre suggéré (impact estimé sur la comparabilité Table 8) :
 
 Tant que les points 1–3 ne sont pas codés, un run ne peut pas prétendre à une réplication contrôlée paramètre par paramètre — seulement à une **approximation documentée**, comme les runs v2/v3 actuels.
 
-Références techniques : [PRD §5 et §9](../docs/PRD.md), [protocole utterance](../docs/protocole_utterance_pantagruel.md), [protocole d’évaluation](../docs/protocole_evaluation.md).
+Références techniques : [PRD §5 et §9](PRD.md), [protocole utterance](protocole_utterance_pantagruel.md), [protocole d’évaluation](protocole_evaluation.md).
 
 **Dossier :** `1_Transformer/`
 
@@ -371,7 +371,7 @@ Ce n’est pas de la traduction bout en bout (E2E) : l’anglais ne dépend que 
 
 **En une phrase :** même architecture que la variante 1, mais avec un encodeur Pantagruel entraîné sur parole et texte ensemble, pas sur la parole seule.
 
-L’encodeur [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal) a vu du français oral et écrit pendant son pré-entraînement. L’hypothèse : ces représentations pourraient mieux servir la traduction. Le décodeur Transformer et SentencePiece restent les mêmes qu’en variante 1 :
+L’encodeur [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal) repose sur un **backbone Transformer partagé** pré-entraîné sur trois types de données : parole seule, texte seul, et paires parole-texte **non-parallèles**. L’objectif de pré-entraînement est de type **JEPA / data2vec 2.0 multimodal** : le modèle prédit des représentations latentes communes pour la parole et le texte sans alignement explicite. L’hypothèse : ces représentations pourraient mieux servir la traduction ST que des représentations acoustiques seules. Le décodeur Transformer et SentencePiece restent les mêmes qu’en variante 1 :
 
 | Étape | Bloc | Rôle | Entraîné ? |
 |:-----:|------|------|------------|
@@ -400,7 +400,7 @@ L’encodeur [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal)
 **Pistes d’amélioration :**
 - Reprendre les réglages d’entraînement de la variante 1 (gel, durée, décodage) avant de conclure sur l’encodeur multimodal.
 - Lancer un run en *utterance* pour comparer au protocole article.
-- Tester un checkpoint [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal) plus récent ou plus grand, si disponible.
+- Relancer `run_040` dès qu’un nouveau checkpoint `Speech_Text` sera publié (le checkpoint intermédiaire `Base_fr_1K_4GB` a été retiré de Hugging Face en juin 2026 ; l’entraînement du modèle multimodal final à grande échelle est en cours).
 - Trancher : creuser l’hypothèse multimodale ou recentrer l’effort sur les variantes 1 et 2.
 
 **Dossier :** `5_Pantagruel_multimodal/`
@@ -497,7 +497,7 @@ Syntaxe : notes de bas de page Markdown (`[^n]`), supportées par Pandoc, GitHub
 [^37]: `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` — **non lancé**
 [^38]: `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` — **en file** (après run_033)
 [^39]: `run_039_speechllm_b1_utterance_large_14k_v5_specaug` — **13,84 / 14,59** test/dev (16 juin — sous run_023)
-[^40]: `run_040_pantagruel_multimodal_utterance_v2` — **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404)
+[^40]: `run_040_pantagruel_multimodal_utterance_v2` — **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404 — checkpoint intermédiaire retiré ; modèle multimodal final en cours d’entraînement)
 [^41]: `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` — **en cours** (finetune run_026)
 [^032]: `run_032_speechllm_b1_utterance_large_114k_replicate` — **14,15 / 15,14** test/dev (48 tok)
 [^033]: `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` — **en cours** (@ 23,5k/80k, best dev 21,9)

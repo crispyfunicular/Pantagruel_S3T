@@ -256,7 +256,7 @@ Agrégat : `runs/experiments_tracking.csv`.
 | `max_new_tokens` | **48** | Limite longueur ; 128+ → répétitions |
 | Prompt | `Translate the French speech to English.` | Comparabilité inter-variantes |
 
-Protocole complet : [docs/protocole_evaluation.md](protocole_evaluation.md).
+Protocole complet : [protocole_evaluation.md](protocole_evaluation.md).
 
 ---
 
@@ -327,8 +327,8 @@ bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-114k
 | Document | Contenu |
 |----------|---------|
 | [2_speechLLM/README.md](../2_speechLLM/README.md) | Usage CLI |
-| [docs/plan_migration_speechllm.md](plan_migration_speechllm.md) | Roadmap B1/B2 |
-| [docs/protocole_evaluation.md](protocole_evaluation.md) | SacreBLEU, décodage figé |
-| [docs/protocole_utterance_pantagruel.md](protocole_utterance_pantagruel.md) | Bench utterance |
+| [plan_migration_speechllm.md](plan_migration_speechllm.md) | Roadmap B1/B2 |
+| [protocole_evaluation.md](protocole_evaluation.md) | SacreBLEU, décodage figé |
+| [protocole_utterance_pantagruel.md](protocole_utterance_pantagruel.md) | Bench utterance |
 | [rapport.md](../rapport.md) §5 | Tableaux comparatifs tous pipelines |
 | [runs/experiments_tracking.csv](../runs/experiments_tracking.csv) | Suivi chiffré |

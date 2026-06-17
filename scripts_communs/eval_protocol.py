@@ -2,7 +2,7 @@
 Protocole d'évaluation S3T — version figée et artefacts reproductibles.
 
 Ce module est la **source de vérité machine** pour la méthodologie documentée dans
-``docs/protocole_evaluation.md``. Toute modification des règles ci-dessous impose
+``documentation/protocole_evaluation.md``. Toute modification des règles ci-dessous impose
 une **nouvelle version** de ``EVAL_PROTOCOL_VERSION`` et une re-évaluation des runs
 comparables.
 
@@ -23,7 +23,7 @@ import sacrebleu
 # Version figée — incrémenter si le protocole change (décodage, métrique, splits).
 # ---------------------------------------------------------------------------
 EVAL_PROTOCOL_VERSION = "2026-06-12-v2"
-EVAL_PROTOCOL_DOC = "docs/protocole_evaluation.md"
+EVAL_PROTOCOL_DOC = "documentation/protocole_evaluation.md"
 
 SACREBLEU_MIN_VERSION = "2.3.0"
 

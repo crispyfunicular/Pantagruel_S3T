@@ -1,7 +1,7 @@
 # S3T — Speech Translation (Pantagruel replication)
 
 > **Page web** — [crispyfunicular.github.io/Pantagruel_S3T](https://crispyfunicular.github.io/Pantagruel_S3T/) · [bona-pellissier.net](https://bona-pellissier.net/)  
-> **Source à éditer** : [`web/`](web/) uniquement. **GitHub Pages** publie le dossier [`docs/`](docs/) (branche `main`) — miroir : `bash scripts/sync_web_pages.sh` ou workflow [`.github/workflows/sync-web-to-docs.yml`](.github/workflows/sync-web-to-docs.yml). **Réglage dépôt (une fois)** : *Settings → Pages → Build and deployment → Deploy from a branch → `main` / `/docs`* (ne pas utiliser « GitHub Actions » comme source, pour éviter les checks en double). **Audio du carrousel** : après `2_prepare` (utterance), `python scripts/extract_web_audio.py` puis resynchroniser. Site personnel ([bona-pellissier.net](https://bona-pellissier.net/)) : copier `web/*.html` et `web/audio/` vers l’hébergement web.
+> **Site web** : [`docs/`](docs/) (HTML, CSS, JS, audio — publié tel quel par GitHub Pages). **Réglage dépôt** : *Settings → Pages → Deploy from a branch → `main` / `/docs`*. **Documentation projet** : [`documentation/`](documentation/) (PRD, protocoles, rapports). **Audio du carrousel** : après `2_prepare` (utterance), `python scripts/extract_web_audio.py` (sortie `docs/audio/`). Site personnel ([bona-pellissier.net](https://bona-pellissier.net/)) : copier `docs/*.html` et `docs/audio/` vers l’hébergement web.
 
 Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`, `fr-es`), évaluée avec **SacreBLEU**. Le dépôt expose **cinq variantes** partageant la même préparation des données (étapes 0–2), avec un choix de **découpage audio** au moment de `prepare` :
 
@@ -16,14 +16,15 @@ Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`,
 
 | Document | Rôle |
 |----------|------|
-| [docs/PRD.md](docs/PRD.md) | Vision, exigences, hyperparamètres, ablations, template YAML, protocole runs |
-| [web/vocabulaire.md](web/vocabulaire.md) | Glossaire des termes techniques, abréviations et codes du projet |
-| [docs/protocole_evaluation.md](docs/protocole_evaluation.md) | **Méthodologie d'évaluation figée** (SacreBLEU, décodage, `eval/protocol.json`) |
-| [docs/corpus_oralite_externe.md](docs/corpus_oralite_externe.md) | Tests ST sur audio FR externe (corpus oralité pluriTAL) |
-| [docs/plan_migration_speechllm.md](docs/plan_migration_speechllm.md) | Plan speechLLM, critères B1/B2 |
+| [documentation/PRD.md](documentation/PRD.md) | Vision, exigences, hyperparamètres, ablations, template YAML, protocole runs |
+| [documentation/vocabulaire.md](documentation/vocabulaire.md) | Glossaire des termes techniques, abréviations et codes du projet |
+| [documentation/protocole_evaluation.md](documentation/protocole_evaluation.md) | **Méthodologie d'évaluation figée** (SacreBLEU, décodage, `eval/protocol.json`) |
+| [documentation/corpus_oralite_externe.md](documentation/corpus_oralite_externe.md) | Tests ST sur audio FR externe (corpus oralité pluriTAL) |
+| [documentation/plan_migration_speechllm.md](documentation/plan_migration_speechllm.md) | Plan speechLLM, critères B1/B2 |
+| [documentation/recommandations.md](documentation/recommandations.md) | **Synthèse unique** : toutes les pistes d'amélioration ST et speechLLM + recommandations Gemini |
 | [2_speechLLM/README.md](2_speechLLM/README.md) | Usage CLI speechLLM, VRAM, format USER/ASSISTANT |
 | [requirements.txt](requirements.txt) | Dépendances runtime + dev (une seule install pour les deux pistes) |
-| [docs/estimation_ressources_fr_en.md](docs/estimation_ressources_fr_en.md) | Budget disque / GPU (fr→en) |
+| [documentation/estimation_ressources_fr_en.md](documentation/estimation_ressources_fr_en.md) | Budget disque / GPU (fr→en) |
 
 ---
 
@@ -55,7 +56,7 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | ST E2E Transformer | `run_001_transformer_baseline_sentence_like` | 16.12 | 14.97 | greedy |
 | Speech_Text + ST | `run_001_pantagruel_multimodal` | 8.39 | 7.95 | greedy |
 
-**Runs S3T — `utterance`** (bench Pantagruel, [protocole](docs/protocole_utterance_pantagruel.md)) :
+**Runs S3T — `utterance`** (bench Pantagruel, [protocole](documentation/protocole_utterance_pantagruel.md)) :
 
 | Variante | Run | BLEU dev | BLEU test | Statut |
 |----------|-----|----------|-----------|--------|
@@ -83,12 +84,14 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | ST L-14k **v9 SpecAugment fort** | `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` | — | — | **non lancé** |
 | ST L-114k **v9 SpecAugment freq** | `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` | — | — | **en file** (après run_033) |
 | speechLLM L-14k **v5 SpecAugment** | `run_039_speechllm_b1_utterance_large_14k_v5_specaug` | 14.59 | **13.84** | ok (16 juin — sous run_023 **14,23**) |
-| Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | — | — | **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404) |
-| ST L-14k **v10 finetune freq** | `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` | — | — | **en cours** (finetune run_026, @ ~44k/69k) |
+| Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | — | — | **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404 — checkpoint intermédiaire retiré, modèle final en cours) |
+| ST L-14k **v10 finetune freq** | `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` | 26.37 | **25.95** | ok (16 juin — sous run_026 **26,12**) |
 | speechLLM L-114k **replicate** | `run_032_speechllm_b1_utterance_large_114k_replicate` | 15.14 | **14.15** | ok (48 tok — sous run_013 **15,24**) |
-| ST L-114k **v7 SPM 5k** | `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` | — | — | **en cours** (@ ~36,5k/80k, best dev **23,40**) |
-| ST L-114k **v10 warmup 10k** | `run_042_transformer_baseline_utterance_large_114k_v10_warmup10k` | — | — | **en file** (après run_038) |
-| ST L-14k **v5 replicate** | `run_043_transformer_baseline_utterance_large_14k_v5_replicate` | — | — | **en cours** (Modyco, réplication run_026) |
+| ST L-114k **v7 SPM 5k** | `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` | — | — | **en cours** (OVH, @ ~71k/80k, best dev **25,53** @ 70k) |
+| ST L-114k **v10 warmup 10k** | `run_042_transformer_baseline_utterance_large_114k_v10_warmup10k` | — | — | **en file** (OVH, après run_038 — waiter actif) |
+| ST L-14k **v5 replicate** | `run_043_transformer_baseline_utterance_large_14k_v5_replicate` | 25.36 | **24.78** | ok (17 juin — réplication run_026 **26,12**, écart ~1,3) |
+| speechLLM L-114k **v5 SpecAugment** | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | — | — | **échec** (Modyco, 17 juin — HF gated ; relancer OVH) |
+| speechLLM L-14k **v9 SpecAugment fort** | `run_045_speechllm_b1_utterance_large_14k_v9_specaug_strong` | 14.40 | **13.69** | ok (17 juin — sous run_023 **14,23**) |
 | speechLLM L-14k **v3** (128 tok) | `run_021_speechllm_b1_utterance_large_14k_v3` | 5.84 | **5.48** | **échec** |
 | speechLLM L-114k **v3** (128 tok) | `run_022_speechllm_b1_utterance_large_114k_v3` | 5.28 | **4.78** | **échec** |
 | speechLLM L-14k **replicate** | `run_023_speechllm_b1_utterance_large_14k_replicate` | 15.26 | **14.23** | ok (48 tok — proche `run_012` 15,03) |
@@ -108,17 +111,18 @@ Trois axes **indépendants** (ne pas les confondre) :
 | **Taille encodeur** | B-1k (`run_004` 16,68) ; L-14k (`run_026` **26,12**) ; L-114k (`run_028` **23,51**, `run_019` 20,19) | papier **14k / 114k** (~24–25 BLEU) ; L-14k dépassé |
 | **Segmentation** | `utterance` (bench papier) et `sentence_like` (runs historiques) | utterance = Table 8 |
 
-**Fichiers de suivi :** `runs/experiments_tracking.csv` ; tableaux complets [rapport.md §5](rapport.md#5-résultats) ; FAQ [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; bench utterance [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md).
+**Fichiers de suivi :** `runs/experiments_tracking.csv` ; tableaux complets [rapport.md §5](rapport.md#5-résultats) ; FAQ [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; bench utterance [documentation/protocole_utterance_pantagruel.md](documentation/protocole_utterance_pantagruel.md).
 
 **speechLLM run_002 vs run_005 :** même encodeur **1k** ; seul change le **gel** de l’encodeur (projecteur entraîné dans les deux cas). Ce n’est **pas** la comparaison 1k / 14k du papier.
 
 ### Ce qu’il reste à faire (priorités)
 
 - **Baseline ST Table 8** : terminée en `sentence_like` — **16.12** dev / **14.97** test (`run_001_transformer_baseline_sentence_like`).
-- Protocole d'évaluation **figé** : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
-- **Bench utterance** — [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
-- **Encodeur 14k / 114k** : meilleur ST **`run_026`** (**26,12**, vocab 1k) ; **`run_041`** finetune SpecAugment freq **en cours** ; ablations **`run_036`** interrompu (éval **0,60**), **`run_039`** ok (**13,84**, speechLLM), **`run_040`** échec HF, **`run_037`** non lancé — voir [`docs/protocole_utterance_pantagruel.md`](docs/protocole_utterance_pantagruel.md).
-- **Runs 114k en cours** : **`run_032`** speechLLM **terminé** (**14,15** test) ; **`run_033`** ST SPM 5k **en cours** (@ ~23,5k/80k) ; **`run_038`** **en file** ; **`run_030`** v6 long **non planifié**.
+- Protocole d'évaluation **figé** : [documentation/protocole_evaluation.md](documentation/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
+- **Bench utterance** — [documentation/protocole_utterance_pantagruel.md](documentation/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
+- **Encodeur 14k / 114k** : meilleur ST **`run_026`** (**26,12**, vocab 1k) ; **`run_041`** finetune SpecAugment freq **ok** (**25,95**) ; **`run_043`** replicate **ok** (**24,78**, −1,3 vs run_026) ; ablations **`run_036`** interrompu, **`run_039`** ok (**13,84**), **`run_040`** échec HF, **`run_037`** ST non lancé ; speechLLM **`run_045`** ok (**13,69**), **`run_044`** échec gated HF sur Modyco — voir [`documentation/protocole_utterance_pantagruel.md`](documentation/protocole_utterance_pantagruel.md).
+- **Runs 114k en cours** : **`run_032`** speechLLM **terminé** (**14,15**) ; **`run_033`** ST SPM 5k **en cours** (@ ~71k/80k, best dev **25,53**) ; **`run_038`** puis **`run_042`** **en file** (waiter actif `run_ovh_wait_spm5k_then_st_114k_v10.sh`) ; **`run_030`** v6 long **non planifié**.
+- **Modyco** : GPU **libre** depuis run_045 (09:35) — prochaines actions : **`run_037`** ST SpecAugment fort, **`run_046`** ST batch-32 (voir [`documentation/recommandations.md`](documentation/recommandations.md)).
 - **Gemini 3.5 Flash** : **`run_005` utterance v2 terminé** — **41,42 / 41,09** ; **`run_004` sentence_like v2 terminé** — **38,69 / 36,76** (garde-fous, `max_output_tokens=8192`, `thinking_level: minimal`) ; devant Gemini 2.5 sur les deux découpages. Runs `run_003_*` v1 **non conclusifs** (troncature).
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.
@@ -173,7 +177,7 @@ Paramètres du mode `sentence_like` : `--sentence-target-duration` (défaut 10s)
 
 **Configs YAML :**
 
-- Baseline : `1_Transformer/configs/<langpair>/base.yaml` (template [PRD §9](docs/PRD.md#9-template-de-configuration-run-yaml)) — référence `data.spm_model` ; pointer `data.*_manifest` vers `manifests/` ou `manifests_sentence/` selon le découpage choisi.
+- Baseline : `1_Transformer/configs/<langpair>/base.yaml` (template [PRD §9](documentation/PRD.md#9-template-de-configuration-run-yaml)) — référence `data.spm_model` ; pointer `data.*_manifest` vers `manifests/` ou `manifests_sentence/` selon le découpage choisi.
 - speechLLM : [`2_speechLLM/configs/fr-en/b1.yaml`](2_speechLLM/configs/fr-en/b1.yaml) — pas de SPM ; champs `model.llm_name`, `prompt.template`, `prompt.format` (B2bis : [`b2bis_qwen25_3b.yaml`](2_speechLLM/configs/fr-en/b2bis_qwen25_3b.yaml), [`b2bis_mistral_7b.yaml`](2_speechLLM/configs/fr-en/b2bis_mistral_7b.yaml)).
 - Gemini : **2.5** [`gemini_flash.yaml`](3_Gemini/configs/fr-en/gemini_flash.yaml) / [`gemini_flash_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_sentence.yaml) ; **3.5** [`gemini_flash_35_utterance.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance.yaml) / [`gemini_flash_35_sentence.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence.yaml) ; **3.5 v2** (relance) [`gemini_flash_35_utterance_v2.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_utterance_v2.yaml) / [`gemini_flash_35_sentence_v2.yaml`](3_Gemini/configs/fr-en/gemini_flash_35_sentence_v2.yaml) — `model.gemini_id` (`gemini-2.5-flash` vs `gemini-3.5-flash`).
 - Cascade : [`cascade.yaml`](4_cascade/configs/fr-en/cascade.yaml) (utterance) ; [`cascade_sentence.yaml`](4_cascade/configs/fr-en/cascade_sentence.yaml) — champs `asr.*`, `mt.*`, `data.*_manifest` ; voir [4_cascade/README.md](4_cascade/README.md).
@@ -244,7 +248,7 @@ Ces baselines servent de points de référence pour les tâches aval (texte + pa
 - **But** : répliquer une baseline en **cascade** telle que citée dans l’article : on transcrit d’abord le français (ASR), puis on traduit le texte (MT).
 - **Implémentation** : [`4_cascade/`](4_cascade/) — Whisper (`asr`) + Marian (`mt`) dans `cascade_common.py`, `evaluate` / `infer`, configs YAML, `--limit` pour smoke.
 - **Cible** : même contrat d’artefacts `runs/.../eval/` et même signature SacreBLEU que les autres pistes.
-- **Doc** : [4_cascade/README.md](4_cascade/README.md), [PRD §2.3.3](docs/PRD.md#233-baseline-cascade-asrmt).
+- **Doc** : [4_cascade/README.md](4_cascade/README.md), [PRD §2.3.3](documentation/PRD.md#233-baseline-cascade-asrmt).
 
 ### 5) `5_Pantagruel_multimodal` — full `speech_text` (expérimental)
 - **But** : tester un checkpoint Pantagruel multimodal récent (`speech_text`) en variante dédiée, sans bloquer la piste prioritaire `2_speechLLM`.
@@ -288,7 +292,7 @@ pytest
 # ou : pre-commit run --all-files
 ```
 
-Mettre à jour [docs/PRD.md](docs/PRD.md) et [README.md](README.md) dans le même commit si le comportement CLI, l'architecture ou les prérequis changent.
+Mettre à jour [documentation/PRD.md](documentation/PRD.md) et [README.md](README.md) dans le même commit si le comportement CLI, l'architecture ou les prérequis changent.
 
 ---
 
@@ -330,7 +334,7 @@ Configs : [`1_Transformer/configs/`](1_Transformer/configs/).
 | speechllm_lib | [`2_speechLLM/speechllm_lib.py`](2_speechLLM/speechllm_lib.py) | — | implémenté |
 | Orchestrateur | [`2_speechLLM/pipeline.py`](2_speechLLM/pipeline.py) | `run` | routeur actif |
 
-**Stack :** PyTorch + **transformers** (Pantagruel HF ; baseline = décodeur custom, speechLLM = LLM causal gelé + projecteur). Pas fairseq ; pas d’import SpeechBrain. Voir [PRD §2.5](docs/PRD.md#25-source-de-vérité-historique-et-transposition-speechbrain) et [PRD §2.3.1](docs/PRD.md#231-pipeline-speechllm-ligne-prioritaire-fr-en-b1).
+**Stack :** PyTorch + **transformers** (Pantagruel HF ; baseline = décodeur custom, speechLLM = LLM causal gelé + projecteur). Pas fairseq ; pas d’import SpeechBrain. Voir [PRD §2.5](documentation/PRD.md#25-source-de-vérité-historique-et-transposition-speechbrain) et [PRD §2.3.1](documentation/PRD.md#231-pipeline-speechllm-ligne-prioritaire-fr-en-b1).
 
 Chaque stage est exécutable **directement** (`python scripts_communs/N_*.py`, `python 2_speechLLM/train.py`, …) ou via le routeur de sa piste.
 
@@ -400,7 +404,7 @@ python 1_Transformer/pipeline.py run --langpair fr-en --run-id run_001_fr-en_bas
   --from-stage spm --to-stage evaluate
 ```
 
-(`1_Transformer/configs/fr-en/base.yaml` : voir template [PRD §9](docs/PRD.md#9-template-de-configuration-run-yaml).)
+(`1_Transformer/configs/fr-en/base.yaml` : voir template [PRD §9](documentation/PRD.md#9-template-de-configuration-run-yaml).)
 
 ### Piste Gemini (API, sans GPU)
 
@@ -732,7 +736,7 @@ S3T/
 | Train | loss ↓, checkpoints `best.pt` | les deux |
 | Evaluate | signature SacreBLEU dans `eval/` | les deux |
 
-Détails : [PRD.md §4](docs/PRD.md#4-plan-de-projet--étapes-dexécution-gantt-conceptuel) et [§8](docs/PRD.md#8-protocole-opérationnel-des-runs). speechLLM : [plan_migration_speechllm.md](docs/plan_migration_speechllm.md).
+Détails : [PRD.md §4](documentation/PRD.md#4-plan-de-projet--étapes-dexécution-gantt-conceptuel) et [§8](documentation/PRD.md#8-protocole-opérationnel-des-runs). speechLLM : [plan_migration_speechllm.md](documentation/plan_migration_speechllm.md).
 
 ---
 
@@ -783,7 +787,7 @@ Puis sur aker : `cd ~/S3T`, créer `.venv`, `pip install -r requirements.txt`, l
 - **speechLLM** : `run_<id>_fr-en_speechllm_b1_*` (ex. `run_001_speechllm_b1`).
 - **Gemini** : `run_<id>_gemini_*` ; noter le découpage (`utterance` / `sentence_like`) dans les notes ou le nom du run.
 
-Répertoire : `runs/<langpair>/<run_id>/` avec le [contrat d'artifacts](docs/PRD.md#contrat-dartifacts-par-run-commun-temps-a-et-b) (config, checkpoints, eval, SacreBLEU). Agrégat : [`runs/experiments_tracking.csv`](runs/experiments_tracking.csv) — mis à jour automatiquement après `3_Gemini` / `2_speechLLM` `evaluate`, ou via `python scripts_communs/update_experiments_tracking.py --all`. Colonnes clés : `pipeline`, `segment_mode`, `bleu_*`, `gemini_duration_min`, `gemini_cost_usd`, `gemini_input_usd_per_1m`, `gemini_output_usd_per_1m` — grilles dans les configs : **2.5** audio 1,00 / sortie 2,50 (`gemini_flash*.yaml`) ; **3.5** 1,50 / 9,00 (`gemini_flash_35_*.yaml`, [tarifs](https://ai.google.dev/gemini-api/docs/pricing)).
+Répertoire : `runs/<langpair>/<run_id>/` avec le [contrat d'artifacts](documentation/PRD.md#contrat-dartifacts-par-run-commun-temps-a-et-b) (config, checkpoints, eval, SacreBLEU). Agrégat : [`runs/experiments_tracking.csv`](runs/experiments_tracking.csv) — mis à jour automatiquement après `3_Gemini` / `2_speechLLM` `evaluate`, ou via `python scripts_communs/update_experiments_tracking.py --all`. Colonnes clés : `pipeline`, `segment_mode`, `bleu_*`, `gemini_duration_min`, `gemini_cost_usd`, `gemini_input_usd_per_1m`, `gemini_output_usd_per_1m` — grilles dans les configs : **2.5** audio 1,00 / sortie 2,50 (`gemini_flash*.yaml`) ; **3.5** 1,50 / 9,00 (`gemini_flash_35_*.yaml`, [tarifs](https://ai.google.dev/gemini-api/docs/pricing)).
 
 ### Verrouillage d'environnement
 
@@ -793,13 +797,14 @@ Répertoire : `runs/<langpair>/<run_id>/` avec le [contrat d'artifacts](docs/PRD
 
 ### Suivi et checklist
 
-- Agrégat recommandé : `runs/experiments_tracking.csv` (colonnes : voir [PRD §8.3](docs/PRD.md#83-suivi-des-expériences)).
-- Checklist de clôture : [PRD §8.4](docs/PRD.md#84-checklist-de-clôture-dun-run).
+- Agrégat recommandé : `runs/experiments_tracking.csv` (colonnes : voir [PRD §8.3](documentation/PRD.md#83-suivi-des-expériences)).
+- Checklist de clôture : [PRD §8.4](documentation/PRD.md#84-checklist-de-clôture-dun-run).
 
 ### Baselines et ablations
 
-- **speechLLM (priorité)** : valider B1 (projecteur seul) sur fr→en, ≥ 2 seeds, puis ablations B2/B3 — [plan_migration_speechllm.md](docs/plan_migration_speechllm.md).
-- **Baseline ST** (comparaison) : ordre [PRD §6](docs/PRD.md#6-baselines--mini-ablations-obligatoire) — freeze encodeur, vocab 1k/5k, beam (greedy aujourd’hui dans `5_evaluate.py`).
+- **Document de référence** : toutes les pistes d’amélioration, ablations planifiées et recommandations Gemini sont regroupées dans [`documentation/recommandations.md`](documentation/recommandations.md).
+- **speechLLM (priorité)** : valider B1 (projecteur seul) sur fr→en, ≥ 2 seeds, puis ablations B2/B3 — [plan_migration_speechllm.md](documentation/plan_migration_speechllm.md).
+- **Baseline ST** (comparaison) : ordre [PRD §6](documentation/PRD.md#6-baselines--mini-ablations-obligatoire) — freeze encodeur, vocab 1k/5k, beam (greedy aujourd’hui dans `5_evaluate.py`).
 
 Promouvoir une variante seulement si **BLEU dev** progresse de façon stable sur au moins **2 seeds** (même protocole SacreBLEU entre pistes).
 
@@ -807,7 +812,7 @@ Promouvoir une variante seulement si **BLEU dev** progresse de façon stable sur
 
 | Piste | Fichier | Référence |
 |-------|---------|-----------|
-| Baseline ST | `1_Transformer/configs/<langpair>/base.yaml` | [PRD §9](docs/PRD.md#9-template-de-configuration-run-yaml) |
+| Baseline ST | `1_Transformer/configs/<langpair>/base.yaml` | [PRD §9](documentation/PRD.md#9-template-de-configuration-run-yaml) |
 | speechLLM B1 | [`2_speechLLM/configs/fr-en/b1.yaml`](2_speechLLM/configs/fr-en/b1.yaml) | [2_speechLLM/README.md](2_speechLLM/README.md) |
 
 ---

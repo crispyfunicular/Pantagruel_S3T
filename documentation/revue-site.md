@@ -1,6 +1,6 @@
 # Revue du site web Pantagruel S3T
 
-Analyse de cohérence globale du dossier `web/` — forme et fond — pour un public académique extérieur au projet.  
+Analyse de cohérence globale du dossier `docs/` — forme et fond — pour un public académique extérieur au projet.  
 *Document de travail — les points corrigés sont barrés ; la remédiation est indiquée en dessous.*
 
 ---
@@ -84,7 +84,7 @@ Les boutons « Documentation complète », « Glossaire », « Exemples traduits
 
 ~~**Suggestion :** privilégier les pages HTML du site ; réserver les liens GitHub à une section « sources / dépôt » ou au lien GitHub principal.~~
 
-➜ Hero d’`index.html` : `pipeline.html`, `vocabulaire.html`, `#exemples` (voir aussi point 16). Lien GitHub principal conservé dans la nav ; sources `.md` accessibles via le dossier `web/` sur GitHub en note de bas de page des exemples.
+➜ Hero d’`index.html` : `pipeline.html`, `vocabulaire.html`, `#exemples` (voir aussi point 16). Lien GitHub principal conservé dans la nav ; sources `.md` accessibles via le dossier `docs/` sur GitHub en note de bas de page des exemples.
 
 ---
 
@@ -176,7 +176,7 @@ Sur mobile, les tooltips au survol ne fonctionnent pas. `pipeline.html` et `corp
 
 ~~**Suggestion :** ne pas mettre en avant les `.md` depuis le hero ; les garder accessibles via GitHub pour les relecteurs techniques.~~
 
-➜ Hero d’`index.html` : liens internes vers `pipeline.html`, `vocabulaire.html` et `#exemples`. Section exemples : lien vers `resultats.html` et `variante-5.html` ; accès aux `.md` relégué en note de bas de page vers le dossier `web/` sur GitHub.
+➜ Hero d’`index.html` : liens internes vers `pipeline.html`, `vocabulaire.html` et `#exemples`. Section exemples : lien vers `resultats.html` et `variante-5.html` ; accès aux `.md` relégué en note de bas de page vers le dossier `docs/` sur GitHub.
 
 ---
 
@@ -192,11 +192,11 @@ Liens vers accueil et vocabulaire, mais pas vers pipeline ou corpus.
 
 ### 18. Fichiers audio manquants (si déploiement local) - OK
 
-`index.html` référence `audio/9fxo9YJhnG8_*.wav` ; le dossier `web/audio/` doit être alimenté avant publication.
+`index.html` référence `audio/9fxo9YJhnG8_*.wav` ; le dossier `docs/audio/` doit être alimenté avant publication.
 
-~~**Suggestion :** vérifier que le dossier `web/audio/` est bien versionné ou documenté pour le déploiement.~~
+~~**Suggestion :** vérifier que le dossier `docs/audio/` est bien versionné ou documenté pour le déploiement.~~
 
-➜ Script [`scripts/extract_web_audio.py`](../scripts/extract_web_audio.py) : copie les 5 segments depuis `datasets/processed/fr-en/{train,valid,test}/` vers `web/audio/`. [`scripts/sync_web_pages.sh`](../scripts/sync_web_pages.sh) propage `web/audio/*.wav` → `docs/audio/`. Procédure documentée dans le README (en-tête page web).
+➜ Script [`scripts/extract_web_audio.py`](../scripts/extract_web_audio.py) : copie les 5 segments depuis `datasets/processed/fr-en/{train,valid,test}/` vers `docs/audio/`. Procédure documentée dans le README (en-tête page web).
 
 ---
 

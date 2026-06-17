@@ -6,7 +6,7 @@
 ## 1. Vue d’Ensemble & Objectifs
 
 ### 1.1 Contexte
-Ce projet vise à répliquer les expériences de **Traduction de la Parole (Speech-to-Text Translation - ST)** décrites dans l’article scientifique *Pantagruel: Unified Self-Supervised Encoders for French Text and Speech* (2026) (`Pantagruel_2026.pdf`). L’étude évalue la capacité des modèles auto-superveillés (SSL) français à projeter des représentations acoustiques continues directement vers du texte cible multilingue de manière *end-to-end* (E2E).
+Ce projet vise à répliquer les expériences de **Traduction de la Parole (Speech-to-Text Translation - ST)** décrites dans l’article scientifique *Pantagruel: Unified Self-Supervised Encoders for French Text and Speech*, Phuong-Hang Le et al., LREC 2026 (`Pantagruel_2026.pdf`). L’étude évalue la capacité des modèles auto-superveillés (SSL) français à projeter des représentations acoustiques continues directement vers du texte cible multilingue de manière *end-to-end* (E2E).
 
 ### 1.2 Objectif Principal
 Construire, entraîner et évaluer un système de traduction de la parole de bout en bout en connectant un décodeur Transformer à 6 couches sur l’encodeur SSL pré-entraîné **Pantagruel** (ou ses équivalents LeBenchmark 2.0).
@@ -33,7 +33,14 @@ Le modèle suit une architecture de type Séquence-à-Séquence (Seq2Seq) *end-t
 ### 2.1 L’Encodeur Acoustique (SSL)
 * **Modèle de base :** `Pantagruel-Base` (768 dimensions de sortie) ou `Pantagruel-Large` (1024 dimensions).
 * **Entrée :** Formes d’onde brutes (raw waveforms) échantillonnées à 16 kHz, mono.
-* **Comportement :** Extrait des caractéristiques contextuelles denses dans un espace latent continu (JEPA/data2vec 2.0).
+* **Objectif de pré-entraînement :** JEPA / data2vec 2.0 — un encodeur « étudiant » voit l’audio partiellement masqué et prédit les représentations latentes qu’un encodeur « enseignant » (EMA) produirait sur les portions cachées ; pas de reconstruction waveform, pas d’unités acoustiques discrètes.
+* **Corpus et checkpoints Hugging Face :**
+
+| Checkpoint | Architecture | Corpus de pré-entraînement | Volume |
+|---|---|---|---|
+| `PantagrueLLM/speech-base-1K` | Base (768 d) | MLS (*Multilingual LibriSpeech*, sous-ensemble français) | ~1 000 h |
+| `PantagrueLLM/speech-large-14K` | Large (1024 d) | LeBenchmark 2.0 | ~14 000 h |
+| `PantagrueLLM/speech-large-114K` | Large (1024 d) | LeBenchmark 2.0 + INA | ~114 000 h |
 
 ### 2.2 Le Décodeur Textuel
 * **Type :** Décodeur Transformer standard autoregressif.
@@ -114,15 +121,15 @@ Détail : [4_cascade/README.md](../4_cascade/README.md).
 
 ### 2.3.4 Variante Pantagruel multimodale (`speech_text`) — expérimentale
 
-Piste dédiée aux essais avec un checkpoint Pantagruel **multimodal récent** (famille
-`Speech_Text_*`) en mode full model, séparée des runs prioritaires `2_speechLLM`.
+Piste dédiée aux essais avec un checkpoint Pantagruel **multimodal** (famille `Speech_Text_*`) — backbone Transformer partagé pré-entraîné simultanément sur trois types d’entrées (parole seule, texte seul, paires parole-texte non-parallèles) via un objectif de prédiction latente unifié (data2vec 2.0 multimodal). Ce modèle apprend des représentations communes parole-texte sans alignement explicite.
 
 Principes :
 - **Entrées** : mêmes manifests `valid.tsv` / `test.tsv` issus de `2_prepare`.
-- **Objectif** : tester l’apport du modèle multimodal tel quel, sans réécrire la piste B1.
+- **Objectif** : tester si les représentations issues d’un pré-entraînement parole+texte conjoint améliorent la ST, sans réécrire la piste B1.
 - **Sorties cibles** : contrat `runs/.../eval/` identique aux autres variantes (SacreBLEU).
-- **Statut** : **implémenté** (délégation `1_Transformer` 3–6) — encodeur `Speech_Text_*` via `model.encoder_api: speech_text` + `trust_remote_code: true` ; décodeur Transformer + SPM ; données `sentence_like` par défaut.
-- **Limite** : pas de perte multimodale speech+text du pretrain ; fine-tuning ST sur encodeur audio uniquement.
+- **Statut pipeline** : **implémenté** (délégation `1_Transformer` 3–6) — encodeur `Speech_Text_*` via `model.encoder_api: speech_text` + `trust_remote_code: true` ; décodeur Transformer + SPM ; données `sentence_like` par défaut.
+- **Statut checkpoint** : le modèle `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` n’est actuellement **plus disponible** sur Hugging Face — checkpoint intermédiaire retiré entre deux phases de développement (ablations multimodales terminées, entraînement final à grande échelle en cours). `run_040` (utterance v2, juin 2026) a échoué avec une erreur 404 ; à relancer dès publication d’un nouveau checkpoint.
+- **Limite** : fine-tuning ST sur l’encodeur audio du backbone uniquement — la perte multimodale speech+text du pré-entraînement n’est pas réactivée au fine-tuning ST.
 
 CLI (routeur `5_Pantagruel_multimodal/pipeline.py`) :
 - `spm` : SentencePiece sur `manifests_sentence` (section `spm` du YAML)
@@ -177,7 +184,7 @@ Les points suivants **ne suivent pas** le schéma minimal `recipes/<task>/train.
 | **Tracking** | Checkpoints SB + logs internes | `runs/<pair>/<run_id>/` + `experiments_tracking.csv` + manifest JSON | Contrat d’artifacts plus strict que la doc SB minimale |
 | **Métriques** | BLEU via utils SB possibles | SacreBLEU en CLI canonique + signature obligatoire | Alignement papier LeBenchmark, pas défaut SB |
 
-> **Divergence SpeechBrain — pré-entraînement multimodal :** le fil historique fairseq inclut des étapes de **prétrain Pantagruel / data2vec multimodal** et des pertes combinées (`pantagruel_multi_loss`, MLM speech-text) absentes du pipeline SB minimal. **Temps A** part du **checkpoint Pantagruel déjà entraîné** (Hugging Face) ; le prétrain multimodal complet n’est **pas** recodé dans S3T sauf décision explicite ultérieure.
+> **Divergence SpeechBrain — pré-entraînement multimodal :** le prétrain Pantagruel multimodal repose sur un **backbone Transformer partagé** traitant indifféremment parole seule, texte seul, ou paires parole-texte non-parallèles, avec un objectif de prédiction latente unifié (data2vec 2.0 multimodal) et, côté texte, une combinaison MLM + prédiction latente à décroissance linéaire. Ces pertes combinées sont absentes du pipeline S3T. **Temps A** part du **checkpoint Pantagruel déjà entraîné** (Hugging Face) ; le prétrain multimodal complet n’est **pas** recodé dans S3T sauf décision explicite ultérieure.
 
 > **Divergence SpeechBrain — augmentation m-TEDx :** la branche historique mentionne une **speed perturbation** sur le prétraitement m-TEDx. Le PRD S3T fixe pour l’instant un prétraitement plus simple (SpecAugment à l’entraînement). Toute réintroduction de speed pert. sera une **extension Temps B**, documentée à part.
 

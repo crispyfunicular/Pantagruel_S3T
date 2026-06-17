@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bench d'évaluation multi-variantes — protocole figé docs/protocole_evaluation.md
+# Bench d'évaluation multi-variantes — protocole figé documentation/protocole_evaluation.md
 #
 # Lance uniquement les étapes ``evaluate`` (pas de train). Chaque run doit déjà
 # disposer d'un checkpoint (ST / speechLLM) ou d'une clé API (Gemini).

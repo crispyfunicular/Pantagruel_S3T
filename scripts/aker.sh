@@ -105,6 +105,7 @@ cmd_rsync_code() {
     "${ROOT}/scripts/" \
     "${ROOT}/tests/" \
     "${ROOT}/docs/" \
+    "${ROOT}/documentation/" \
     "${ROOT}/requirements.txt" \
     "${ROOT}/pyproject.toml" \
     "${ROOT}/README.md" \

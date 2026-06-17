@@ -110,4 +110,4 @@ runs/fr-en/<run_id>/eval/
 | `evaluate_cascade.py` | SacreBLEU valid/test |
 | `infer_cascade.py` | JSONL inférence |
 
-Voir aussi [docs/PRD.md §2.3.3](../docs/PRD.md#233-baseline-cascade-asrmt).
+Voir aussi [documentation/PRD.md §2.3.3](../documentation/PRD.md#233-baseline-cascade-asrmt).

@@ -3,7 +3,7 @@
 
 Statut : bench utterance partiel ; ST B-1k run_002 échoué (3,79) ; run_004 v2 **terminé** (16,84 / 16,68) ; ST L-14k `run_010` **échec** (0,00) — **`run_014` v2** (17,21) — **`run_020` v3** (22,05 / **21,22**, Modyco) ; ST L-114k **`run_016` v2** (19,63) — **`run_019` v3** (21,09 / **20,19**, OVH) ; speechLLM **`run_012`/`run_013`** (15,03/15,24, 48 tok) — **`run_023` replicate** (15,26 / **14,23**, Modyco) ; échecs 128 tok (`run_017` 5,60 / `run_021` 5,48) ; Qwen **`run_018`** (12,95) ; **`run_022` v3 en cours** (OVH) ; Gemini 3.5 v2 **`run_005`** (41,09) ; sentence_like v2 **`run_004`** (36,76)
 
-Références : [Pantagruel (2026)](docs/Pantagruel_2026.pdf) ; dépôt et protocole [PRD](docs/PRD.md), [README](README.md).
+Références : [Pantagruel (2026)](documentation/Pantagruel_2026.pdf) ; dépôt et protocole [PRD](documentation/PRD.md), [README](README.md).
 
 ---
 
@@ -134,7 +134,7 @@ python 3_Gemini/pipeline.py evaluate \
 
 #### Protocole d’évaluation figé (point 6)
 
-**Version `2026-06-02-v1`** — document complet : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) ; implémentation : `scripts_communs/eval_protocol.py` ; artefact par run : `eval/protocol.json`.
+**Version `2026-06-02-v1`** — document complet : [documentation/protocole_evaluation.md](documentation/protocole_evaluation.md) ; implémentation : `scripts_communs/eval_protocol.py` ; artefact par run : `eval/protocol.json`.
 
 Résumé : SacreBLEU corpus (défaut bibliothèque), pas de normalisation texte ; ST en **greedy** (beam 5 YAML journalisé seulement) ; speechLLM beam 1 / 48 tokens ; Gemini temp 0 / 256 tokens. Toute modification de protocole impose une **nouvelle version** et une re-évaluation des runs comparables.
 
@@ -187,7 +187,7 @@ Pour aligner la segmentation sur l’article (segments m-TEDx natifs, sans fusio
 | Audio | `datasets/processed/fr-en/` |
 | Référence papier | Pantagruel-B-1k, fr→en ≈ **17,5 BLEU** (Table 8) |
 
-Runs dédiés (configs et scripts dans le dépôt, voir [docs/protocole_utterance_pantagruel.md](docs/protocole_utterance_pantagruel.md)) :
+Runs dédiés (configs et scripts dans le dépôt, voir [documentation/protocole_utterance_pantagruel.md](documentation/protocole_utterance_pantagruel.md)) :
 
 | Variante | Run ID | Statut (juin 2026) |
 |----------|--------|-------------------|
@@ -201,7 +201,7 @@ Règle : ne pas réutiliser un modèle entraîné sur `sentence_like` pour score
 
 ### 2.4 Métrique, sélection de modèle et protocole d’évaluation
 
-Protocole figé : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) (`2026-06-02-v1`).
+Protocole figé : [documentation/protocole_evaluation.md](documentation/protocole_evaluation.md) (`2026-06-02-v1`).
 
 - Métrique principale : SacreBLEU corpus (dev + test), signature dans `eval/sacrebleu_*.txt` et `eval/protocol.json`.
 - Critère de checkpoint : meilleur BLEU dev → `checkpoints/best.pt` (loss dev secondaire).
@@ -356,7 +356,7 @@ Run : `run_001_gemini_flash_sentence_like_v2`.
 
 ## 5. Résultats
 
-Métrique : **SacreBLEU corpus** (signature habituelle `tok:13a|smooth:exp|version:2.6.0`). Sources : `runs/fr-en/<run_id>/eval/sacrebleu_*.txt`, agrégat `runs/experiments_tracking.csv`. Protocole : [docs/protocole_evaluation.md](docs/protocole_evaluation.md) (`2026-06-02-v1`).
+Métrique : **SacreBLEU corpus** (signature habituelle `tok:13a|smooth:exp|version:2.6.0`). Sources : `runs/fr-en/<run_id>/eval/sacrebleu_*.txt`, agrégat `runs/experiments_tracking.csv`. Protocole : [documentation/protocole_evaluation.md](documentation/protocole_evaluation.md) (`2026-06-02-v1`).
 
 **Règle de lecture :** comparer deux runs seulement si **`segment_mode` identique** (utterance vs sentence_like). Le décodage ST S3T v1 est **greedy** en pratique (YAML `beam_size: 5` journalisé, pas beam search — voir protocole §4.1).
 
@@ -538,11 +538,11 @@ Le projet S3T met en place un bench reproductible pour la ST fr→en sur m-TEDx 
 
 ## 9. Références et ressources
 
-- Pantagruel et al., 2026 — *Pantagruel: Unified Self-Supervised Encoders for French Text and Speech* — `docs/Pantagruel_2026.pdf`
+- Pantagruel et al., 2026 — *Pantagruel: Unified Self-Supervised Encoders for French Text and Speech* — `documentation/Pantagruel_2026.pdf`
 - Parcollet et al., 2024 — LeBenchmark 2.0 (protocole ST de référence)
 - Salesky et al., 2021 — m-TEDx (OpenSLR-100)
 - SLAM-ASR / *Embarrassingly Simple* — `2_speechLLM/embarrassingly_simple_approach.pdf`
-- Documentation projet : `docs/PRD.md`, `docs/plan_migration_speechllm.md`, `docs/rapport_pantagruel_uni_vers_article.md`
+- Documentation projet : `documentation/PRD.md`, `documentation/plan_migration_speechllm.md`, `documentation/rapport_pantagruel_uni_vers_article.md`
 
 ---
 

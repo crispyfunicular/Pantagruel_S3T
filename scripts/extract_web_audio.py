@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Extraire les segments audio du carrousel d'exemples vers ``web/audio/``.
+"""Extraire les segments audio du carrousel d'exemples vers ``docs/audio/``.
 
-Copie les cinq WAV utterance référencés par ``web/index.html`` depuis le corpus
-préparé (``datasets/processed/<langpair>/<split>/``) vers ``web/audio/``.
+Copie les cinq WAV utterance référencés par ``docs/index.html`` depuis le corpus
+préparé (``datasets/processed/<langpair>/<split>/``) vers ``docs/audio/``.
 
 Prérequis : étape ``2_prepare`` exécutée en mode ``utterance`` pour la paire cible.
 
@@ -18,7 +18,7 @@ import shutil
 import sys
 from pathlib import Path
 
-# Identifiants alignés sur web/index.html (PHRASES) et web/phrases.md.
+# Identifiants alignés sur docs/index.html (PHRASES) et documentation/phrases.md.
 WEB_EXAMPLE_IDS: tuple[str, ...] = (
     "9fxo9YJhnG8_5",
     "9fxo9YJhnG8_6",
@@ -59,7 +59,7 @@ def extract_web_audio(
     langpair: str,
     utt_ids: tuple[str, ...] = WEB_EXAMPLE_IDS,
 ) -> list[tuple[str, Path]]:
-    """Copier les segments vers ``web/audio/``.
+    """Copier les segments vers ``docs/audio/``.
 
     Args:
         processed_root: Racine des WAV préparés.
@@ -95,7 +95,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Construire l'analyseur CLI."""
     root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(
-        description="Copier les WAV d'exemples m-TEDx vers web/audio/."
+        description="Copier les WAV d'exemples m-TEDx vers docs/audio/."
     )
     parser.add_argument(
         "--processed-root",
@@ -106,8 +106,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--web-audio-dir",
         type=Path,
-        default=root / "web" / "audio",
-        help="Dossier de sortie du site (défaut : web/audio).",
+        default=root / "docs" / "audio",
+        help="Dossier de sortie du site (défaut : docs/audio).",
     )
     parser.add_argument(
         "--langpair",

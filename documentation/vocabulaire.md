@@ -81,7 +81,7 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 | | |
 |---|---|
 | **En clair** | Document d’exigences produit : objectifs scientifiques, architecture, hyperparamètres cibles, contrat des fichiers de run. |
-| **Identifiant** | [docs/PRD.md](PRD.md) |
+| **Identifiant** | [documentation/PRD.md](PRD.md) |
 | **Où** | Référence obligatoire avant commit si le comportement change |
 
 ### Temps A / Temps B (présentation)
@@ -119,7 +119,7 @@ Ce document recense le **langage du projet** S3T (Speech Translation replication
 | **TSV** | Tableau texte à tabulations (manifests, exports relecture). | `train.tsv`, `valid.tsv`, `test.tsv` |
 | **WAV** | Fichier audio non compressé (ici 16 kHz, mono, PCM 16 bits). | `datasets/processed/` |
 | **NFKC** | Normalisation Unicode des textes avant tokenisation SPM. | `2_prepare`, PRD RF-08 |
-| **MFA** | Montreal Forced Aligner (alignement phonétique, corpus oralité externe). | `docs/corpus_oralite_externe.md` |
+| **MFA** | Montreal Forced Aligner (alignement phonétique, corpus oralité externe). | `documentation/corpus_oralite_externe.md` |
 | **GETALP** | Laboratoire / contexte d’accueil du stage (non code). | Mentions rapport |
 | **INA** | Partenaire des corpus français (pré-entraînement Pantagruel Large). | Doc 14k / 114k |
 | **RF-xx** | Exigence fonctionnelle numérotée dans le PRD. | PRD §3 |
