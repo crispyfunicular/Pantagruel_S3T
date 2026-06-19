@@ -1,0 +1,49 @@
+# speechLLM B1 — fr-en, utterance, Pantagruel-B-1k, encodeur dégelé (run_006).
+#
+# Ablation vs run_003 (B-1k gelé, 7,47 BLEU test) : dégel + LR conservateur (run_005 sentence_like).
+# Budget GPU visé : ~3–4 h (encodeur B-1k plus léger que L-14k).
+# Run cible : run_006_speechllm_b1_utterance_unfreeze
+
+experiment:
+  name: "fr-en_speechllm_b1_utterance_unfreeze"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_006_speechllm_b1_utterance_unfreeze"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-base-1K"
+  trust_remote_code: true
+  llm_name: "microsoft/phi-2"
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: false
+  freeze_llm: true
+
+prompt:
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 1000
+  learning_rate_peak: 0.00005
+  weight_decay: 0.01
+  batch_size: 2
+  gradient_accumulation: 4
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48
