@@ -620,7 +620,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>) ; L-114k <strong>23,5</strong> (<code>run_028</code>). Meilleur speechLLM : 15,2 (<code>run_013</code>).",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : 15,2 (<code>run_013</code>).",
         rows: [
           {
             id: 3,
@@ -639,6 +639,15 @@
             tableLabel: 'Cascade ASR→MT',
             score: 37,
             params: '<code>run_001</code> — Whisper large-v3 puis Marian opus-mt-fr-en.'
+          },
+          {
+            id: '—',
+            color: 'ref',
+            href: 'variante-1.html#run_033',
+            chartLabel: 'S3T L-114k SPM 5k',
+            tableLabel: 'Transformer L-114k (run_033)',
+            score: 25.1,
+            params: '<code>run_033</code> — L-114k, vocab SPM 5k ; ≈ Table 8 Pantagruel (25,2).'
           },
           {
             id: '—',

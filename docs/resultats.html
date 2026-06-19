@@ -373,6 +373,11 @@
           <div class="stat-label">1 · Transformer ST</div>
           <div class="stat-sub">utterance · run_026</div>
         </a>
+        <a class="stat-card stat-card-ref" href="variante-1.html#run_033" title="run_033 — Transformer L-114k SPM 5k (25,1 BLEU) — réplication Table 8">
+          <div class="stat-bleu stat-bleu-ref">25,1</div>
+          <div class="stat-label">1 · L-114k SPM 5k</div>
+          <div class="stat-sub">utterance · run_033 · ≈ article</div>
+        </a>
         <a class="stat-card stat-card-ref" href="https://arxiv.org/abs/2601.05911" target="_blank" rel="noopener noreferrer" title="Article Pantagruel (2026) — Table 8, L-114k">
           <div class="stat-bleu stat-bleu-ref">25,2</div>
           <div class="stat-label">Référence article</div>
@@ -512,10 +517,18 @@
             </tr>
             <tr style="background:#fafaf8;">
               <td></td>
+              <td><code><a href="variante-1.html#run_033">run_033</a></code></td>
+              <td><span class="result-best rb-ref">25,1</span></td>
+              <td><em>utterance</em></td>
+              <td>L-114k · SPM 5k — <strong>réplication Table 8</strong> (article 25,2)</td>
+              <td><a href="variante-1.html#replication-table8">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
               <td><code>run_028</code></td>
               <td>23,5</td>
               <td><em>utterance</em></td>
-              <td>L-114k · SpecAugment v5 — meilleur L-114k local</td>
+              <td>L-114k · SpecAugment v5 vocab 1k — sous run_033</td>
               <td><a href="variante-1.html">→</a></td>
             </tr>
             <tr style="background:#fafaf8;">
@@ -609,10 +622,11 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>) ; L-114k <strong>23,5</strong> (<code>run_028</code>). Meilleur speechLLM : 15,2 (<code>run_013</code>).',
+          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : 15,2 (<code>run_013</code>).',
         chartRows: [
           { id: 3, color: 'v3', href: 'variante-3.html', chartLabel: '3 · Gemini 3.5 Flash', tableLabel: 'Gemini 3.5 Flash v2', score: 41.1 },
           { id: 4, color: 'v4', href: 'variante-4.html', chartLabel: '4 · Cascade', tableLabel: 'Cascade ASR→MT', score: 37 },
+          { id: '—', color: 'ref', href: 'variante-1.html#run_033', chartLabel: 'S3T L-114k SPM 5k', tableLabel: 'Transformer L-114k (run_033)', score: 25.1 },
           { id: '—', color: 'ref', href: 'https://arxiv.org/abs/2601.05911', chartLabel: 'Article Pantagruel-L-114k', tableLabel: 'Pantagruel-L-114k (article)', score: 25.2 },
           { id: 1, color: 'v1', href: 'variante-1.html', chartLabel: '1 · Transformer', tableLabel: 'Transformer ST', score: 26.1 },
           { id: 2, color: 'v2', href: 'variante-2.html', chartLabel: '2 · speechLLM', tableLabel: 'speechLLM B1', score: 15.2 }
@@ -626,10 +640,12 @@
             params: 'Whisper large-v3 (ASR) → Marian opus-mt-fr-en (MT)' },
           { id: '—', color: 'ref', tableLabel: 'Pantagruel-L-114k (article)', run: '—', score: 25.2,
             params: 'fairseq · beam 5 · Table 8 Pantagruel (2026)' },
+          { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_033', score: 25.1,
+            params: 'L-114k · SPM 5k — réplication Table 8 (article 25,2)' },
           { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_026', score: 26.1,
             params: 'L-14k · SpecAugment v5 · vocab 1k' },
           { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_028', score: 23.5,
-            params: 'L-114k · SpecAugment v5' },
+            params: 'L-114k · SpecAugment v5 vocab 1k — sous run_033' },
           { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_020', score: 21.2,
             params: 'L-14k · v3 · gel 5k puis dégel' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_013', score: 15.2,

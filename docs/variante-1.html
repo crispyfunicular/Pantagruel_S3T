@@ -374,13 +374,21 @@
               <td>5 h</td>
               <td class="col-notes"><span class="term">v8<span class="term-tip term-tip-left">Version 8 de la config.</span></span> <span class="term">SPM 8k<span class="term-tip term-tip-left">Vocabulaire SentencePiece de 8 000 sous-mots — test d’un vocabulaire encore plus grand.</span></span> ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé quand le score de validation cesse de s’améliorer.</span></span> (14 juin) — sous run_031</td>
             </tr>
-            <tr>
+            <tr id="run_028">
               <td><code>run_028</code></td>
               <td>L-114k</td>
               <td><em>utterance</em></td>
-              <td><span class="result-best">23,5</span></td>
+              <td>23,5</td>
               <td>9 h</td>
-              <td class="col-notes"><span class="term">v5<span class="term-tip term-tip-left">Version 5 de la config.</span></span> SpecAugment ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé quand le score de validation cesse de s’améliorer.</span></span> (14 juin) — meilleur L-114k <span class="term">local<span class="term-tip term-tip-left">Meilleur score obtenu sur nos machines, dans ce dépôt — pas forcément égal au papier.</span></span></td>
+              <td class="col-notes"><span class="term">v5<span class="term-tip term-tip-left">Version 5 de la config.</span></span> SpecAugment vocab 1k ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé quand le score de validation cesse de s’améliorer.</span></span> (14 juin) — sous article L-114k et <span class="term">run_033<span class="term-tip term-tip-left">Run L-114k avec vocabulaire SPM 5k — 25,10 BLEU test, proche Table 8.</span></span></td>
+            </tr>
+            <tr id="run_033">
+              <td><code>run_033</code></td>
+              <td>L-114k</td>
+              <td><em>utterance</em></td>
+              <td><span class="result-best">25,1</span></td>
+              <td>~12 h</td>
+              <td class="col-notes"><span class="term">v7<span class="term-tip term-tip-left">Version 7 de la config.</span></span> <span class="term">SPM 5k<span class="term-tip term-tip-left">Vocabulaire SentencePiece de 5 000 sous-mots — configuration proche du protocole LeBenchmark / Table 8 pour L-114k.</span></span> ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé @ 78k (best dev 25,53 @ 70k).</span></span> (17 juin OVH) — <strong>≈ article Table 8 (25,2)</strong></td>
             </tr>
             <tr>
               <td><code>run_035</code></td>
@@ -422,13 +430,45 @@
               <td>~7 h</td>
               <td class="col-notes">v5 replicate run_026 (17 juin — écart ~1,3 vs <strong>26,12</strong>)</td>
             </tr>
-            <tr>
+            <tr id="run_038">
               <td><code>run_038</code></td>
               <td>L-114k</td>
               <td><em>utterance</em></td>
-              <td><em>en file</em></td>
+              <td>24,78</td>
               <td>9–12 h</td>
-              <td class="col-notes">v9 SpecAugment <span class="term">temporel + fréquentiel<span class="term-tip term-tip-left">Masquage à la fois dans le temps et dans les fréquences du spectrogramme — régularisation plus complète. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> (post run_033)</td>
+              <td class="col-notes">v9 SpecAugment <span class="term">temporel + fréquentiel<span class="term-tip term-tip-left">Masquage à la fois dans le temps et dans les fréquences du spectrogramme — régularisation plus complète. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> (OVH, 18 juin — early stop @ 30k)</td>
+            </tr>
+            <tr id="run_042">
+              <td><code>run_042</code></td>
+              <td>L-114k</td>
+              <td><em>utterance</em></td>
+              <td>24,11</td>
+              <td>9–12 h</td>
+              <td class="col-notes">v10 warmup 10k + SpecAugment (OVH, 19 juin — early stop @ 38k ; sous run_033 <strong>25,10</strong>)</td>
+            </tr>
+            <tr id="run_037">
+              <td><code>run_037</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td>24,55</td>
+              <td>8–10 h</td>
+              <td class="col-notes">v9 SpecAugment fort <code>mask_time_prob: 0.10</code> (Modyco, 17 juin)</td>
+            </tr>
+            <tr id="run_046">
+              <td><code>run_046</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td>2,76</td>
+              <td>~4 h</td>
+              <td class="col-notes">v11 batch effectif 32 — <span class="term">collapse<span class="term-tip term-tip-left">Effondrement de l’entraînement : le modèle produit des sorties dégénérées (répétitions, score proche de zéro).</span></span> @ 12k (Modyco, 19 juin)</td>
+            </tr>
+            <tr id="run_049">
+              <td><code>run_049</code></td>
+              <td>L-14k</td>
+              <td><em>utterance</em></td>
+              <td>23,84</td>
+              <td>~8 h</td>
+              <td class="col-notes">v5 seed 2 — réplicabilité (Modyco, 19 juin ; vs run_026 <strong>26,12</strong>)</td>
             </tr>
             <tr>
               <td><code>run_020</code></td>
@@ -519,9 +559,46 @@
     </div>
 
     <!-- Réplication stricte -->
-    <div class="card">
+    <div class="card" id="replication-table8">
       <h2><span class="icon">🔬</span> Réplication de l’article Pantagruel (Table 8)</h2>
-      <p class="section-intro">Les runs utterance visent la Table 8 de l’article, mais la réplication reste partielle. Voici la checklist pour s’en approcher davantage.</p>
+      <p class="section-intro">Les runs <em>utterance</em> visent la Table 8 de l’article. La réplication reste <strong>partielle</strong> sur les hyperparamètres (batch, stack PyTorch/HF vs fairseq), mais le <strong>score L-114k</strong> de référence est désormais atteint.</p>
+
+      <div class="note note-info" style="margin-bottom:1rem;">
+        <strong>Réplication L-114k confirmée (17 juin 2026)</strong> — <code><a href="#run_033">run_033</a></code> combine l’encodeur <strong>Pantagruel-L-114k</strong> avec un vocabulaire <strong>SPM 5k</strong> (protocole proche de LeBenchmark) sur la segmentation <em>utterance</em> m-TEDx fr→en.<br><br>
+        <strong>25,10 BLEU test</strong> (dev 25,27 ; meilleur dev 25,53 @ 70k) — à <strong>±0,1 point</strong> de la Table 8 Pantagruel (<strong>25,2 ± 0,4</strong>). C’est la première configuration L-114k du projet à rejoindre le niveau article.<br><br>
+        <em>À noter :</em> le meilleur ST global du dépôt reste <code><a href="#run_026">run_026</a></code> (L-14k + vocab 1k + SpecAugment, <strong>26,12</strong> BLEU test) — au-dessus de la référence L-14k article (24,0).
+      </div>
+
+      <div class="table-wrap" style="margin-bottom:1rem;">
+        <table>
+          <thead><tr><th>Encodeur</th><th>Article Table 8</th><th>Meilleur run S3T</th><th>Écart</th><th>Statut réplication</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>L-14k</td>
+              <td><strong>24,0</strong> ± 0,4</td>
+              <td><code>run_026</code> — <strong>26,12</strong></td>
+              <td>+2,1</td>
+              <td><span class="tag tag-green">dépassé</span></td>
+            </tr>
+            <tr>
+              <td>L-114k</td>
+              <td><strong>25,2</strong> ± 0,4</td>
+              <td><code>run_033</code> — <strong>25,10</strong> (SPM 5k)</td>
+              <td>−0,1</td>
+              <td><span class="tag tag-green">atteint</span></td>
+            </tr>
+            <tr>
+              <td>B-1k</td>
+              <td><strong>17,5</strong> ± 0,4</td>
+              <td><code>run_004</code> — <strong>16,68</strong></td>
+              <td>−0,8</td>
+              <td><span class="tag tag-orange">proche</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="section-intro" style="margin-top:0.5rem;">Checklist technique — écarts résiduels par rapport au papier :</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Élément</th><th>Cible papier</th><th>État actuel</th></tr></thead>
@@ -576,10 +653,9 @@
             <div class="imp-header">
               <strong>SpecAugment</strong>
               <span class="tag tag-green">&#10003; impl&eacute;ment&eacute;</span>
-              <span class="tag tag-blue">runs en cours</span>
             </div>
             <p class="imp-detail">Masquage al&eacute;atoire de bandes de fr&eacute;quences ou d&rsquo;instants dans le spectrogramme audio &mdash; force le mod&egrave;le &agrave; &ecirc;tre robuste aux occultations partielles. Actif en masquage temporel + fr&eacute;quentiel pour la variante ST, temporel uniquement pour speechLLM.</p>
-            <p class="imp-note"><code>run_043</code> &mdash; replicate run_026 (<strong>24,78</strong>) &middot; <code>run_033</code> &mdash; SPM 5k L-114k (en cours) &middot; <code>run_038</code> &mdash; fr&eacute;quentiel L-114k (en file)</p>
+            <p class="imp-note"><code>run_026</code> &mdash; L-14k (<strong>26,12</strong>, meilleur local) &middot; <code>run_033</code> &mdash; L-114k SPM 5k (<strong>25,10</strong>, ≈ article) &middot; <code>run_037</code> &mdash; fort L-14k (<strong>24,55</strong>) &middot; <code>run_038</code> / <code>run_042</code> &mdash; L-114k (<strong>24,78</strong> / <strong>24,11</strong>)</p>
           </div>
         </li>
 
@@ -635,12 +711,28 @@
                 <div class="run-card-desc">speechLLM &middot; <strong>14,15</strong> BLEU test</div>
               </div>
               <div class="run-card">
-                <div class="run-card-id"><code>run_033</code> <span class="tag tag-blue" style="font-size:0.68rem;">&#8635; en cours</span></div>
-                <div class="run-card-desc">L-114k &middot; SPM 5k &middot; ~64&nbsp;500 / 80k steps (best dev 24,99)</div>
+                <div class="run-card-id"><code>run_033</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
+                <div class="run-card-desc">L-114k &middot; SPM 5k &middot; <strong>25,10</strong> BLEU test &mdash; ≈ Table 8 (25,2)</div>
               </div>
               <div class="run-card">
-                <div class="run-card-id"><code>run_038</code> <span class="tag tag-gray" style="font-size:0.68rem;">&#9203; en file</span></div>
-                <div class="run-card-desc">L-114k &middot; SpecAugment fr&eacute;quentiel</div>
+                <div class="run-card-id"><code>run_038</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
+                <div class="run-card-desc">L-114k &middot; SpecAugment freq &middot; <strong>24,78</strong> BLEU test (OVH)</div>
+              </div>
+              <div class="run-card">
+                <div class="run-card-id"><code>run_042</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
+                <div class="run-card-desc">L-114k &middot; warmup 10k &middot; <strong>24,11</strong> BLEU test (OVH)</div>
+              </div>
+              <div class="run-card">
+                <div class="run-card-id"><code>run_037</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
+                <div class="run-card-desc">L-14k &middot; SpecAugment fort &middot; <strong>24,55</strong> BLEU test</div>
+              </div>
+              <div class="run-card">
+                <div class="run-card-id"><code>run_049</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
+                <div class="run-card-desc">L-14k &middot; v5 seed 2 &middot; <strong>23,84</strong> BLEU test</div>
+              </div>
+              <div class="run-card">
+                <div class="run-card-id"><code>run_046</code> <span class="tag tag-red" style="font-size:0.68rem;">&#10007; collapse</span></div>
+                <div class="run-card-desc">L-14k &middot; batch 32 &middot; <strong>2,76</strong> BLEU test</div>
               </div>
               <div class="run-card">
                 <div class="run-card-id"><code>run_039</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
@@ -649,10 +741,6 @@
               <div class="run-card">
                 <div class="run-card-id"><code>run_040</code> <span class="tag tag-red" style="font-size:0.68rem;">&#10007; &eacute;chec</span></div>
                 <div class="run-card-desc">&Eacute;chec chargement HuggingFace</div>
-              </div>
-              <div class="run-card">
-                <div class="run-card-id"><code>run_037</code> <span class="tag tag-gray" style="font-size:0.68rem;">&mdash; non lanc&eacute;</span></div>
-                <div class="run-card-desc">En attente</div>
               </div>
             </div>
           </div>
