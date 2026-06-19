@@ -77,7 +77,7 @@ Alternative au décodeur Transformer : **Pantagruel gelé** → downsampling →
 | Train B1 | `2_speechLLM/train.py` | `train` | Loss masquée sur tokens `ASSISTANT` | implémenté |
 | Evaluate | `2_speechLLM/evaluate.py` | `evaluate` | SacreBLEU valid/test (texte brut, pas SPM) | implémenté |
 | Infer | `2_speechLLM/infer.py` | `infer` | WAV arbitraire → traduction anglaise | implémenté |
-| speechllm_lib | `2_speechLLM/speechllm_lib.py` | — | Modèle, collate, checkpoints projecteur | implémenté |
+| speechllm_lib | `2_speechLLM/speechllm_lib.py` | — | Modèle, collate, checkpoints ; **`model.encoder_layer`** (défaut `-1`) | implémenté |
 | Config | `2_speechLLM/configs/fr-en/b1.yaml` | — | Pilote Phi-2 ; B2bis Qwen/Mistral dans `b2bis_*.yaml` | implémenté |
 | Orchestrateur | `2_speechLLM/pipeline.py` | `run` | `train` → `evaluate` | routeur actif |
 

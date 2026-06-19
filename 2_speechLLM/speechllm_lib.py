@@ -179,12 +179,35 @@ def downsample_encoder_states(
     return reshaped, new_mask
 
 
-def _resolve_encoder_output_dim(encoder: nn.Module) -> int:
+def _encoder_hidden_from_outputs(outputs: Any, encoder_layer: int) -> torch.Tensor:
+    """
+    Extraire la couche de sortie Pantagruel pour speechLLM.
+
+    ``encoder_layer < 0`` : ``last_hidden_state`` (comportement historique).
+    Sinon : ``hidden_states[encoder_layer]`` (forward avec ``output_hidden_states=True``).
+    """
+    if encoder_layer < 0:
+        return outputs.last_hidden_state
+    hidden_states = getattr(outputs, "hidden_states", None)
+    if not hidden_states:
+        raise ValueError(
+            "encoder_layer>=0 requiert output_hidden_states=True sur l'encodeur"
+        )
+    if encoder_layer >= len(hidden_states):
+        raise ValueError(
+            f"encoder_layer={encoder_layer} hors limites "
+            f"(hidden_states: {len(hidden_states)} tenseurs)"
+        )
+    return hidden_states[encoder_layer]
+
+
+def _resolve_encoder_output_dim(encoder: nn.Module, encoder_layer: int = -1) -> int:
     """
     Déterminer la dimension de sortie réelle de l'encodeur Pantagruel.
 
     Sur les checkpoints Large (14k / 114k), ``config.hidden_size`` peut indiquer 768
-    alors que ``last_hidden_state`` est en 1024 ; on sonde un forward minimal.
+    alors que ``last_hidden_state`` est en 1024 ; on sonde un forward minimal sur la
+    couche cible (``encoder_layer``, défaut dernière couche).
     """
     config_dim = int(encoder.config.hidden_size)
     was_training = encoder.training
@@ -192,8 +215,14 @@ def _resolve_encoder_output_dim(encoder: nn.Module) -> int:
     with torch.no_grad():
         probe_wav = torch.randn(1, 8000)
         probe_mask = torch.ones(1, probe_wav.size(1), dtype=torch.long)
-        outputs = encoder(input_values=probe_wav, attention_mask=probe_mask)
-        actual_dim = int(outputs.last_hidden_state.shape[-1])
+        forward_kwargs: dict[str, Any] = {
+            "input_values": probe_wav,
+            "attention_mask": probe_mask,
+        }
+        if encoder_layer >= 0:
+            forward_kwargs["output_hidden_states"] = True
+        outputs = encoder(**forward_kwargs)
+        actual_dim = int(_encoder_hidden_from_outputs(outputs, encoder_layer).shape[-1])
     if was_training:
         encoder.train()
     return actual_dim if actual_dim != config_dim else config_dim
@@ -220,6 +249,7 @@ class SpeechLLMModel(nn.Module):
         load_in_4bit: bool = False,
         load_in_8bit: bool = False,
         prompt_format: str = "phi2",
+        encoder_layer: int = -1,
         device: torch.device | None = None,
     ) -> None:
         """
@@ -237,9 +267,11 @@ class SpeechLLMModel(nn.Module):
             load_in_4bit : Charger le LLM en 4-bit (nécessite ``bitsandbytes``).
             load_in_8bit : Charger le LLM en 8-bit (nécessite ``bitsandbytes``).
             prompt_format : Template chat (`phi2`, `qwen_chatml`, `mistral_inst`).
+            encoder_layer : Indice de couche Pantagruel (-1 = dernière couche).
             device : Périphérique cible (requis si quantisation LLM activée).
         """
         super().__init__()
+        self.encoder_layer = int(encoder_layer)
         self.downsample_k = max(1, int(downsample_k))
         self.llm_name = llm_name
         format_name = str(prompt_format).strip().lower()
@@ -273,7 +305,7 @@ class SpeechLLMModel(nn.Module):
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        encoder_dim = _resolve_encoder_output_dim(self.encoder)
+        encoder_dim = _resolve_encoder_output_dim(self.encoder, self.encoder_layer)
         llm_dim = int(self.llm.config.hidden_size)
         self.encoder_proj = (
             nn.Identity() if encoder_dim == llm_dim else nn.Linear(encoder_dim, llm_dim)
@@ -328,10 +360,14 @@ class SpeechLLMModel(nn.Module):
         with torch.set_grad_enabled(
             any(parameter.requires_grad for parameter in self.encoder.parameters())
         ):
-            encoded = self.encoder(
-                input_values=input_values,
-                attention_mask=attention_mask,
-            ).last_hidden_state
+            forward_kwargs: dict[str, Any] = {
+                "input_values": input_values,
+                "attention_mask": attention_mask,
+            }
+            if self.encoder_layer >= 0:
+                forward_kwargs["output_hidden_states"] = True
+            outputs = self.encoder(**forward_kwargs)
+            encoded = _encoder_hidden_from_outputs(outputs, self.encoder_layer)
         projected = self.encoder_proj(encoded)
         downsampled, speech_mask = downsample_encoder_states(
             projected,
@@ -601,6 +637,7 @@ def load_speechllm_from_config(
     load_in_4bit = bool(deep_get(config, "model.load_in_4bit", False))
     load_in_8bit = bool(deep_get(config, "model.load_in_8bit", False))
     prompt_format = resolve_prompt_format(config)
+    encoder_layer = int(deep_get(config, "model.encoder_layer", -1))
     model = SpeechLLMModel(
         encoder_name=encoder_name,
         llm_name=llm_name,
@@ -613,6 +650,7 @@ def load_speechllm_from_config(
         load_in_4bit=load_in_4bit,
         load_in_8bit=load_in_8bit,
         prompt_format=prompt_format,
+        encoder_layer=encoder_layer,
         device=device,
     )
     if model._quantized_llm:

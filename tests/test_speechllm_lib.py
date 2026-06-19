@@ -6,6 +6,7 @@ import torch
 from scripts_communs.st_common import ManifestSample
 from speechLLM.speechllm_lib import (
     IGNORE_INDEX,
+    _encoder_hidden_from_outputs,
     collate_speechllm_batch,
     downsample_encoder_states,
 )
@@ -38,6 +39,16 @@ def test_downsample_trims_incomplete_tail() -> None:
 
 def test_ignore_index_constant() -> None:
     assert IGNORE_INDEX == -100
+
+
+def test_encoder_hidden_from_outputs_last_layer() -> None:
+    last = torch.randn(1, 4, 8)
+    hidden_states = (torch.randn(1, 4, 8), last)
+    outputs = type(
+        "Out", (), {"last_hidden_state": last, "hidden_states": hidden_states}
+    )()
+    assert torch.equal(_encoder_hidden_from_outputs(outputs, -1), last)
+    assert torch.equal(_encoder_hidden_from_outputs(outputs, 1), hidden_states[1])
 
 
 def test_collate_speechllm_batch_empty() -> None:
