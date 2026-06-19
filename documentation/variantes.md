@@ -150,7 +150,7 @@ C’est la piste de référence de l’article [Pantagruel](vocabulaire.md#panta
 | **Quand la choisir** | Réplication article, analyse scientifique, déploiement sans cloud |
 
 **Pistes d’amélioration :**
-- Encodeur **L-14k** : v5 SpecAugment [^27] (**26,1**, **meilleur local**, vocab 1k) ; **`run_041`** finetune freq **en cours** ; `run_036` interrompu (éval **0,60**) ; `run_037` non lancé. **L-114k** v5 [^33] (23,5) ; `run_033` SPM 5k **en cours** ; `run_038` freq **en file**.
+- Encodeur **L-14k** : v5 SpecAugment [^27] (**26,1**, **meilleur local**) ; **`run_049`** seed2 **ok** (**23,8**) ; **`run_046`** batch-32 **échec** (**2,8**) ; **`run_037` ok** (**24,55**). **L-114k** : **`run_033` ok** (**25,10**) ; **`run_038` ok** (**24,78**) ; **`run_042` ok** (**24,11**).
 - Implémenter le [décodage par faisceau](vocabulaire.md#beam-search-beam-5) (beam 5) — **fait** à l’évaluation (`5_evaluate.py`).
 - Affiner l’entraînement : durée, [gel de l’encodeur](vocabulaire.md#freeze_encoder_updates), taux d’apprentissage, taille des lots.
 - Poursuivre l’alignement sur le protocole *utterance* de l’article (Table 8) tout en documentant clairement les runs *sentence_like*.
@@ -192,7 +192,7 @@ Ordre suggéré (impact estimé sur la comparabilité Table 8) :
 
 1. **Coder le beam search** en évaluation — **fait** (`5_evaluate.py`, `6_infer.py`).
 2. **Implémenter le warmup LR** (10 000 pas) dans `4_train.py` — **fait** ; ablation `run_036` interrompue (éval **0,60**).
-3. **Ajouter SpecAugment** — **fait** (v5+) ; `run_041` finetune freq **en cours** ; `run_038` (freq L-114k) **en file**.
+3. **Ajouter SpecAugment** — **fait** (v5+) ; `run_041` finetune freq **ok** (**25,95**) ; `run_038` / `run_042` L-114k **ok** (**24,78** / **24,11**) ; `run_037` fort L-14k **ok** (**24,55**).
 4. **Rédiger une config dédiée** `base_utterance_replication_strict.yaml` calquée sur le template PRD §9 :
    - `segment_mode: utterance`
    - `freeze_encoder_updates: 5000`
@@ -494,13 +494,16 @@ Syntaxe : notes de bas de page Markdown (`[^n]`), supportées par Pandoc, GitHub
 [^34]: `run_034_transformer_baseline_utterance_large_14k_v8_spm8k` — 23,36 / **22,24** test (SPM 8k — sous run_031)
 [^35]: `run_035_transformer_baseline_utterance_b1k_v5` — **19,75** test (B-1k SpecAugment, 15 juin)
 [^36]: `run_036_transformer_baseline_utterance_large_14k_v9_warmup10k` — **interrompu** — éval best.pt **0,60 / 0,42** test/dev
-[^37]: `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` — **non lancé**
-[^38]: `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` — **en file** (après run_033)
+[^37]: `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` — **24,55** test (Modyco, 17 juin — SpecAugment fort, sous run_026)
+[^38]: `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` — **24,78** test (OVH, 18 juin)
+[^42]: `run_042_transformer_baseline_utterance_large_114k_v10_warmup10k` — **24,11** test (OVH, 19 juin)
+[^46]: `run_046_transformer_baseline_utterance_large_14k_v11_batch32` — **2,76** test (collapse, Modyco)
+[^49]: `run_049_transformer_baseline_utterance_large_14k_v5_seed2` — **23,84** test (Modyco, seed 2)
 [^39]: `run_039_speechllm_b1_utterance_large_14k_v5_specaug` — **13,84 / 14,59** test/dev (16 juin — sous run_023)
 [^40]: `run_040_pantagruel_multimodal_utterance_v2` — **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404 — checkpoint intermédiaire retiré ; modèle multimodal final en cours d’entraînement)
 [^41]: `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` — **en cours** (finetune run_026)
 [^032]: `run_032_speechllm_b1_utterance_large_114k_replicate` — **14,15 / 15,14** test/dev (48 tok)
-[^033]: `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` — **en cours** (@ 23,5k/80k, best dev 21,9)
+[^033]: `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` — **ok** — **25,10** test (best dev **25,53** @ 70k)
 [^17]: `run_004_gemini_35_flash_utterance_v2` — 41,42 / **20,32** test (2 outliers, sans garde-fous)
 [^19]: `run_005_gemini_35_flash_utterance_v2` — 41,42 / **41,09** test (garde-fous anti-boucles)
 [^20]: `run_004_gemini_35_flash_sentence_like_v2` — 38,69 / **36,76** test (garde-fous anti-boucles)

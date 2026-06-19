@@ -29,6 +29,12 @@ DEFAULT_MODY=(
   run_031_transformer_baseline_utterance_large_14k_v7_spm5k
   run_034_transformer_baseline_utterance_large_14k_v8_spm8k
   run_035_transformer_baseline_utterance_b1k_v5
+  run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong
+  run_041_finetune_utterance_large_14k_v10_specaug_freq
+  run_043_transformer_baseline_utterance_large_14k_v5_replicate
+  run_049_transformer_baseline_utterance_large_14k_v5_seed2
+  run_046_transformer_baseline_utterance_large_14k_v11_batch32
+  run_006_speechllm_b1_utterance_unfreeze
 )
 DEFAULT_OVH=(
   run_012_speechllm_b1_utterance_large_14k
@@ -40,6 +46,7 @@ DEFAULT_OVH=(
   run_025_transformer_baseline_utterance_large_114k_v4
   run_028_transformer_baseline_utterance_large_114k_v5
   run_032_speechllm_b1_utterance_large_114k_replicate
+  run_033_transformer_baseline_utterance_large_114k_v7_spm5k
 )
 
 pull_one() {

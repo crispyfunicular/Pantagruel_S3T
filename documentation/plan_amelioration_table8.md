@@ -2,7 +2,7 @@
 
 Document de référence pour rapprocher les scores du pipeline S3T de la **Table 8** du papier Pantagruel ([`documentation/Pantagruel_2026.pdf`](Pantagruel_2026.pdf)) : ST fr→en/pt/es sur m-TEDx (utterance), NER, SLU, SER.
 
-**Baseline actuelle (juin 2026)** : meilleur ST local `run_026` v5 SpecAugment — **26,12 BLEU** test (Modyco, vocab 1k). Finetune freq `run_041` : **25,95** test. Replicate `run_043` : **24,78** test (−1,3 vs run_026). L-114k : `run_028` **23,51** test (OVH). **Modyco** : GPU libre. **OVH** : **`run_033`** ST L-114k SPM 5k **en cours** (@ ~64,5k/80k, best dev **24,99**) ; **`run_038`** puis **`run_042`** **en file** (waiter unique).
+**Baseline actuelle (juin 2026)** : meilleur ST local `run_026` — **26,12** test. L-114k : `run_033` SPM 5k **25,10** (meilleur L-114k) ; `run_038` **24,78** ; `run_042` **24,11**. Modyco nuit : `run_049` seed2 **23,84** ; `run_046` batch-32 **collapse 2,76** ; `run_006` speechLLM **9,60**. **OVH** chaîne terminée — éteignable. **Modyco** GPU libre ; piste J (047→048) reportée.
 
 **Runs piste 1 (batch 64)** :
 
@@ -106,9 +106,11 @@ spec_augment:
 | Run | Changement | Machine | Statut |
 |-----|------------|---------|--------|
 | `run_036` | `warmup_updates: 10000` | Modyco | **interrompu** (@ ~5k — reprise `--resume` possible) |
-| `run_037` | `mask_time_prob: 0.10` | Modyco | **non lancé** (chaîne 036→037 abandonnée) |
-| `run_038` | SpecAugment temporel + fréquentiel L-114k | OVH | **en file** (waiter post run_033, chaîne 038→042) |
-| `run_042` | `warmup_updates: 10000` + SpecAugment L-114k | OVH | **en file** (après run_038) |
+| `run_037` | `mask_time_prob: 0.10` | Modyco | **ok** — **24,55** test (sous run_026) |
+| `run_038` | SpecAugment freq L-114k | OVH | **ok** — **24,78** test |
+| `run_042` | warmup 10k + SpecAugment L-114k | OVH | **ok** — **24,11** test (sous run_033) |
+| `run_046` | batch effectif 32 L-14k | Modyco | **échec** — collapse **2,76** @ 12k |
+| `run_049` | seed 2 (v5 replicate) | Modyco | **ok** — **23,84** test |
 | `run_039` | SpecAugment speechLLM L-14k | Modyco | **ok** — **13,84 / 14,59** test/dev (sous run_023 **14,23**) |
 | `run_040` | Speech_Text utterance (recette run_026) | Modyco | **échec** — modèle HF `Speech_Text_Base_fr_1K_4GB` introuvable (404) |
 | `run_041` | Finetune run_026 + SpecAugment freq L-14k | Modyco | **ok** — 26,37 / **25,95** test (sous run_026 **26,12**) |
@@ -126,7 +128,7 @@ Scripts : [`run_modyco_wait_chain_post_036_eval_then_039_040_037.sh`](../scripts
 - Tester `--vocab-size 5000` puis `8000` via [`1_Transformer/3_spm.py`](../1_Transformer/3_spm.py).
 - Configs v7 SPM 5k (recette run_026 v5 + SpecAugment) :
   - L-14k : [`base_utterance_large_14k_v7_spm5k.yaml`](../1_Transformer/configs/fr-en/base_utterance_large_14k_v7_spm5k.yaml) → `run_031` (**ok** — 24,02 test, sous run_026)
-  - L-114k : [`base_utterance_large_114k_v7_spm5k.yaml`](../1_Transformer/configs/fr-en/base_utterance_large_114k_v7_spm5k.yaml) → `run_033` (**en cours** OVH, @ ~64,5k/80k, best dev **24,99** @ 64k)
+  - L-114k : [`base_utterance_large_114k_v7_spm5k.yaml`](../1_Transformer/configs/fr-en/base_utterance_large_114k_v7_spm5k.yaml) → `run_033` (**ok** OVH — **25,10** test, best dev **25,53** @ 70k)
 - Config v8 SPM 8k :
   - L-14k : [`base_utterance_large_14k_v8_spm8k.yaml`](../1_Transformer/configs/fr-en/base_utterance_large_14k_v8_spm8k.yaml) → `run_034` (**ok** — 22,24 test, sous run_031)
   - Scripts : [`run_modyco_wait_st_then_st_14k_v8_spm8k.sh`](../scripts/run_modyco_wait_st_then_st_14k_v8_spm8k.sh)
@@ -200,13 +202,15 @@ Ces benchmarks de la Table 8 ne sont **pas encore** dans le pipeline S3T :
 | spec-augment-long | run_027 (14k 120k) | **ok** — **25,12** test (sous run_026) |
 | spm-vocab | SPM 5k run_031 Modyco | **ok** — **24,02** test (sous run_026) |
 | spm-vocab | SPM 8k run_034 Modyco | **ok** — **22,24** test (sous run_031) |
-| spm-vocab | SPM 5k run_033 OVH | **en cours** (@ ~64,5k/80k, best dev **24,99** @ 64k) |
+| spm-vocab | SPM 5k run_033 OVH | **ok** — **25,10** test (best dev **25,53** @ 70k) |
 | speechllm-114k-replicate | run_032 OVH (48 tok) | **ok** — **14,15 / 15,14** test/dev (sous run_013 **15,24**) |
 | st-b1k-specaugment | run_035 Modyco (B-1k v5) | **ok** — **19,75** test |
 | improve-run026-warmup | run_036 Modyco (warmup 10k) | **interrompu** (@ ~5k) |
-| improve-run026-specaug-strong | run_037 Modyco (mask 0.10) | **non lancé** |
-| improve-run026-specaug-freq | run_038 OVH (time + freq L-114k) | **en file** (chaîne 038→042 post run_033) |
-| warmup-114k | run_042 OVH (warmup 10k + SpecAugment L-114k) | **en file** (après run_038) |
+| improve-run026-specaug-strong | run_037 Modyco (mask 0.10) | **ok** — **24,55** test |
+| improve-run026-specaug-freq | run_038 OVH (time + freq L-114k) | **ok** — **24,78** test |
+| warmup-114k | run_042 OVH (warmup 10k + SpecAugment L-114k) | **ok** — **24,11** test (sous run_033) |
+| batch-32-14k | run_046 Modyco (batch effectif 32) | **échec** — collapse **2,76** @ 12k |
+| seed-replicate | run_049 Modyco (v5 seed 2) | **ok** — **23,84** test |
 | improve-run026-specaug-freq-finetune | run_041 Modyco (freq L-14k depuis run_026) | **ok** — **25,95** test (sous run_026) |
 | replicate-run026 | run_043 Modyco (v5 replicate) | **ok** — **24,78** test (écart ~1,3 vs run_026 **26,12**) |
 | improve-run026-sllm-specaug | run_039 Modyco (speechLLM) | **ok** — **13,84** test (sous run_023) |
