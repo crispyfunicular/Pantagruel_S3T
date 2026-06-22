@@ -250,6 +250,7 @@ Le modèle apprend avec un format de type dialogue : une consigne du côté [USE
 | *utterance* L-114k v2 (128 tok) [^22] | 5,6 | 15 h GPU — **échec** vs run_013 |
 | *utterance* L-14k v3 (128 tok) [^23] | 5,5 | 4 h GPU — **échec** ; hyp. 3× trop longues |
 | *utterance* L-14k replicate (48 tok) [^25] | **14,2** | 2,5 h GPU — proche run_012 (15,03) |
+| *utterance* L-14k couche 9 [^47] | **14,0** | ~2,5 h GPU — sous run_012 (dernière couche) |
 | *utterance* L-14k dégelé [^13] | 3,7 | 2–3 h GPU — sous run_012 gelé |
 | *sentence_like*, encodeur gelé [^4] | 16 | 2 h |
 | *sentence_like*, encodeur dégelé [^5] | **19** | 2 h |
@@ -499,6 +500,7 @@ Syntaxe : notes de bas de page Markdown (`[^n]`), supportées par Pandoc, GitHub
 [^42]: `run_042_transformer_baseline_utterance_large_114k_v10_warmup10k` — **24,11** test (OVH, 19 juin)
 [^46]: `run_046_transformer_baseline_utterance_large_14k_v11_batch32` — **2,76** test (collapse, Modyco)
 [^49]: `run_049_transformer_baseline_utterance_large_14k_v5_seed2` — **23,84** test (Modyco, seed 2)
+[^47]: `run_047_speechllm_b1_utterance_large_14k_layer9` — **14,00 / 15,10** test/dev (couche 9, Modyco, 22 juin — sous run_012 **15,03**)
 [^39]: `run_039_speechllm_b1_utterance_large_14k_v5_specaug` — **13,84 / 14,59** test/dev (16 juin — sous run_023)
 [^40]: `run_040_pantagruel_multimodal_utterance_v2` — **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404 — checkpoint intermédiaire retiré ; modèle multimodal final en cours d’entraînement)
 [^41]: `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` — **en cours** (finetune run_026)

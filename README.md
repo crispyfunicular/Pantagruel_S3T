@@ -85,6 +85,7 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | ST L-114k **v9 SpecAugment freq** | `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` | 24.21 | **24.78** | ok (OVH, 18 juin) |
 | ST L-14k **v11 batch 32** | `run_046_transformer_baseline_utterance_large_14k_v11_batch32` | 3.29 | **2.76** | **échec** — collapse (piste B clos) |
 | ST L-14k **v5 seed 2** | `run_049_transformer_baseline_utterance_large_14k_v5_seed2` | 23.75 | **23.84** | ok (Modyco, 19 juin) |
+| speechLLM **L-14k couche 9** | `run_047_speechllm_b1_utterance_large_14k_layer9` | 15.10 | **14.00** | ok (Modyco, 22 juin — sous run_012 **15,03**) |
 | speechLLM **B-1k dégel** | `run_006_speechllm_b1_utterance_unfreeze` | 9.32 | **9.60** | ok (Modyco, 19 juin) |
 | speechLLM L-14k **v5 SpecAugment** | `run_039_speechllm_b1_utterance_large_14k_v5_specaug` | 14.59 | **13.84** | ok (16 juin — sous run_023 **14,23**) |
 | Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | — | — | **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404 — checkpoint intermédiaire retiré, modèle final en cours) |
@@ -125,7 +126,7 @@ Trois axes **indépendants** (ne pas les confondre) :
 - **Bench utterance** — [documentation/protocole_utterance_pantagruel.md](documentation/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
 - **Encodeur 14k / 114k** : meilleur ST **`run_026`** (**26,12**) ; **`run_049`** seed2 **ok** (**23,84**) ; **`run_046`** batch-32 **échec** (**2,76**) ; **`run_043`** **24,78** ; **`run_037`** **24,55** ; L-114k **`run_033`** **25,10** ; **`run_038`** **24,78** ; **`run_042`** **24,11** — voir [`documentation/protocole_utterance_pantagruel.md`](documentation/protocole_utterance_pantagruel.md).
 - **OVH** : chaîne **terminée** — **éteignable** week-end ; **`run_044`** speechLLM **reporté**.
-- **Modyco** : GPU **libre** (collègues) ; piste J **`run_047`/`run_048`** **reportée** — relancer `run_modyco_wait_weekend_chain_047_048.sh`.
+- **Modyco** : GPU **libre** (22 juin) ; **`run_047`** couche 9 **ok** (**14,00** test) ; **`run_048`** couche 6 **reporté**.
 - **Gemini 3.5 Flash** : **`run_005` utterance v2 terminé** — **41,42 / 41,09** ; **`run_004` sentence_like v2 terminé** — **38,69 / 36,76** (garde-fous, `max_output_tokens=8192`, `thinking_level: minimal`) ; devant Gemini 2.5 sur les deux découpages. Runs `run_003_*` v1 **non conclusifs** (troncature).
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.

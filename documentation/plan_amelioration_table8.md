@@ -2,7 +2,7 @@
 
 Document de référence pour rapprocher les scores du pipeline S3T de la **Table 8** du papier Pantagruel ([`documentation/Pantagruel_2026.pdf`](Pantagruel_2026.pdf)) : ST fr→en/pt/es sur m-TEDx (utterance), NER, SLU, SER.
 
-**Baseline actuelle (juin 2026)** : meilleur ST local `run_026` — **26,12** test. L-114k : `run_033` SPM 5k **25,10** (meilleur L-114k) ; `run_038` **24,78** ; `run_042` **24,11**. Modyco nuit : `run_049` seed2 **23,84** ; `run_046` batch-32 **collapse 2,76** ; `run_006` speechLLM **9,60**. **OVH** chaîne terminée — éteignable. **Modyco** GPU libre ; piste J (047→048) reportée.
+**Baseline actuelle (juin 2026)** : meilleur ST local `run_026` — **26,12** test. L-114k : `run_033` SPM 5k **25,10**. Modyco récent : `run_049` seed2 **23,84** ; `run_046` collapse **2,76** ; `run_006` speechLLM **9,60** ; **`run_047`** couche 9 **14,00** (sous run_012 **15,03**). **Modyco** GPU libre (22 juin) ; **`run_048`** couche 6 à lancer.
 
 **Runs piste 1 (batch 64)** :
 
@@ -211,6 +211,8 @@ Ces benchmarks de la Table 8 ne sont **pas encore** dans le pipeline S3T :
 | warmup-114k | run_042 OVH (warmup 10k + SpecAugment L-114k) | **ok** — **24,11** test (sous run_033) |
 | batch-32-14k | run_046 Modyco (batch effectif 32) | **échec** — collapse **2,76** @ 12k |
 | seed-replicate | run_049 Modyco (v5 seed 2) | **ok** — **23,84** test |
+| speechllm-encoder-layer9 | run_047 Modyco (couche 9) | **ok** — **14,00** test (sous run_012 **15,03**) |
+| speechllm-encoder-layer6 | run_048 Modyco (couche 6) | **reporté** |
 | improve-run026-specaug-freq-finetune | run_041 Modyco (freq L-14k depuis run_026) | **ok** — **25,95** test (sous run_026) |
 | replicate-run026 | run_043 Modyco (v5 replicate) | **ok** — **24,78** test (écart ~1,3 vs run_026 **26,12**) |
 | improve-run026-sllm-specaug | run_039 Modyco (speechLLM) | **ok** — **13,84** test (sous run_023) |

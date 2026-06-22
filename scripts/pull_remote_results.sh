@@ -35,6 +35,9 @@ DEFAULT_MODY=(
   run_049_transformer_baseline_utterance_large_14k_v5_seed2
   run_046_transformer_baseline_utterance_large_14k_v11_batch32
   run_006_speechllm_b1_utterance_unfreeze
+  run_047_speechllm_b1_utterance_large_14k_layer9
+  run_039_speechllm_b1_utterance_large_14k_v5_specaug
+  run_045_speechllm_b1_utterance_large_14k_v9_specaug_strong
 )
 DEFAULT_OVH=(
   run_012_speechllm_b1_utterance_large_14k
