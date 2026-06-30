@@ -620,7 +620,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : 15,2 (<code>run_013</code>).",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>15,2</strong> (<code>run_013</code>) ; ablation couche encodeur (piste J) sans gain ; <code>run_052</code> Llama-3.2-3B en file sur Modyco.",
         rows: [
           {
             id: 3,

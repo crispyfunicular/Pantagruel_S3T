@@ -1,7 +1,7 @@
 # Multimodalité : speech-to-text translation avec Pantagruel
 # Traduction parole français → anglais sur m-TEDx : réplication Pantagruel et variantes multimodales
 
-Statut : bench utterance partiel ; ST B-1k run_002 échoué (3,79) ; run_004 v2 **terminé** (16,84 / 16,68) ; ST L-14k `run_010` **échec** (0,00) — **`run_014` v2** (17,21) — **`run_020` v3** (22,05 / **21,22**, Modyco) ; ST L-114k **`run_016` v2** (19,63) — **`run_019` v3** (21,09 / **20,19**, OVH) ; speechLLM **`run_012`/`run_013`** (15,03/15,24, 48 tok) — **`run_023` replicate** (15,26 / **14,23**, Modyco) ; échecs 128 tok (`run_017` 5,60 / `run_021` 5,48) ; Qwen **`run_018`** (12,95) ; **`run_022` v3 en cours** (OVH) ; Gemini 3.5 v2 **`run_005`** (41,09) ; sentence_like v2 **`run_004`** (36,76)
+Statut : bench utterance partiel ; ST B-1k run_002 échoué (3,79) ; run_004 v2 **terminé** (16,84 / 16,68) ; ST L-14k `run_010` **échec** (0,00) — **`run_014` v2** (17,21) — **`run_020` v3** (22,05 / **21,22**, Modyco) ; ST L-114k **`run_016` v2** (19,63) — **`run_019` v3** (21,09 / **20,19**, OVH) ; speechLLM **`run_012`/`run_013`** (15,03/15,24, 48 tok) — **`run_023` replicate** (15,26 / **14,23**, Modyco) ; piste J **`run_047`–`run_051`** (14,00 / 12,41 / **13,58**, sous run_012) ; échecs 128 tok (`run_017` 5,60 / `run_021` 5,48) ; Qwen **`run_018`** (12,95) ; Llama-3.2-3B **`run_052` en file** (Modyco) ; Gemini 3.5 v2 **`run_005`** (41,09) ; sentence_like v2 **`run_004`** (36,76)
 
 Références : [Pantagruel (2026)](documentation/Pantagruel_2026.pdf) ; dépôt et protocole [PRD](documentation/PRD.md), [README](README.md).
 
@@ -387,6 +387,11 @@ Métrique : **SacreBLEU corpus** (signature habituelle `tok:13a|smooth:exp|versi
 | speechLLM B1 | `run_003_speechllm_b1_utterance_long` | `speech-base-1K` gelé → Phi-2 gelé | beam 1, max 48 tok | **10,00** | **7,47** | ok (tour) |
 | speechLLM B1 **L-14k** | `run_012_speechllm_b1_utterance_large_14k` | `speech-large-14K` gelé → Phi-2 gelé | beam 1, max 48 tok | **15,49** | **15,03** | ok (OVH, ~1,4 h GPU) |
 | speechLLM B1 **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | `speech-large-114K` gelé → Phi-2 gelé | beam 1, max 48 tok | **15,92** | **15,24** | ok (OVH) |
+| speechLLM B1 L-14k couche 9 | `run_047_speechllm_b1_utterance_large_14k_layer9` | L-14k, `encoder_layer: 9` | beam 1, max 48 tok | **15,10** | **14,00** | ok (Modyco) — sous run_012 |
+| speechLLM B1 L-14k couche 6 | `run_048_speechllm_b1_utterance_large_14k_layer6` | L-14k, `encoder_layer: 6` | beam 1, max 48 tok | **13,69** | **12,41** | ok (Modyco) — sous run_047 |
+| speechLLM B1 L-14k contrôle couche -1 | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | L-14k, `encoder_layer: -1` | beam 1, max 48 tok | **14,57** | **13,58** | ok (Modyco, ~2,9 h GPU) — sous run_012 |
+| speechLLM B2bis L-14k + Qwen2.5-3B | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | L-14k → Qwen2.5-3B gelé | beam 1, max 48 tok | **13,96** | **12,95** | ok (Modyco, ~2,7 h GPU) — sous Phi-2 |
+| speechLLM B2bis L-14k + Llama-3.2-3B | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | L-14k → Llama-3.2-3B gelé | beam 1, max 48 tok | — | — | **en file** (Modyco, waiter HF ; ~3,5–5 h estimées) |
 | ST E2E Transformer **L-14k** | `run_010_transformer_baseline_utterance_large_14k` | `speech-large-14K` + décodeur 6L + SPM 1k | greedy (v1) | 0,00 | 0,00 | **échec** (collapse, tour, 2026-06-09) |
 | ST E2E Transformer **L-14k v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | idem + gel 5k + early stop + LR 1e-4 | greedy (v1) | **17,12** | **17,21** | ok (Modyco) |
 | ST E2E Transformer **L-114k v2** | `run_016_transformer_baseline_utterance_large_114k_v2` | `speech-large-114K` + correctifs run_014 | beam 5 | **20,30** | **19,63** | ok (OVH, ~9,1 h GPU, early stop @~21k) |
@@ -515,7 +520,9 @@ Lecture prudente : stack PyTorch/HF vs fairseq historique ; ST v1 en greedy vs b
 - **`run_004_gemini_35_flash_sentence_like_v2`** : **terminé** (local, 2026-06-10) — **38,69 / 36,76** ; 38 min ; 1,27 $ API.
 - Optionnel : rsync `eval/` cascade utterance (tour → ThinkPad) ; cascade `run_001_cascade_sentence_like` (sentence_like) pour tableau §5.3 complet.
 - Ablations ST : greedy vs beam (nouvelle version protocole si beam 5 implémenté).
-- Ablations speechLLM : LLM gelés (Llama-3.2-3B, Mistral-7B 4-bit) ; cascade Whisper medium vs large × MT NLLB.
+- **`run_051_speechllm_b1_utterance_large_14k_encoder_control`** : **terminé** (Modyco, 2026-06-27) — **14,57 / 13,58** (contrôle piste J ; sous run_012).
+- **`run_052_speechllm_b2bis_utterance_large_14k_llama32_3b`** : **en file** (Modyco, 2026-06-30) — waiter HF ; format `llama_inst` implémenté ; référence à battre : run_012 **15,03** test, run_018 Qwen **12,95** test.
+- Ablations speechLLM : Llama-3.2-3B (`run_052` en cours de lancement) ; Mistral-7B 4-bit (backlog) ; cascade Whisper medium vs large × MT NLLB.
 - MQM / relecture humaine en fin de projet (hors scope immédiat).
 
 ---

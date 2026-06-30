@@ -254,7 +254,7 @@
           <!-- LLM Phi-2 -->
           <rect x="499" y="20" width="155" height="112" rx="8" fill="#1a0a2e" stroke="#a855f7" stroke-width="2"/>
           <text x="576" y="49" text-anchor="middle" font-size="11.5" font-weight="700" fill="#d8b4fe">LLM</text>
-          <text x="576" y="65" text-anchor="middle" font-size="11.5" font-weight="700" fill="#d8b4fe">Phi-2 / Qwen…</text>
+          <text x="576" y="65" text-anchor="middle" font-size="11.5" font-weight="700" fill="#d8b4fe">Phi-2 / Qwen / Llama…</text>
           <text x="576" y="83" text-anchor="middle" font-size="9.5" fill="#c084fc">format USER/ASSISTANT</text>
           <text x="576" y="99" text-anchor="middle" font-size="9" fill="#7c3aed">gelé</text>
           <text x="576" y="114" text-anchor="middle" font-size="9" fill="#64748b">génération en anglais</text>
@@ -327,9 +327,9 @@
                 <strong>Choix du <span class="term">LLM<span class="term-tip">Grand modèle de langue (Large Language Model) qui génère la traduction en anglais à partir des vecteurs audio. <a href="vocabulaire.html#llm">→ glossaire</a></span></span></strong>
               </td>
               <td class="col-expl">Quel modèle de texte génératif utiliser pour produire la traduction. Chacun a ses forces et ses faiblesses selon la tâche.</td>
-              <td>Phi-2 (défaut) · Mistral · Qwen2.5-3B</td>
-              <td>Qwen2.5-3B 13 test (<code>run_018</code>) — sous Phi-2</td>
-              <td><span class="tag tag-blue">à explorer</span></td>
+              <td>Phi-2 (défaut) · Qwen2.5-3B · Llama-3.2-3B · Mistral</td>
+              <td>Qwen2.5-3B 13 test (<code>run_018</code>) ; Llama-3.2-3B <code>run_052</code> en file — sous Phi-2 (<code>run_012</code> 15 test)</td>
+              <td><span class="tag tag-blue">Llama en file</span></td>
             </tr>
             <tr>
               <td>
@@ -427,8 +427,40 @@
               <td>L-14k + Qwen2.5-3B</td>
               <td><em>utterance</em></td>
               <td>13,0</td>
-              <td>0,4 h éval</td>
-              <td>Sous Phi-2</td>
+              <td>~2,7 h</td>
+              <td>Sous Phi-2 (<code>run_012</code>)</td>
+            </tr>
+            <tr>
+              <td><code>run_047</code></td>
+              <td>L-14k couche 9 (gelé)</td>
+              <td><em>utterance</em></td>
+              <td>14,0</td>
+              <td>~2,5 h</td>
+              <td>Piste J — sous run_012</td>
+            </tr>
+            <tr>
+              <td><code>run_050</code></td>
+              <td>L-14k (gelé, seed 2)</td>
+              <td><em>utterance</em></td>
+              <td>14,0</td>
+              <td>~3,5 h</td>
+              <td>Réplicabilité — sous run_012</td>
+            </tr>
+            <tr>
+              <td><code>run_051</code></td>
+              <td>L-14k contrôle couche -1</td>
+              <td><em>utterance</em></td>
+              <td>13,6</td>
+              <td>~2,9 h</td>
+              <td>Piste J clos — sous run_012</td>
+            </tr>
+            <tr>
+              <td><code>run_052</code></td>
+              <td>L-14k + Llama-3.2-3B</td>
+              <td><em>utterance</em></td>
+              <td>—</td>
+              <td>~3,5–5 h (estim.)</td>
+              <td><span class="tag tag-blue">en file</span> Modyco — waiter HF</td>
             </tr>
             <tr>
               <td><code>run_002</code></td>
@@ -492,7 +524,7 @@
         </li>
         <li>
           <span class="imp-num">3</span>
-          <div><strong>Tester d’autres LLM gelés</strong> (Llama-3, Mistral, Qwen2.5-7B) — <code>run_018</code> Qwen2.5-3B 13 test, sous Phi-2 ; un modèle plus grand pourrait inverser la tendance.</div>
+          <div><strong>Tester d’autres LLM gelés</strong> — <code>run_018</code> Qwen2.5-3B **13** test (sous Phi-2) ; <code>run_052</code> Llama-3.2-3B <strong>en file</strong> sur Modyco (format <code>llama_inst</code>, ~3,5–5 h GPU) ; Mistral-7B 4-bit en backlog.</div>
         </li>
         <li>
           <span class="imp-num">4</span>
