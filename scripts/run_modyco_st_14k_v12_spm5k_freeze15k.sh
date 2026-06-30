@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Modyco — ST Pantagruel-L-14k v12 SPM 5k + gel encodeur 15k (run_052, piste E).
+#
+# Budget : ≤ 13 h GPU. Durée attendue ~8–12 h.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+ST_SCRIPT="${ROOT}/1_Transformer/scripts/run_052_baseline_utterance_large_14k_v12_spm5k_freeze15k_nohup.sh"
+
+if [[ -f "${ROOT}/.venv/bin/activate" ]]; then
+  # shellcheck source=/dev/null
+  source "${ROOT}/.venv/bin/activate"
+fi
+
+require_gpu_free() {
+  if pgrep -af "^python.*pipeline\.py (train|run)" >/dev/null 2>&1; then
+    echo "ERROR: entraînement GPU encore actif sur Modyco :" >&2
+    pgrep -af "^python.*pipeline\.py (train|run)" >&2 || true
+    exit 2
+  fi
+  echo "OK: aucun pipeline.py train/run Python actif."
+}
+
+FORCE=0
+for arg in "$@"; do
+  case "$arg" in
+    --force) FORCE=1 ;;
+    -h|--help|help)
+      sed -n '1,8p' "$0" | tail -n +2
+      exit 0
+      ;;
+    *)
+      echo "Argument inconnu: ${arg}" >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [[ "$FORCE" != "1" ]]; then
+  require_gpu_free
+fi
+
+chmod +x "$ST_SCRIPT"
+
+ensure_spm_5k() {
+  local spm_model="datasets/processed/spm/fr-en_5000.model"
+  if [[ -f "$spm_model" ]]; then
+    echo "=== $(date -Is) SPM existant : ${spm_model} ==="
+    return 0
+  fi
+  echo "=== $(date -Is) SPM 5k absent — entraînement avant pré-vol ==="
+  local manifests="datasets/manifests/fr-en"
+  local target_txt="${manifests}/train.target.txt"
+  if [[ ! -f "$target_txt" && -f "${manifests}/train.tsv" ]]; then
+    python -c "
+import csv
+from pathlib import Path
+manifest = Path('${manifests}/train.tsv')
+target = Path('${target_txt}')
+with manifest.open(encoding='utf-8') as handle_in, target.open('w', encoding='utf-8') as handle_out:
+    for row in csv.DictReader(handle_in, delimiter='\t'):
+        handle_out.write(row['tgt_text'].strip() + '\n')
+"
+  fi
+  python 1_Transformer/3_spm.py \
+    --langpair fr-en \
+    --vocab-size 5000 \
+    --manifests-root datasets/manifests \
+    --train-text "${target_txt}" \
+    --overwrite
+}
+
+ensure_spm_5k
+
+echo "=== $(date -Is) Pré-vol ST L-14k v12 SPM 5k gel 15k (Modyco, run_052) ==="
+python 1_Transformer/pipeline.py train \
+  --config 1_Transformer/configs/fr-en/base_utterance_large_14k_v12_spm5k_freeze15k.yaml \
+  --run-id run_052_transformer_baseline_utterance_large_14k_v12_spm5k_freeze15k \
+  --dry-run
+
+echo "=== $(date -Is) Délégation → ${ST_SCRIPT} ==="
+exec bash "$ST_SCRIPT"
