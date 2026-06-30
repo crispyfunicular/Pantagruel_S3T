@@ -9,7 +9,7 @@ Référence : [embarrassingly_simple_approach.pdf](embarrassingly_simple_approac
 - Stages données S3T `0`–`3` exécutés (`datasets/manifests/fr-en/*.tsv`).
 - GPU recommandé ; pour debug pipeline, `microsoft/phi-2` dans `configs/fr-en/b1.yaml`.
 - Accès Hugging Face pour Pantagruel et le LLM.
-- B2bis (Qwen / Mistral) : voir [recap_decodeurs.md](recap_decodeurs.md) ; Mistral 7B requiert `bitsandbytes` (`load_in_4bit: true`).
+- B2bis (Qwen / Llama / Mistral) : voir [recap_decodeurs.md](recap_decodeurs.md) ; Mistral 7B requiert `bitsandbytes` (`load_in_4bit: true`) ; Llama-3.2-3B requiert un token HF (modèle gated).
 
 ## Commandes
 
@@ -64,6 +64,7 @@ Sous `runs/fr-en/<run_id>/` (ou `experiment.output_dir` dans le YAML) :
 | Config | LLM | Format prompt | Quantisation |
 |--------|-----|---------------|--------------|
 | `configs/fr-en/b2bis_qwen25_3b.yaml` | Qwen2.5-3B-Instruct | `qwen_chatml` | non |
+| `configs/fr-en/b1_utterance_large_14k_llama32_3b.yaml` | Llama-3.2-3B-Instruct | `llama_inst` | non |
 | `configs/fr-en/b2bis_mistral_7b.yaml` | Mistral-7B-Instruct-v0.3 | `mistral_inst` | 4-bit |
 
 Chaque LLM nécessite un **projecteur réentraîné** (dimensions d'embedding différentes). Les checkpoints Phi-2 B1 ne sont pas réutilisables.
@@ -74,12 +75,13 @@ python 2_speechLLM/pipeline.py train \
   --run-id run_010_speechllm_b2bis_qwen25_3b
 ```
 
-Champs YAML clés : `model.llm_name`, `prompt.format` (`phi2` | `qwen_chatml` | `mistral_inst`), `model.load_in_4bit`.
+Champs YAML clés : `model.llm_name`, `prompt.format` (`phi2` | `qwen_chatml` | `llama_inst` | `mistral_inst`), `model.load_in_4bit`.
 
 ## VRAM
 
 - **Phi-2** : pilote pipeline sur GPU 12–16 Go (batch réduit dans `b1.yaml`).
 - **Qwen2.5-3B** : ~7 Go full-precision (config `b2bis_qwen25_3b.yaml`).
+- **Llama-3.2-3B** : ~7–8 Go full-precision (`b1_utterance_large_14k_llama32_3b.yaml`) ; token HF requis.
 - **Mistral-7B** : ~5 Go en 4-bit (`b2bis_mistral_7b.yaml`, `pip install bitsandbytes`).
 
 ## Format d'entraînement
@@ -90,6 +92,7 @@ Le format dépend du LLM (`prompt.format` dans le YAML) :
 |--------|----------|
 | `phi2` (défaut B1) | `USER: <speech> <prompt> ASSISTANT: <traduction>` |
 | `qwen_chatml` | `<\|im_start\|>user\n<speech><prompt>\n<\|im_start\|>assistant\n<traduction>` |
+| `llama_inst` | `<\|begin_of_text\|><\|start_header_id\|>user…<speech><prompt><\|eot_id\|><\|start_header_id\|>assistant…<traduction>` |
 | `mistral_inst` | `[INST] <speech><prompt> [/INST] <traduction>` |
 
 La loss ne s'applique qu'aux tokens de la traduction (après le marqueur assistant).

@@ -30,6 +30,17 @@ def test_build_prompt_text_parts_mistral_inst() -> None:
     assert parts.assistant_marker == "[/INST]"
 
 
+def test_build_prompt_text_parts_llama_inst() -> None:
+    parts = build_prompt_text_parts("llama_inst", "Translate.")
+    assert (
+        parts.prefix == "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n"
+    )
+    assert parts.suffix == (
+        "Translate.<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+    )
+    assert parts.assistant_marker == "<|start_header_id|>assistant<|end_header_id|>"
+
+
 def test_resolve_prompt_format_explicit() -> None:
     config = {
         "prompt": {"format": "mistral_inst"},
@@ -50,6 +61,15 @@ def test_resolve_prompt_format_infers_from_llm_name() -> None:
         == "mistral_inst"
     )
     assert resolve_prompt_format({"model": {"llm_name": "microsoft/phi-2"}}) == "phi2"
+
+
+def test_resolve_prompt_format_infers_llama() -> None:
+    assert (
+        resolve_prompt_format(
+            {"model": {"llm_name": "meta-llama/Llama-3.2-3B-Instruct"}}
+        )
+        == "llama_inst"
+    )
 
 
 def test_resolve_prompt_format_rejects_unknown() -> None:

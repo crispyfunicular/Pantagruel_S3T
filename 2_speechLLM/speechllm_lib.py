@@ -34,8 +34,10 @@ PROJECT_ROOT = SPEECHLLM_ROOT.parent
 
 IGNORE_INDEX = -100
 
-# Formats de prompt supportés pour l'injection speech → LLM (B1 Phi-2, B2bis Qwen/Mistral).
-SUPPORTED_PROMPT_FORMATS = frozenset({"phi2", "qwen_chatml", "mistral_inst"})
+# Formats de prompt supportés pour l'injection speech → LLM (B1 Phi-2, B2bis Qwen/Mistral/Llama).
+SUPPORTED_PROMPT_FORMATS = frozenset(
+    {"phi2", "qwen_chatml", "mistral_inst", "llama_inst"}
+)
 
 
 @dataclass(frozen=True)
@@ -69,6 +71,8 @@ def resolve_prompt_format(config: dict[str, Any]) -> str:
         return "qwen_chatml"
     if "mistral" in llm_name:
         return "mistral_inst"
+    if "llama" in llm_name:
+        return "llama_inst"
     return "phi2"
 
 
@@ -96,6 +100,12 @@ def build_prompt_text_parts(format_name: str, prompt: str) -> PromptTextParts:
             prefix="[INST] ",
             suffix=f"{prompt} [/INST] ",
             assistant_marker="[/INST]",
+        )
+    if format_name == "llama_inst":
+        return PromptTextParts(
+            prefix="<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n",
+            suffix=f"{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+            assistant_marker="<|start_header_id|>assistant<|end_header_id|>",
         )
     supported = ", ".join(sorted(SUPPORTED_PROMPT_FORMATS))
     raise ValueError(
@@ -266,7 +276,7 @@ class SpeechLLMModel(nn.Module):
             llm_trust_remote_code : ``trust_remote_code`` pour le LLM / tokenizer.
             load_in_4bit : Charger le LLM en 4-bit (nécessite ``bitsandbytes``).
             load_in_8bit : Charger le LLM en 8-bit (nécessite ``bitsandbytes``).
-            prompt_format : Template chat (`phi2`, `qwen_chatml`, `mistral_inst`).
+            prompt_format : Template chat (`phi2`, `qwen_chatml`, `mistral_inst`, `llama_inst`).
             encoder_layer : Indice de couche Pantagruel (-1 = dernière couche).
             device : Périphérique cible (requis si quantisation LLM activée).
         """

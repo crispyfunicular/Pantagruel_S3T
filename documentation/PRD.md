@@ -78,10 +78,10 @@ Alternative au décodeur Transformer : **Pantagruel gelé** → downsampling →
 | Evaluate | `2_speechLLM/evaluate.py` | `evaluate` | SacreBLEU valid/test (texte brut, pas SPM) | implémenté |
 | Infer | `2_speechLLM/infer.py` | `infer` | WAV arbitraire → traduction anglaise | implémenté |
 | speechllm_lib | `2_speechLLM/speechllm_lib.py` | — | Modèle, collate, checkpoints ; **`model.encoder_layer`** (défaut `-1`) | implémenté |
-| Config | `2_speechLLM/configs/fr-en/b1.yaml` | — | Pilote Phi-2 ; B2bis Qwen/Mistral dans `b2bis_*.yaml` | implémenté |
+| Config | `2_speechLLM/configs/fr-en/b1.yaml` | — | Pilote Phi-2 ; B2bis Qwen/Llama/Mistral dans `b2bis_*.yaml` et `b1_utterance_large_14k_llama32_3b.yaml` | implémenté |
 | Orchestrateur | `2_speechLLM/pipeline.py` | `run` | `train` → `evaluate` | routeur actif |
 
-**Artifacts :** même contrat que §2.3 (`runs/<lang_pair>/<run_id>/`, `eval/sacrebleu_*.txt`, signature SacreBLEU). Checkpoints : `trainable_state` (projecteur ; + tenseurs `encoder.*` si `freeze_encoder: false`). Voir [plan_migration_speechllm.md](plan_migration_speechllm.md) et [2_speechLLM/README.md](../2_speechLLM/README.md).
+**Artifacts :** même contrat que §2.3 (`runs/<lang_pair>/<run_id>/`, `eval/sacrebleu_*.txt`, signature SacreBLEU). Checkpoints : `trainable_state` (projecteur ; + tenseurs `encoder.*` si `freeze_encoder: false`). Formats prompt LLM : `phi2`, `qwen_chatml`, `llama_inst`, `mistral_inst` (ablation Llama-3.2-3B : `run_052`, config `b1_utterance_large_14k_llama32_3b.yaml` — modèle HF gated, token requis). Voir [plan_migration_speechllm.md](plan_migration_speechllm.md) et [2_speechLLM/README.md](../2_speechLLM/README.md).
 
 ### 2.3.2 Baseline API — Gemini ST (audio → texte)
 

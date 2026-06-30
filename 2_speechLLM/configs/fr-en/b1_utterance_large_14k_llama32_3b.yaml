@@ -1,0 +1,58 @@
+# speechLLM B2bis — fr-en, utterance, Pantagruel-L-14k gelé + Llama-3.2-3B-Instruct gelé.
+#
+# Ablation LLM (P3 roadmap) : même protocole que run_012 (Phi-2 @ 15,03 test) et
+# run_018 (Qwen2.5-3B @ 12,95 test) ; seul le LLM gelé change.
+#
+# Prérequis HF : modèle gated — accepter la licence Llama 3.2 Community sur
+# https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct puis `huggingface-cli login`
+# ou `export HF_TOKEN=…`.
+#
+# Run cible : run_052_speechllm_b2bis_utterance_large_14k_llama32_3b (Modyco / OVH)
+
+experiment:
+  name: "fr-en_speechllm_b2bis_utterance_large_14k_llama32_3b"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_052_speechllm_b2bis_utterance_large_14k_llama32_3b"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  llm_name: "meta-llama/Llama-3.2-3B-Instruct"
+  llm_trust_remote_code: false
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+  load_in_4bit: false
+  load_in_8bit: false
+
+prompt:
+  format: "llama_inst"
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48
