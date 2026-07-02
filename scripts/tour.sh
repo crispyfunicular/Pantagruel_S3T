@@ -9,6 +9,9 @@
 #   ssh-copy-id mpellissier@10.8.0.2
 # Voir aussi scripts/tour.ssh.config.example et scripts/tour.bashrc.snippet
 #
+# SÉCURITÉ (agents) : ne JAMAIS utiliser ~/.ssh/id_* comme destination rsync.
+# Voir AGENTS.md § « SSH, rsync et machines distantes ».
+#
 # Usage :
 #   ./scripts/tour.sh ssh                    # shell interactif sur la tour
 #   ./scripts/tour.sh ssh 'nvidia-smi'       # commande distante

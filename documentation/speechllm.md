@@ -217,7 +217,7 @@ Modèle pré-entraîné sur ~1 000 h de parole française (`PantagrueLLM/speech-
 | `speech-large-14K` | ~14 000 h | ~24,0 |
 | `speech-large-114K` | ~114 000 h | ~25,2 |
 
-**État speechLLM :** utterance B-1k mesuré (`run_003` : **7,47** test) ; sentence_like meilleur (`run_005` : **18,83**). Encodeurs **Large** (`run_012`, `run_013`) pas encore lancés — chaque taille impose un **nouvel entraînement** du projecteur.
+**État speechLLM :** meilleur utterance = **`run_052` Llama-3.2-3B** (**16,31** test, 30 juin) ; Phi-2 L-114k `run_013` **15,24** ; L-14k `run_012` **15,03**. Mistral B2bis `run_054` **14,22** (2 juil., sous Phi-2). Piste J **clos** (`run_047`–`run_051`). Qwen B2bis `run_018` **12,95**.
 
 ---
 
@@ -270,10 +270,18 @@ Bench **utterance** (même segmentation) — ordre décroissant BLEU test :
 | Gemini 2.5 Flash | `run_001_gemini_flash_utterance_full` | 33,76 | **33,72** |
 | ST Transformer B-1k v2 | `run_004_transformer_baseline_utterance_v2` | 16,84 | **16,68** |
 | *Pantagruel papier Table 8* | — | — | *~17,5* |
+| **speechLLM B1 L-14k** | `run_012_speechllm_b1_utterance_large_14k` | **15,49** | **15,03** |
+| **speechLLM B1 L-114k** | `run_013_speechllm_b1_utterance_large_114k` | **15,92** | **15,24** |
+| speechLLM B1 L-14k couche 9 | `run_047_speechllm_b1_utterance_large_14k_layer9` | **15,10** | **14,00** |
+| speechLLM B1 L-14k couche 6 | `run_048_speechllm_b1_utterance_large_14k_layer6` | **13,69** | **12,41** |
+| speechLLM B1 L-14k contrôle couche -1 | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | **14,57** | **13,58** |
+| speechLLM B2bis L-14k + Qwen2.5-3B | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | **13,96** | **12,95** |
+| speechLLM B2bis L-14k + Llama-3.2-3B | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | **18,28** | **16,31** |
+| speechLLM B2bis L-14k + Mistral-7B 4-bit | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | **14,76** | **14,22** |
 | **speechLLM B1** | `run_003_speechllm_b1_utterance_long` | **10,00** | **7,47** |
 | ST Transformer B-1k (échec) | `run_002_transformer_baseline_utterance` | 3,90 | 3,79 |
 
-**Lecture :** speechLLM utterance est **sous** la ST S3T et le papier ; la cascade/Gemini ne sont pas comparables au paradigme B1 (projecteur seul) mais fixent le plafond pratique sur m-TEDx.
+**Lecture :** meilleur speechLLM utterance = **16,31** test (`run_052` Llama) ; au-dessus de Phi-2 (`run_013` **15,24**, `run_012` **15,03**) ; Mistral 4-bit **14,22** (sous Phi-2) ; Qwen sous Phi-2. La cascade/Gemini fixent le plafond pratique sur m-TEDx.
 
 ---
 
@@ -315,10 +323,11 @@ bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-114k
 
 ## 10. Résumé
 
-1. **Fait et valide** : B1 gelé `sentence_like` (**15,89** test, `run_002`) ; ablation dégel (**18,83** test, `run_005`, +2,9 vs gelé) ; utterance B1 (**7,47** test, `run_003`).
+1. **Fait et valide** : B1 gelé `sentence_like` (**15,89** test, `run_002`) ; ablation dégel (**18,83** test, `run_005`) ; utterance L-14k/114k (**15,03** / **15,24** test, `run_012`/`run_013`) ; piste J **clos** (`run_047`–`run_051`, sous `run_012`) ; Qwen B2bis (**12,95** test, `run_018`).
 2. **Fait mais invalide** : `run_004` speechLLM (bug checkpoint) — exclu des tableaux.
-3. **Constat utterance** : speechLLM (**7,47**) << ST S3T (**16,68**) << papier (~17,5) ; hypothèses probablement trop longues — relecture qualitative avant nouveau run GPU.
-4. **À faire** : rsync `run_003` → ablation dégel utterance (`run_006`) → encodeurs 14k/114k → seeds / autres LLM.
+3. **B2bis Llama** : `run_052` **16,31** test (Modyco, 30 juin) — **meilleur speechLLM** utterance.
+4. **B2bis Mistral** : `run_054` **14,22** test (Modyco, 2 juil.) — sous Phi-2 ; ablation **clos**.
+5. **À faire** : `run_055` Llama seed 2 (réplicabilité) ; relecture qualitative `run_003`.
 
 ---
 

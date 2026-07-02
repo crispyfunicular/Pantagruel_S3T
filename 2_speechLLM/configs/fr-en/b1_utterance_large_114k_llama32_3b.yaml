@@ -1,0 +1,58 @@
+# speechLLM B2bis — fr-en, utterance, Pantagruel-L-114k gelé + Llama-3.2-3B-Instruct gelé.
+#
+# Ablation encodeur (piste H) : même recette que run_052 (Llama @ **16,31** test, L-14k) ;
+# seul changement = encodeur **L-114k** (Phi-2 : run_012 **15,03** → run_013 **15,24**).
+# Référence à battre : run_052 **16,31** test ; run_013 Phi-2 L-114k **15,24**.
+#
+# Machine cible : **OVH** (`speech-large-114K` gated sur Modyco).
+# Prérequis HF : licence Llama 3.2 + accès `PantagrueLLM/speech-large-114K`.
+#
+# Run cible : run_053_speechllm_b2bis_utterance_large_114k_llama32_3b (~3–5 h GPU OVH)
+
+experiment:
+  name: "fr-en_speechllm_b2bis_utterance_large_114k_llama32_3b"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_053_speechllm_b2bis_utterance_large_114k_llama32_3b"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-114K"
+  trust_remote_code: true
+  llm_name: "meta-llama/Llama-3.2-3B-Instruct"
+  llm_trust_remote_code: false
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+  load_in_4bit: false
+  load_in_8bit: false
+
+prompt:
+  format: "llama_inst"
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48

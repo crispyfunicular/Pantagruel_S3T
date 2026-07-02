@@ -41,37 +41,38 @@ Compléter les variantes **Pantagruel entraînées sur m-TEDx** (1–2) par des 
 
 ## File d'attente GPU
 
-Dernière mise à jour : **30 juin 2026** (piste J **clos** ; `run_052` Llama-3.2-3B **en file** sur Modyco).
+Dernière mise à jour : **2 juillet 2026** (`run_054` Mistral **14,22** test — sous Llama **16,31** ; ablation B2bis Mistral **clos**).
 
 ### OVH
 
 Hôte : `ubuntu@145.239.52.158`
 
-**État :** GPU **libre** — serveur **éteignable** tant que `run_044` n'est pas lancé.
+**État :** GPU **libre** — serveur **éteignable** tant que `run_053` n'est pas lancé.
 
-**Prochain run OVH :** **`run_044`** — speechLLM L-114k + SpecAugment ([piste H](#piste-h--speechllm--suite-des-ablations-b1--b2)). Bloqué sur Modyco (HF `speech-large-114K` gated) ; seule machine cible pour cette ablation. Durée estimée **~2–3 h GPU**.
+**Prochain run OVH :** **`run_053`** — speechLLM **L-114k + Llama-3.2-3B** ([piste H](#piste-h--speechllm--suite-des-ablations-b1--b2)) ; suite de `run_052` (**16,31** test, L-14k). Bloqué sur Modyco (HF `speech-large-114K` gated). Durée estimée **~3–5 h GPU**. Ancien candidat `run_044` (L-114k + SpecAugment + Phi-2) reste en backlog.
 
 | Pos. | Statut | Run | Variante | Piste | Notes |
 |------|--------|-----|----------|-------|-------|
 | — | **terminé** | `run_033` | ST L-114k SPM 5k | — | test **25,10** |
 | — | **terminé** | `run_038` | ST L-114k SpecAugment freq | [A](#piste-a--stabiliser-l-114k-ovh) | test **24,78** ; early stop @ 30k |
 | — | **terminé** | `run_042` | ST L-114k warmup 10k | [A](#piste-a--stabiliser-l-114k-ovh) | test **24,11** ; early stop @ 38k |
-| **1** | **à lancer** | `run_044` | speechLLM L-114k SpecAugment | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | **prochain run OVH** — config + nohup prêts |
+| **1** | **à lancer** | `run_053` | speechLLM L-114k + Llama-3.2-3B | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | **prochain run OVH** — config + scripts prêts |
 
-**Lancement `run_044` sur OVH** (après `huggingface-cli login` pour L-114k) :
+**Lancement `run_053` sur OVH** (après `huggingface-cli login` pour L-114k + Llama) :
 
 ```bash
 # Depuis la machine locale — rsync puis lancement
-rsync -avz 2_speechLLM/configs/fr-en/b1_utterance_large_114k_v5_specaug.yaml \
-  2_speechLLM/scripts/run_044_b1_utterance_large_114k_v5_specaug_nohup.sh \
-  ubuntu@145.239.52.158:~/S3T/2_speechLLM/{configs/fr-en/,scripts/}
+rsync -avz 2_speechLLM/configs/fr-en/b1_utterance_large_114k_llama32_3b.yaml \
+  2_speechLLM/scripts/run_053_b1_utterance_large_114k_llama32_3b_nohup.sh \
+  scripts/run_ovh_speechllm_114k_llama32_3b.sh \
+  ubuntu@145.239.52.158:~/S3T/
 
 ssh ubuntu@145.239.52.158 'cd ~/S3T && source .venv/bin/activate && mkdir -p logs && \
-  nohup bash 2_speechLLM/scripts/run_044_b1_utterance_large_114k_v5_specaug_nohup.sh \
-  > logs/run_044_ovh_wrapper.log 2>&1 &'
+  nohup bash scripts/run_ovh_speechllm_114k_llama32_3b.sh \
+  > logs/run_053_speechllm_chain_wrapper.log 2>&1 &'
 
 # Surveillance :
-# ssh ubuntu@145.239.52.158 'tail -f ~/S3T/logs/run_044_speechllm_b1_utterance_large_114k_v5_specaug_train_eval.log'
+# ssh ubuntu@145.239.52.158 'tail -f ~/S3T/logs/run_053_speechllm_b2bis_utterance_large_114k_llama32_3b_train_eval.log'
 ```
 
 ```mermaid
@@ -80,14 +81,14 @@ flowchart LR
     r033["run_033\n25,10 ok"]
     r038["run_038\n24,78 ok"]
     r042["run_042\n24,11 ok"]
-    r044["run_044\nà lancer"]
-    r033 --> r038 --> r042 --> r044
+    r053["run_053 Llama L-114k\nà lancer"]
+    r033 --> r038 --> r042 --> r053
   end
 ```
 
 ### Modyco
 
-**État :** GPU **libre** — waiter actif pour **`run_052`** (Llama-3.2-3B, attente approbation HF Meta après acceptation licence).
+**État :** GPU **en cours** — **`run_055`** Llama seed 2 (réplicabilité run_052, ~3 h GPU). **`run_054`** Mistral **terminé** (**14,22** test).
 
 | Pos. | Statut | Run | Variante | Piste | Notes |
 |------|--------|-----|----------|-------|-------|
@@ -98,10 +99,12 @@ flowchart LR
 | — | **terminé** | `run_049` | ST v5 seed 2 | [F](#piste-f--réplicabilité-et-seeds-multiples) | test **23,84** (vs run_026 **26,12**, run_043 **24,78**) |
 | — | **terminé** | `run_047` | speechLLM couche 9 | [J](#piste-j--speechllm--couche-de-sortie-de-lencodeur-pantagruel) | **14,00** test / **15,10** dev (22 juin) |
 | — | **terminé** | `run_048` | speechLLM couche 6 | [J](#piste-j--speechllm--couche-de-sortie-de-lencodeur-pantagruel) | **12,41** test / **13,69** dev (22 juin) — sous run_047 et run_012 |
-| — | **terminé** | `run_050` | speechLLM L-14k seed 2 | [F](#piste-f--réplicabilité-et-seeds-multiples) | **14,01** test / **14,56** dev (22–23 juin) — légèrement sous run_012 **15,03** |
+| — | **terminé** | `run_050` | speechLLM L-14k seed 2 (Phi-2) | [F](#piste-f--réplicabilité-et-seeds-multiples) | **14,01** test / **14,56** dev (22–23 juin) — légèrement sous run_012 **15,03** |
 | — | **terminé** | `run_051` | speechLLM contrôle couche -1 | [J](#piste-j--speechllm--couche-de-sortie-de-lencodeur-pantagruel) | **13,58** test / **14,57** dev (27 juin) — sous run_012 **15,03** |
 | — | **échec** | `run_036` | ST warmup 10k (reprise) | warmup ablation | **0,60** test (23 juin) — **ne pas relancer** |
-| **1** | **en file** | `run_052` | speechLLM L-14k + Llama-3.2-3B | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | waiter HF actif ; ~**3,5–5 h** GPU estimées ; format `llama_inst` implémenté |
+| — | **terminé** | `run_052` | speechLLM L-14k + Llama-3.2-3B | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | **16,31** test / **18,28** dev (30 juin) — **meilleur speechLLM** ; au-dessus run_013 **15,24** |
+| — | **terminé** | `run_054` | speechLLM L-14k + Mistral-7B 4-bit | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | **14,22** test / **14,76** dev (2 juil.) — sous run_052 et run_012 ; timeout 14 h @ ~16,9k |
+| **1** | **en cours** | `run_055` | speechLLM L-14k + Llama seed 2 | [F](#piste-f--réplicabilité-et-seeds-multiples) | réplicabilité run_052 ; ~3 h GPU |
 
 #### Historique scripts Modyco récents
 
@@ -115,11 +118,12 @@ flowchart LR
 | 22 juin 20h53 | 23 juin 00h24 | waiter `048→050` | `run_050` | **ok** — **14,01** test / **14,56** dev (~2,9 h GPU) |
 | 23 juin 00h24 | 23 juin 02h01 | waiter `050→036` | `run_036` | **échec** — **0,60** test (warmup 10k L-14k instable) |
 | 23 juin 06h07 | 27 juin 02h09 | `run_modyco_speechllm_14k_encoder_control.sh` | `run_051` | **ok** — **13,58** test / **14,57** dev (~2,9 h GPU) |
-| 30 juin 18h26 | — | `run_modyco_wait_hf_then_speechllm_llama32_3b.sh` | `run_052` | **en file** — attente approbation HF Llama-3.2-3B |
+| 30 juin 18h26 | 30 juin 20h47 | `run_modyco_wait_hf_then_speechllm_llama32_3b.sh` | `run_052` | **ok** — **16,31** test / **18,28** dev (~2,7 h GPU) |
+| 1 juil. 11h57 | 2 juil. 01h57 | `run_modyco_speechllm_14k_mistral_7b.sh` | `run_054` | **ok** — **14,22** test / **14,76** dev (~14 h GPU, timeout ; éval manuelle post-hoc) |
 
-Logs : `logs/run_048_*`, `logs/run_050_*`, `logs/run_051_*`, `logs/run_052_modyco_wait_hf_chain.log`, `logs/chain_048_050_modyco_wait.log`, `logs/chain_050_036_modyco_wait.log`.
+Logs : `logs/run_048_*`, `logs/run_050_*`, `logs/run_051_*`, `logs/run_052_*`, `logs/run_054_*`.
 
-**Blocage connu :** modèles HF `speech-large-114K` **gated** sur Modyco — réserver speechLLM L-114k (`run_044`) à **OVH**. **`meta-llama/Llama-3.2-3B-Instruct`** : licence acceptée, approbation Meta en cours (waiter `run_052`).
+**Blocage connu :** modèles HF `speech-large-114K` **gated** sur Modyco — réserver speechLLM L-114k (`run_053`, `run_044`) à **OVH**.
 
 ```mermaid
 flowchart LR
@@ -128,17 +132,24 @@ flowchart LR
     r048["run_048 couche 6\n12,41 ok"]
     r050["run_050 seed2\n14,01 ok"]
     r051["run_051 contrôle\n13,58 ok"]
-    r052["run_052 Llama\nen file HF"]
-    r047 --> r048 --> r050 --> r051 --> r052
+    r052["run_052 Llama\n16,31 ok"]
+    r054["run_054 Mistral\n14,22 ok"]
+    r047 --> r048 --> r050 --> r051 --> r052 --> r054
   end
 ```
 
-**Waiters :** `run_modyco_wait_hf_then_speechllm_llama32_3b.sh` **actif** (lance `run_052` dès accès HF).
+**Waiters :** aucun actif.
 
 ```bash
-# Surveillance run_052 (waiter puis train) :
-# tail -f ~/S3T/logs/run_052_modyco_wait_hf_chain.log
-# tail -f ~/S3T/logs/run_052_speechllm_b2bis_utterance_large_14k_llama32_3b_train_eval.log
+# Lancement run_055 (Modyco) :
+rsync -az 2_speechLLM/configs/fr-en/b1_utterance_large_14k_llama32_3b_seed2.yaml \
+  2_speechLLM/scripts/run_055_b1_utterance_large_14k_llama32_3b_seed2_nohup.sh \
+  scripts/run_modyco_speechllm_14k_llama32_3b_seed2.sh \
+  -e "ssh -i ~/.ssh/id_ed25519" mpellissier@10.8.0.2:~/S3T/
+./scripts/tour.sh ssh 'cd ~/S3T && source .venv/bin/activate && mkdir -p logs && \
+  nohup bash scripts/run_modyco_speechllm_14k_llama32_3b_seed2.sh \
+  > logs/run_055_speechllm_chain_wrapper.log 2>&1 &'
+# tail -f ~/S3T/logs/run_055_speechllm_b2bis_utterance_large_14k_llama32_3b_seed2_train_eval.log
 ```
 
 ### Légende des statuts
@@ -164,7 +175,7 @@ Ordre de priorité **scientifique** (indépendant de la disponibilité GPU). Cro
 | Pri. | Piste | Action concrète | Machine cible | Run(s) | Statut |
 |------|-------|-----------------|---------------|--------|--------|
 | — | **OVH** | Chaîne 038→042 terminée ; **`run_044`** **à lancer** | OVH | `run_044` | **à lancer** — prochain run OVH |
-| — | **Modyco** | `run_052` Llama-3.2-3B en file (waiter HF) | Modyco | `run_052` | **en file** |
+| — | **Modyco** | GPU libre — `run_054` Mistral **ok** (**14,22**) ; B2bis Mistral **clos** | Modyco | — | — |
 | **P0** | [D](#piste-d--cohérence-greedy--beam-pour-bestpt) | Réévaluer run_026 et run_037 avec `last.pt` | Modyco | `run_026_eval_lastpt`, `run_037_eval_lastpt` | **ok** |
 | **P0** | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | Relecture qualitative `run_003` | local | — | **à faire** |
 | **P1** | [B](#piste-b--batch-effectif-intermédiaire-modyco) | Batch 32 | Modyco | `run_046` | **échec** (collapse **2,76**) |
@@ -174,7 +185,7 @@ Ordre de priorité **scientifique** (indépendant de la disponibilité GPU). Cro
 | **P2** | [F](#piste-f--réplicabilité-et-seeds-multiples) | 2e seed ST run_026 (`seed: 1`) | Modyco | `run_049` | **ok** — **23,84** |
 | **P2** | [F](#piste-f--réplicabilité-et-seeds-multiples) | 2e seed speechLLM (run_012) | Modyco | `run_050` | **ok** — **14,01** (légèrement sous run_012 **15,03**) |
 | **P3** | [E](#piste-e--vocabulaire-spm-avec-gel-encodeur-prolongé) | SPM 5k + gel encodeur 15k L-14k (run_033 L-114k **25,10** ≈ papier) | Modyco | — | **backlog** — priorité basse |
-| **P3** | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | B2 — Llama-3.2-3B | Modyco | `run_052` | **en file** — code + config prêts ; waiter HF actif |
+| **P3** | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | B2 — Llama-3.2-3B | Modyco | `run_052` | **ok** — **16,31** test (30 juin) — **meilleur speechLLM** |
 | **P3** | [G](#piste-g--extensions-multilingues-fres-et-frpt) | fr→es / fr→pt (clone configs + `2_prepare`) | — | — | **backlog** |
 | **P3** | [K](#piste-k--baselines-st-open-source-réplicables) | Éval SeamlessM4T v2 / Canary / Granite / Ollama sur m-TEDx | local | — | **backlog** |
 | — | [I](#piste-i--tâches-downstream-non-st) | NER / SLU / SER | — | — | **hors scope** |
@@ -205,7 +216,8 @@ Ordre de priorité **scientifique** (indépendant de la disponibilité GPU). Cro
 | speechLLM couche 6 | `run_048` | **12,41** | ok (Modyco, 22 juin) — sous run_047 et run_012 ; dev **13,69** |
 | speechLLM L-14k seed 2 | `run_050` | **14,01** | ok (Modyco, 22–23 juin) — légèrement sous run_012 **15,03** ; dev **14,56** |
 | speechLLM contrôle couche -1 | `run_051` | **13,58** | ok (Modyco, 27 juin) — sous run_012 **15,03** ; dev **14,57** |
-| speechLLM L-14k + Llama-3.2-3B | `run_052` | — | **en file** (Modyco, waiter HF ; ~3,5–5 h GPU estimées) |
+| speechLLM L-14k + Llama-3.2-3B | `run_052` | **16,31** | ok (Modyco, 30 juin) — **meilleur speechLLM** ; dev **18,28** |
+| speechLLM L-14k + Mistral-7B 4-bit | `run_054` | **14,22** | ok (Modyco, 2 juil.) — sous run_052 et Phi-2 ; dev **14,76** ; timeout 14 h |
 | speechLLM B1 L-14k gelé | `run_012` | **15,03** | ok — référence piste J / B2bis |
 
 Référence papier (Table 8, fr→en, utterance) : B-1k **17,5 ± 0,4** ; L-14k **24,0 ± 0,4** ; L-114k **25,2 ± 0,4**.
@@ -377,9 +389,12 @@ Voir la [roadmap](#roadmap-des-prochaines-pistes) (P0–P3) et la [file Modyco /
 | Relecture qualitative `run_003` | — | P0 | à faire |
 | Ablation dégel utterance (LR `5e-5`) | `run_006` | P1 | **ok** — **9,60** |
 | Ablation couche encodeur (Piste J) | `run_047`–`run_051` | P1 | **ok** — 9 **14,00** ; 6 **12,41** ; -1 **13,58** — **pas de gain** |
-| Relancer L-114k SpecAugment | `run_044` | P1 | **à lancer sur OVH** — **prochain run OVH** |
+| Relancer L-114k SpecAugment | `run_044` | P1 | **backlog** (Phi-2 ; SpecAugment n'a pas aidé en L-14k) |
 | 2e seed | `run_050` | P2 | **ok** — **14,01** (vs run_012 **15,03**) |
-| B2 Llama-3.2-3B | `run_052` | P3 | **en file** — format `llama_inst` + config prêts ; waiter Modyco |
+| B2 Llama-3.2-3B L-14k | `run_052` | P3 | **ok** — **16,31** test (30 juin) — **meilleur speechLLM** |
+| B2 Llama-3.2-3B L-114k | `run_053` | P3 | **à lancer sur OVH** — suite run_052 (~3–5 h GPU) |
+| B2 Mistral-7B 4-bit L-14k | `run_054` | P3 | **ok** — **14,22** test (2 juil.) — sous Llama et Phi-2 ; ablation **clos** |
+| B2 Llama seed 2 L-14k | `run_055` | P2 | **à lancer sur Modyco** — réplicabilité run_052 (~3 h GPU) |
 | SpecAugment speechLLM | run_039 vs run_045 | clos | **n'aide pas** (13,84 → 13,69) |
 
 ---
@@ -437,7 +452,7 @@ Config de départ : dupliquer [`b1_utterance_large_14k.yaml`](../2_speechLLM/con
 
 ### Priorité
 
-**P1 — clos** : ablation piste J terminée — couche 9 **14,00** > couche 6 **12,41** > contrôle -1 **13,58** ≪ run_012 **15,03**. **Prochaine action GPU Modyco :** `run_052` Llama-3.2-3B (waiter HF). **Prochaine action OVH :** `run_044` (speechLLM L-114k SpecAugment).
+**P1 — clos** : ablation piste J terminée. **`run_052` Llama L-14k** : **16,31** test — **meilleur speechLLM**. **`run_054` Mistral** : **14,22** test — B2bis Mistral **clos** (sous Phi-2). **Prochaine action OVH :** `run_053` (L-114k + Llama). **Prochaine action Modyco :** `run_055` (Llama seed 2, réplicabilité).
 
 ---
 
@@ -496,11 +511,13 @@ Synthèse alignée sur la [file d'attente](#file-dattente-gpu) et la [roadmap](#
 
 | Machine | Pos. | Run / action | Piste | Statut |
 |---------|------|--------------|-------|--------|
-| OVH | **1** | `run_044` speechLLM L-114k | H | **à lancer** — **prochain run OVH** |
+| OVH | **1** | `run_053` Llama L-114k | H | **à lancer** — **prochain run OVH** (~3–5 h GPU) |
 | OVH | — | `run_033` ST L-114k SPM 5k | — | **ok** — test **25,10** |
 | OVH | — | `run_038` SpecAugment freq | A | **ok** — **24,78** |
 | OVH | — | `run_042` warmup 10k | A | **ok** — **24,11** |
-| Modyco | **1** | `run_052` Llama-3.2-3B | H | **en file** (waiter HF) |
+| Modyco | **1** | `run_055` Llama seed 2 | F | **à lancer** (~3 h GPU) |
+| Modyco | — | `run_054` Mistral-7B L-14k | H | **ok** — **14,22** |
+| Modyco | — | `run_052` Llama-3.2-3B | H | **ok** — **16,31** |
 | Modyco | — | `run_051` contrôle couche -1 | J | **ok** — **13,58** |
 | Modyco | — | `run_048` couche encodeur 6 | J | **ok** — **12,41** |
 | Modyco | — | `run_050` seed 2 speechLLM | F | **ok** — **14,01** |
@@ -508,7 +525,8 @@ Synthèse alignée sur la [file d'attente](#file-dattente-gpu) et la [roadmap](#
 | local | — | relecture qualitative run_003 | H-P0 | **à faire** |
 | — | — | SPM + gel long | E | **backlog** |
 | — | — | fr→es / fr→pt | G | **backlog** |
-| — | — | Mistral-7B 4-bit (B2bis) | H-P3 | **backlog** |
+| — | — | Mistral-7B 4-bit (B2bis) | H-P3 | **run_054** — **ok** **14,22** ; clos |
+| — | — | Llama seed 2 (B2bis) | F-P2 | **run_055** — à lancer Modyco |
 | — | — | Baselines open source (SeamlessM4T, etc.) | K | **backlog** |
 | — | — | NER / SLU / SER | I | **hors scope** |
 

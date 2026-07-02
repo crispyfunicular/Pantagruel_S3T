@@ -103,7 +103,8 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | speechLLM L-114k **v3** (128 tok) | `run_022_speechllm_b1_utterance_large_114k_v3` | 5.28 | **4.78** | **échec** |
 | speechLLM L-14k **replicate** | `run_023_speechllm_b1_utterance_large_14k_replicate` | 15.26 | **14.23** | ok (48 tok — proche `run_012` 15,03) |
 | speechLLM L-14k + **Qwen2.5-3B** | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | 13.96 | **12.95** | ok — sous Phi-2 |
-| speechLLM L-14k + **Llama-3.2-3B** | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | — | — | **en file** (Modyco, waiter HF ; ~3,5–5 h GPU ; format `llama_inst`) |
+| speechLLM L-14k + **Llama-3.2-3B** | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | 18.28 | **16.31** | ok (Modyco, 30 juin — **meilleur speechLLM** ; au-dessus run_013 **15,24**) |
+| speechLLM L-14k + **Mistral-7B 4-bit** | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | 14.76 | **14.22** | ok (Modyco, 2 juil. — sous run_052 et Phi-2 ; au-dessus Qwen **12,95**) |
 | speechLLM L-14k **unfreeze** | `run_015_speechllm_b1_utterance_large_14k_unfreeze` | 3.90 | 3.65 | ok — **sous** run_012 gelé (15,03) |
 | speechLLM L-114k **v2** (128 tok) | `run_017_speechllm_b1_utterance_large_114k_v2` | 6.56 | **5.60** | **échec** |
 
@@ -129,8 +130,8 @@ Trois axes **indépendants** (ne pas les confondre) :
 - Protocole d'évaluation **figé** : [documentation/protocole_evaluation.md](documentation/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
 - **Bench utterance** — [documentation/protocole_utterance_pantagruel.md](documentation/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
 - **Encodeur 14k / 114k** : meilleur ST **`run_026`** (**26,12**) ; **`run_049`** seed2 **ok** (**23,84**) ; **`run_046`** batch-32 **échec** (**2,76**) ; **`run_043`** **24,78** ; **`run_037`** **24,55** ; L-114k **`run_033`** **25,10** ; **`run_038`** **24,78** ; **`run_042`** **24,11** — voir [`documentation/protocole_utterance_pantagruel.md`](documentation/protocole_utterance_pantagruel.md).
-- **OVH** : chaîne **terminée** ; **`run_044`** speechLLM L-114k **à lancer** — **prochain run OVH** (~2–3 h GPU) ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
-- **Modyco** : piste J **clos** — `run_051` **13,58** test (27 juin) ; **`run_052`** Llama-3.2-3B **en file** (waiter HF actif, ~3,5–5 h GPU estimées) ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
+- **OVH** : chaîne **terminée** ; **`run_053`** speechLLM L-114k + Llama **à lancer** — **prochain run OVH** (~3–5 h GPU) ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
+- **Modyco** : **`run_055`** Llama seed 2 **en cours** (~3 h GPU) ; **`run_054`** Mistral **terminé** — **14,22** test ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
 - **Gemini 3.5 Flash** : **`run_005` utterance v2 terminé** — **41,42 / 41,09** ; **`run_004` sentence_like v2 terminé** — **38,69 / 36,76** (garde-fous, `max_output_tokens=8192`, `thinking_level: minimal`) ; devant Gemini 2.5 sur les deux découpages. Runs `run_003_*` v1 **non conclusifs** (troncature).
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.

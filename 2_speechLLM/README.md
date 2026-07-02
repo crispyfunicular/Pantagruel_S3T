@@ -65,6 +65,9 @@ Sous `runs/fr-en/<run_id>/` (ou `experiment.output_dir` dans le YAML) :
 |--------|-----|---------------|--------------|
 | `configs/fr-en/b2bis_qwen25_3b.yaml` | Qwen2.5-3B-Instruct | `qwen_chatml` | non |
 | `configs/fr-en/b1_utterance_large_14k_llama32_3b.yaml` | Llama-3.2-3B-Instruct | `llama_inst` | non |
+| `configs/fr-en/b1_utterance_large_14k_llama32_3b_seed2.yaml` | Llama-3.2-3B-Instruct (seed 2) | `llama_inst` | non |
+| `configs/fr-en/b1_utterance_large_114k_llama32_3b.yaml` | Llama-3.2-3B-Instruct (L-114k) | `llama_inst` | non |
+| `configs/fr-en/b1_utterance_large_14k_mistral_7b.yaml` | Mistral-7B-Instruct (4-bit) | `mistral_inst` | oui |
 | `configs/fr-en/b2bis_mistral_7b.yaml` | Mistral-7B-Instruct-v0.3 | `mistral_inst` | 4-bit |
 
 Chaque LLM nécessite un **projecteur réentraîné** (dimensions d'embedding différentes). Les checkpoints Phi-2 B1 ne sont pas réutilisables.

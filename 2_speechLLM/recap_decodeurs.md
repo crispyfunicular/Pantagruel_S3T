@@ -57,3 +57,13 @@ Tous les runs partagent le même protocole d'éval (conforme `eval_protocol.py`)
 |-----|----------|-----|----------|---------------|----------------|
 | `run_002_speechllm_b1_sentence_long` | speech-base-1K (gelé) | Phi-2 (gelé) | sentence_like | **19.99** | **15.89** |
 | `run_005_speechllm_b1_sentence_long_unfreeze_encoder` | speech-base-1K (dégelé) | Phi-2 (gelé) | sentence_like | 19.25 | 18.83 |
+| `run_012_speechllm_b1_utterance_large_14k` | speech-large-14K (gelé) | Phi-2 (gelé) | utterance | **15.49** | **15.03** |
+| `run_013_speechllm_b1_utterance_large_114k` | speech-large-114K (gelé) | Phi-2 (gelé) | utterance | **15.92** | **15.24** |
+
+## Résultats B2bis (utterance, L-14k gelé)
+
+| Run | LLM | Format prompt | SacreBLEU dev | SacreBLEU test | Statut |
+|-----|-----|---------------|---------------|----------------|--------|
+| `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | Qwen2.5-3B-Instruct | `qwen_chatml` | **13.96** | **12.95** | ok (sous Phi-2) |
+| `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | Llama-3.2-3B-Instruct | `llama_inst` | **18.28** | **16.31** | ok — **meilleur speechLLM** utterance |
+| `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | Mistral-7B-Instruct-v0.3 | `mistral_inst` | **14.76** | **14.22** | ok (Modyco, 4-bit, 2 juil.) — sous Phi-2 **15.03** et Llama **16.31** ; au-dessus Qwen **12.95** |

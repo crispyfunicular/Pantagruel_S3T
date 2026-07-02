@@ -1,0 +1,58 @@
+# speechLLM B2bis — fr-en, utterance, Pantagruel-L-14k gelé + Mistral-7B-Instruct-v0.3 gelé (4-bit).
+#
+# Ablation LLM (piste H) : même protocole que run_052 (Llama-3.2-3B @ **16,31** test) ;
+# seul le LLM gelé change. Mistral-7B est la référence qualité open source retenue en B2bis.
+# Références : run_052 Llama **16,31** ; run_018 Qwen **12,95** ; run_012 Phi-2 **15,03**.
+#
+# Prérequis : `bitsandbytes` (4-bit), VRAM ~10–14 Go (L-14k + Mistral 4-bit).
+# Machine cible : **Modyco** (L-14k accessible ; L-114k gated).
+#
+# Run cible : run_054_speechllm_b2bis_utterance_large_14k_mistral_7b (~4–8 h GPU)
+
+experiment:
+  name: "fr-en_speechllm_b2bis_utterance_large_14k_mistral_7b"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_054_speechllm_b2bis_utterance_large_14k_mistral_7b"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  llm_name: "mistralai/Mistral-7B-Instruct-v0.3"
+  llm_trust_remote_code: true
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+  load_in_4bit: true
+  load_in_8bit: false
+
+prompt:
+  format: "mistral_inst"
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48
