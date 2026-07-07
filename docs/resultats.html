@@ -6,7 +6,7 @@
   <script src="theme-init.js"></script>
 
   <title>Résultats — Pantagruel S3T</title>
-  <meta name="description" content="Synthèse comparative des scores BLEU pour les 5 variantes du projet S3T et impact des paramètres speechLLM.">
+  <meta name="description" content="Synthèse comparative des scores BLEU pour les 6 variantes du projet S3T et impact des paramètres speechLLM.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -28,6 +28,7 @@
       --v3: #b45309; --v3-soft: #fffbeb;
       --v4: #047857; --v4-soft: #ecfdf5;
       --v5: #0e7490; --v5-soft: #ecfeff;
+      --v6: #be185d; --v6-soft: #fdf2f8;
       --ref: #64748b; --ref-soft: #f1f5f9;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -85,11 +86,12 @@
     .stat-card-v3 { background: var(--v3-soft); border: 1px solid rgba(180,83,9,0.2); }
     .stat-card-v4 { background: var(--v4-soft); border: 1px solid rgba(4,120,87,0.2); }
     .stat-card-v5 { background: var(--v5-soft); border: 1px solid rgba(14,116,144,0.2); }
+    .stat-card-v6 { background: var(--v6-soft); border: 1px solid rgba(190,24,93,0.2); }
     .stat-card-ref { background: var(--ref-soft); border: 1px solid rgba(100,116,139,0.2); }
     .stat-bleu { font-size: 1.6rem; font-weight: 700; line-height: 1; font-family: var(--mono); margin-bottom: 0.2rem; }
     .stat-bleu-v1 { color: var(--v1); } .stat-bleu-v2 { color: var(--v2); }
     .stat-bleu-v3 { color: var(--v3); } .stat-bleu-v4 { color: var(--v4); }
-    .stat-bleu-v5 { color: var(--v5); } .stat-bleu-ref { color: var(--ref); }
+    .stat-bleu-v5 { color: var(--v5); } .stat-bleu-v6 { color: var(--v6); } .stat-bleu-ref { color: var(--ref); }
     .stat-label { font-size: 0.79rem; font-weight: 600; color: var(--text); margin-bottom: 0.15rem; }
     .stat-sub { font-size: 0.74rem; color: var(--muted); }
 
@@ -347,7 +349,7 @@
 
   <header class="hero">
     <h1>Résultats</h1>
-    <p class="lead">Synthèse des scores SacreBLEU sur m-TEDx FR→EN pour les cinq variantes du projet. Le BLEU (<a href="evaluation.html#bleu">voir Évaluation</a>) mesure le recouvrement lexical avec les références : il sert surtout à comparer des systèmes sur un même test, pas comme une « note sur 100 ».</p>
+    <p class="lead">Synthèse des scores SacreBLEU sur m-TEDx FR→EN pour les six variantes du projet. Le BLEU (<a href="evaluation.html#bleu">voir Évaluation</a>) mesure le recouvrement lexical avec les références : il sert surtout à comparer des systèmes sur un même test, pas comme une « note sur 100 ».</p>
   </header>
 
   <main class="container">
@@ -367,6 +369,11 @@
           <div class="stat-bleu stat-bleu-v4">37,4</div>
           <div class="stat-label">4 · Cascade ASR→MT</div>
           <div class="stat-sub">utterance · run_001</div>
+        </a>
+        <a class="stat-card stat-card-v6" href="variante-6.html#run_072" title="run_072–074 — Open baselines ST (éval en cours sur OVH)">
+          <div class="stat-bleu stat-bleu-v6" style="font-size:1.1rem;">en cours</div>
+          <div class="stat-label">6 · Open baselines ST</div>
+          <div class="stat-sub">utterance · run_072→074</div>
         </a>
         <a class="stat-card stat-card-v1" href="variante-1.html#run_026" title="run_026 — Transformer L-14k v5 SpecAugment (26,1 BLEU)">
           <div class="stat-bleu stat-bleu-v1">26,1</div>
@@ -396,7 +403,7 @@
       </div>
 
       <div class="note note-info" style="margin-top:0.75rem;">
-        <strong>Pourquoi Gemini et Cascade font mieux ?</strong> Ces deux variantes s’appuient sur des modèles pré-entraînés sur d’immenses corpus — Gemini via une API cloud, Cascade en chaînant Whisper (transcription) et Marian MT (traduction). Les variantes 1, 2 et 5, elles, entraînent un modèle de zéro ou presque sur les seules données m-TEDx.
+        <strong>Pourquoi Gemini et Cascade font mieux ?</strong> Ces deux variantes s’appuient sur des modèles pré-entraînés sur d’immenses corpus — Gemini via une API cloud, Cascade en chaînant Whisper (transcription) et Marian MT (traduction). La <strong>variante 6</strong> teste des alternatives <em>open weights</em> reproductibles (Whisper-ST, SeamlessM4T v2, Canary-1B) sur le même protocole. Les variantes 1, 2 et 5 entraînent un modèle de zéro ou presque sur les seules données m-TEDx.
         <br><br>
         <strong>Données déjà vues ?</strong> Gemini et Whisper ont peut-être déjà rencontré des enregistrements proches de m-TEDx lors de leur entraînement initial : les conférences TED sont librement téléchargeables sur Internet. Ce biais potentiel complique la comparaison directe avec les approches entraînées uniquement sur le corpus du projet.
       </div>
@@ -622,7 +629,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>16,3</strong> (<code>run_052</code> Llama-3.2-3B) ; Mistral 4-bit <code>run_054</code> 14,2 ; Phi-2 L-114k <code>run_013</code> 15,2 ; ablation couche encodeur (piste J) sans gain.',
+          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>16,3</strong> (<code>run_052</code> Llama-3.2-3B) ; réplication IMAG Phi-2 <code>run_059</code> <strong>14,8</strong> ; Llama seed 1 OVH <code>run_055</code> <strong>13,7</strong> ; Mistral 4-bit <code>run_054</code> 14,2.',
         chartRows: [
           { id: 3, color: 'v3', href: 'variante-3.html', chartLabel: '3 · Gemini 3.5 Flash', tableLabel: 'Gemini 3.5 Flash v2', score: 41.1 },
           { id: 4, color: 'v4', href: 'variante-4.html', chartLabel: '4 · Cascade', tableLabel: 'Cascade ASR→MT', score: 37 },
@@ -650,6 +657,10 @@
             params: 'L-14k · v3 · gel 5k puis dégel' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_052', score: 16.3,
             params: 'L-14k gelé · Llama-3.2-3B · 48 tok — meilleur speechLLM' },
+          { id: 2, color: 'v2', tableLabel: 'speechLLM B1 IMAG', run: 'run_059', score: 14.8,
+            params: 'L-14k gelé · Phi-2 · lig-gpu6 OAR · proche run_012 (15,0)' },
+          { id: 2, color: 'v2', tableLabel: 'speechLLM Llama seed 1', run: 'run_055', score: 13.7,
+            params: 'OVH · réplicabilité run_052 · early stop @ 6k' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM B2bis', run: 'run_054', score: 14.2,
             params: 'L-14k gelé · Mistral-7B 4-bit · 48 tok — sous Phi-2' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_013', score: 15.2,

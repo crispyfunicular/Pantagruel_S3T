@@ -6,7 +6,7 @@
   <script src="theme-init.js"></script>
 
   <title>Pipeline — Pantagruel S3T</title>
-  <meta name="description" content="Présentation simple du pipeline S3T : étapes communes (scripts_communs) et étapes spécifiques aux variantes (Transformer, speechLLM, Gemini, Cascade, Speech_Text).">
+  <meta name="description" content="Présentation simple du pipeline S3T : étapes communes (scripts_communs) et étapes spécifiques aux variantes (Transformer, speechLLM, Gemini, Cascade, Speech_Text, Open baselines).">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -123,6 +123,7 @@
     .vchip-v3 { border: 1px solid rgba(217, 119, 6, 0.35); border-left: 3px solid #d97706; background: #fffbeb; color: #b45309; }
     .vchip-v4 { border: 1px solid rgba(5, 150, 105, 0.35); border-left: 3px solid #059669; background: #ecfdf5; color: #047857; }
     .vchip-v5 { border: 1px solid rgba(8, 145, 178, 0.35); border-left: 3px solid #0891b2; background: #ecfeff; color: #0e7490; }
+    .vchip-v6 { border: 1px solid rgba(190, 24, 93, 0.35); border-left: 3px solid #be185d; background: #fdf2f8; color: #be185d; }
 
     .page-end {
       margin-top: 2.5rem;
@@ -372,14 +373,15 @@
           <line x1="472" y1="87" x2="520" y2="87" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrP)"/>
 
           <!-- Variants box -->
-          <rect x="522" y="18" width="440" height="138" rx="10" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+          <rect x="522" y="18" width="440" height="158" rx="10" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
           <text x="742" y="45" text-anchor="middle" font-size="12" font-weight="800" fill="#e2e8f0">Étapes par variante</text>
 
-          <text x="548" y="70" font-size="10.2" fill="#cbd5e1">[1] Transformer ST (SPM → train → evaluate → infer)</text>
-          <text x="548" y="90" font-size="10.2" fill="#cbd5e1">[2] speechLLM (train → evaluate → infer)</text>
-          <text x="548" y="110" font-size="10.2" fill="#cbd5e1">[3] Gemini (evaluate / infer via API)</text>
-          <text x="548" y="130" font-size="10.2" fill="#cbd5e1">[4] Cascade ASR→MT (evaluate / infer)</text>
-          <text x="548" y="150" font-size="10.2" fill="#cbd5e1">[5] Speech_Text (wrappers de la V1)</text>
+          <text x="548" y="68" font-size="10.2" fill="#cbd5e1">[1] Transformer ST (SPM → train → evaluate → infer)</text>
+          <text x="548" y="86" font-size="10.2" fill="#cbd5e1">[2] speechLLM (train → evaluate → infer)</text>
+          <text x="548" y="104" font-size="10.2" fill="#cbd5e1">[3] Gemini (evaluate / infer via API)</text>
+          <text x="548" y="122" font-size="10.2" fill="#cbd5e1">[4] Cascade ASR→MT (evaluate / infer)</text>
+          <text x="548" y="140" font-size="10.2" fill="#cbd5e1">[5] Speech_Text (wrappers de la V1)</text>
+          <text x="548" y="158" font-size="10.2" fill="#fbcfe8">[6] Open baselines ST (evaluate / infer, zero-shot)</text>
         </svg>
       </div>
 
@@ -555,6 +557,7 @@
               <th>Variante 3</th>
               <th>Variante 4</th>
               <th>Variante 5</th>
+              <th>Variante 6</th>
             </tr>
           </thead>
           <tbody>
@@ -565,6 +568,7 @@
               <td>—</td>
               <td>—</td>
               <td><span class="term">wrapper<span class="term-tip term-tip-left">Script qui délègue à la variante 1 (Transformer) avec une config adaptée (ex. encodeur Speech_Text).</span></span> (via V1)</td>
+              <td>—</td>
             </tr>
             <tr>
               <td><strong>4 · <span class="term">Train<span class="term-tip term-tip-left">Fine-tuning : le modèle apprend à traduire à partir des paires audio–texte du corpus d’entraînement.</span></span></strong></td>
@@ -573,6 +577,7 @@
               <td>—</td>
               <td>—</td>
               <td><span class="term">wrapper<span class="term-tip term-tip-left">Script qui délègue à la variante 1 (Transformer) avec une config adaptée (ex. encodeur Speech_Text).</span></span> (via V1)</td>
+              <td>—</td>
             </tr>
             <tr>
               <td><strong>5 · <span class="term">Évaluer<span class="term-tip term-tip-left">Décodage sur valid/test + calcul BLEU (et autres métriques) — produit <code>eval/metrics.json</code>.</span></span></strong></td>
@@ -581,6 +586,7 @@
               <td><code>3_Gemini/evaluate_gemini.py</code></td>
               <td><code>4_cascade/evaluate_cascade.py</code></td>
               <td><span class="term">wrapper<span class="term-tip term-tip-left">Script qui délègue à la variante 1 (Transformer) avec une config adaptée (ex. encodeur Speech_Text).</span></span> (via V1)</td>
+              <td><code>6_open_baselines/evaluate_open.py</code></td>
             </tr>
             <tr>
               <td><strong>6 · <span class="term">Inférer<span class="term-tip term-tip-left">Traduction d’un fichier audio arbitraire (hors corpus) — sortie JSONL avec l’hypothèse anglaise.</span></span></strong></td>
@@ -589,6 +595,7 @@
               <td><code>3_Gemini/infer_gemini.py</code></td>
               <td><code>4_cascade/infer_cascade.py</code></td>
               <td><span class="term">wrapper<span class="term-tip term-tip-left">Script qui délègue à la variante 1 (Transformer) avec une config adaptée (ex. encodeur Speech_Text).</span></span> (via V1)</td>
+              <td><code>6_open_baselines/infer_open.py</code></td>
             </tr>
           </tbody>
         </table>
@@ -600,6 +607,7 @@
         <a class="vchip vchip-v3" href="variante-3.html">3 · Gemini</a>
         <a class="vchip vchip-v4" href="variante-4.html">4 · Cascade</a>
         <a class="vchip vchip-v5" href="variante-5.html">5 · Speech_Text</a>
+        <a class="vchip vchip-v6" href="variante-6.html">6 · Open ST</a>
       </div>
     </div>
 

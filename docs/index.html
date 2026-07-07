@@ -6,7 +6,7 @@
   <script src="theme-init.js"></script>
 
   <title>Pantagruel S3T — Traduction de la parole FR→EN</title>
-  <meta name="description" content="Comparaison de cinq approches de traduction automatique de la parole français→anglais avec Pantagruel sur m-TEDx (SacreBLEU).">
+  <meta name="description" content="Comparaison de six approches de traduction automatique de la parole français→anglais avec Pantagruel sur m-TEDx (SacreBLEU).">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -146,7 +146,13 @@
 
     @media (min-width: 900px) {
       .arch-overview .variants-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .arch-overview .variants-grid {
+        grid-template-columns: repeat(6, 1fr);
       }
     }
 
@@ -222,6 +228,7 @@
     .variant-chip--v3 { border-color: rgba(217, 119, 6, 0.35); border-left: 3px solid #d97706; }
     .variant-chip--v4 { border-color: rgba(5, 150, 105, 0.35); border-left: 3px solid #059669; }
     .variant-chip--v5 { border-color: rgba(8, 145, 178, 0.35); border-left: 3px solid #0891b2; }
+    .variant-chip--v6 { border-color: rgba(190, 24, 93, 0.35); border-left: 3px solid #be185d; }
 
     .chart-row {
       display: grid;
@@ -258,6 +265,7 @@
     .chart-bar--v2 { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
     .chart-bar--v3 { background: linear-gradient(90deg, #f59e0b, #d97706); }
     .chart-bar--v4 { background: linear-gradient(90deg, #10b981, #059669); }
+    .chart-bar--v6 { background: linear-gradient(90deg, #f472b6, #be185d); }
     .chart-bar--v5 { background: linear-gradient(90deg, #06b6d4, #0891b2); }
     .chart-bar--ref { background: linear-gradient(90deg, #94a3b8, #64748b); }
 
@@ -272,6 +280,7 @@
     .model-name--v2 { color: #6d28d9; }
     .model-name--v3 { color: #b45309; }
     .model-name--v4 { color: #047857; }
+    .model-name--v6 { color: #be185d; }
     .model-name--v5 { color: #0e7490; }
 
     .model-name strong { font-weight: inherit; color: inherit; }
@@ -499,9 +508,9 @@
   </nav>
 
   <header class="hero container">
-    <h1>Cinq façons de traduire la parole</h1>
+    <h1>Six façons de traduire la parole</h1>
     <p class="lead">
-      Comparaison de cinq approches pour passer de l’audio français au texte anglais sur le corpus
+      Comparaison de six approches pour passer de l’audio français au texte anglais sur le corpus
       <a href="https://www.openslr.org/100" target="_blank" rel="noopener noreferrer"><strong>m-TEDx</strong></a>, avec le même protocole d’évaluation (<strong>SacreBLEU</strong>).
       Projet de réplication autour de l’encodeur <a href="https://huggingface.co/PantagrueLLM" target="_blank" rel="noopener noreferrer"><strong>Pantagruel</strong></a> (<a href="http://lig-getalp.imag.fr/fr/accueil/" target="_blank" rel="noopener noreferrer">LIG-GETALP (UGA)</a>).
     </p>
@@ -515,9 +524,9 @@
     <div class="card">
       <h2>Vue d’ensemble</h2>
       <p class="section-intro">Toutes les variantes partagent la même préparation des données (étapes 0–2), puis appliquent une recette distincte.</p>
-      <div class="arch-overview" aria-label="Schéma des cinq variantes">
+      <div class="arch-overview" aria-label="Schéma des six variantes">
         <svg viewBox="0 0 480 112" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="arch-index-desc">
-          <desc id="arch-index-desc">Audio français, préparation commune, puis cinq recettes de traduction</desc>
+          <desc id="arch-index-desc">Audio français, préparation commune, puis six recettes de traduction</desc>
           <defs>
             <marker id="arrIdx" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
               <polygon points="0 0,8 3,0 6" fill="#64748b"/>
@@ -538,13 +547,14 @@
           <line x1="240" y1="104" x2="240" y2="112" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrIdx)"/>
         </svg>
         <div class="arch-variants">
-          <p class="arch-variants-label">5 recettes distinctes</p>
+          <p class="arch-variants-label">6 recettes distinctes</p>
           <div class="variants-grid">
             <a href="variante-1.html" class="variant-chip variant-chip--v1"><span class="model-name model-name--v1"><strong>1 · Transformer</strong></span><span class="variant-chip-desc">E2E Pantagruel</span></a>
             <a href="variante-2.html" class="variant-chip variant-chip--v2"><span class="model-name model-name--v2"><strong>2 · speechLLM</strong></span><span class="variant-chip-desc">LLM + adaptateur</span></a>
             <a href="variante-3.html" class="variant-chip variant-chip--v3"><span class="model-name model-name--v3"><strong>3 · Gemini</strong></span><span class="variant-chip-desc">API cloud</span></a>
             <a href="variante-4.html" class="variant-chip variant-chip--v4"><span class="model-name model-name--v4"><strong>4 · Cascade</strong></span><span class="variant-chip-desc">ASR puis MT</span></a>
             <a href="variante-5.html" class="variant-chip variant-chip--v5"><span class="model-name model-name--v5"><strong>5 · Speech_Text</strong></span><span class="variant-chip-desc">Encodeur multimodal</span></a>
+            <a href="variante-6.html" class="variant-chip variant-chip--v6"><span class="model-name model-name--v6"><strong>6 · Open ST</strong></span><span class="variant-chip-desc">Zero-shot ouvert</span></a>
           </div>
         </div>
         <p class="pipeline-detail-link"><a href="pipeline.html">Voir le pipeline détaillé →</a></p>
@@ -620,7 +630,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>16,3</strong> (<code>run_052</code> Llama-3.2-3B) ; Mistral 4-bit <code>run_054</code> 14,2 ; Phi-2 L-114k <code>run_013</code> 15,2 ; ablation couche encodeur (piste J) sans gain.",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). <strong>Variante 6</strong> (open baselines : Whisper-ST, SeamlessM4T v2, Canary-1B) est en cours d’évaluation sur OVH (<code>run_072</code>–<code>run_074</code>) — alternative reproductible à Gemini. Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>16,3</strong> (<code>run_052</code> Llama-3.2-3B).",
         rows: [
           {
             id: 3,

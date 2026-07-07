@@ -81,7 +81,7 @@
     .vchip-v1 { border: 1px solid rgba(99,102,241,0.3); background: #eef2ff; color: #4338ca; }
     .vchip-v2 { border: 1px solid rgba(124,58,237,0.3); background: #ede9fe; color: #6d28d9; }
     .vchip-v4 { border: 1px solid rgba(5,150,105,0.3); background: #ecfdf5; color: #047857; }
-    .vchip-v5 { border: 1px solid rgba(8,145,178,0.3); background: #ecfeff; color: #0e7490; }
+    .vchip-v6 { border: 1px solid rgba(190,24,93,0.3); background: #fdf2f8; color: #be185d; }
     .page-end { margin-top: 1.5rem; padding: 1.5rem 0 1.25rem; background: #e8eaef; border-top: 1px solid rgba(0,0,0,0.1); }
     .page-end footer { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; color: var(--muted); font-size: 0.72rem; text-align: center; }
     .prompt-block { background: #0f172a; border-radius: 12px; padding: 1rem 1.15rem; margin: 0.5rem 0 1rem; }
@@ -121,7 +121,7 @@
   </div>
 
   <header class="hero">
-    <div class="variant-badge">Variante 3 / 5</div>
+    <div class="variant-badge">Variante 3 / 6</div>
     <h1>Gemini (API cloud)</h1>
     <p class="lead">Envoyer l’audio à Google Gemini et récupérer la traduction anglaise. Zéro entraînement local — la ligne de référence « prêt à l’emploi ».</p>
     <p class="tagline">« On envoie l’audio à Google Gemini et on récupère la traduction anglaise, sans entraînement local. »</p>
@@ -314,6 +314,9 @@
       <div class="note">
         <strong>Interprétation :</strong> Gemini 3.5 Flash v2 (<code>run_005</code>, 41,1 BLEU) est le meilleur score global du projet. Mais les extraits m-TEDx étant accessibles en ligne, une partie de la performance peut refléter une familiarité avec le corpus. Comparer avec prudence aux systèmes entraînés uniquement sur m-TEDx.
       </div>
+      <div class="note note-warn" style="margin-top:0.75rem;">
+        <strong>Alternative ouverte :</strong> la <a href="variante-6.html">variante 6</a> (Whisper-ST, SeamlessM4T v2, Canary-1B) vise une référence reproductible sans API — évaluation en cours sur OVH (<code>run_072</code>–<code>run_074</code>).
+      </div>
     </div>
 
     <!-- Pistes d’amélioration -->
@@ -363,6 +366,7 @@
       <a href="variante-2.html" class="vchip vchip-v2">2 · speechLLM</a>
       <a href="variante-4.html" class="vchip vchip-v4">4 · Cascade</a>
       <a href="variante-5.html" class="vchip vchip-v5">5 · Speech_Text</a>
+      <a href="variante-6.html" class="vchip vchip-v6">6 · Open ST</a>
     </div>
   </div>
 

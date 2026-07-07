@@ -80,7 +80,7 @@
     .vchip-v1 { border: 1px solid rgba(99,102,241,0.3); background: #eef2ff; color: #4338ca; }
     .vchip-v2 { border: 1px solid rgba(124,58,237,0.3); background: #ede9fe; color: #6d28d9; }
     .vchip-v3 { border: 1px solid rgba(217,119,6,0.3); background: #fffbeb; color: #b45309; }
-    .vchip-v5 { border: 1px solid rgba(8,145,178,0.3); background: #ecfeff; color: #0e7490; }
+    .vchip-v6 { border: 1px solid rgba(190,24,93,0.3); background: #fdf2f8; color: #be185d; }
     .page-end { margin-top: 1.5rem; padding: 1.5rem 0 1.25rem; background: #e8eaef; border-top: 1px solid rgba(0,0,0,0.1); }
     .page-end footer { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; color: var(--muted); font-size: 0.72rem; text-align: center; }
     /* Specific: two-stage diagram label */
@@ -118,7 +118,7 @@
   </div>
 
   <header class="hero">
-    <div class="variant-badge">Variante 4 / 5</div>
+    <div class="variant-badge">Variante 4 / 6</div>
     <h1>Cascade ASR → MT</h1>
     <p class="lead">D’abord transcrire le français (ASR avec Whisper), puis traduire ce texte en anglais (MT avec Marian). La baseline classique « deux modèles en série ».</p>
     <p class="tagline">« D’abord transcrire le français à l’écrit, puis traduire ce texte en anglais, comme le ferait un humain avec deux outils séparés. »</p>
@@ -257,7 +257,7 @@
         </table>
       </div>
       <div class="note">
-        <strong>Très bon BLEU utterance (37,4)</strong> — deuxième meilleur score du projet, derrière Gemini 3.5 v2 (41). La transcription française intermédiaire est un avantage pour l’interprétabilité : on peut lire les erreurs et comprendre pourquoi la traduction échoue.
+        <strong>Très bon BLEU utterance (37,4)</strong> — deuxième meilleur score du projet, derrière Gemini 3.5 v2 (41). La transcription française intermédiaire est un avantage pour l’interprétabilité : on peut lire les erreurs et comprendre pourquoi la traduction échoue. Voir aussi la <a href="variante-6.html">variante 6</a> pour des ST open directes (sans étape ASR intermédiaire).
       </div>
     </div>
 
@@ -336,6 +336,7 @@
       <a href="variante-2.html" class="vchip vchip-v2">2 · speechLLM</a>
       <a href="variante-3.html" class="vchip vchip-v3">3 · Gemini</a>
       <a href="variante-5.html" class="vchip vchip-v5">5 · Speech_Text</a>
+      <a href="variante-6.html" class="vchip vchip-v6">6 · Open ST</a>
     </div>
   </div>
 
