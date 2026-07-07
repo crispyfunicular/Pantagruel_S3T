@@ -3,7 +3,7 @@
 > **Page web** — [crispyfunicular.github.io/Pantagruel_S3T](https://crispyfunicular.github.io/Pantagruel_S3T/) · [bona-pellissier.net](https://bona-pellissier.net/)  
 > **Site web** : [`docs/`](docs/) (HTML, CSS, JS, audio — publié tel quel par GitHub Pages). **Réglage dépôt** : *Settings → Pages → Deploy from a branch → `main` / `/docs`*. **Documentation projet** : [`documentation/`](documentation/) (PRD, protocoles, rapports). **Audio du carrousel** : après `2_prepare` (utterance), `python scripts/extract_web_audio.py` (sortie `docs/audio/`). Site personnel ([bona-pellissier.net](https://bona-pellissier.net/)) : copier `docs/*.html` et `docs/audio/` vers l’hébergement web.
 
-Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`, `fr-es`), évaluée avec **SacreBLEU**. Le dépôt expose **cinq variantes** partageant la même préparation des données (étapes 0–2), avec un choix de **découpage audio** au moment de `prepare` :
+Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`, `fr-es`), évaluée avec **SacreBLEU**. Le dépôt expose **six variantes** partageant la même préparation des données (étapes 0–2), avec un choix de **découpage audio** au moment de `prepare` :
 
 | # | Dossier | Variante | Statut | Orchestrateur |
 |---|---------|----------|--------|---------------|
@@ -13,6 +13,7 @@ Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`,
 | **3** | [`3_Gemini/`](3_Gemini/) | Gemini 2.5 / 3.5 Flash (API audio→EN) | implémenté | [`3_Gemini/pipeline.py`](3_Gemini/pipeline.py) |
 | **4** | [`4_cascade/`](4_cascade/) | Cascade ASR→MT (Whisper + Marian) | implémenté (evaluate/infer) | [`4_cascade/pipeline.py`](4_cascade/pipeline.py) |
 | **5** | [`5_Pantagruel_multimodal/`](5_Pantagruel_multimodal/) | Pantagruel `Speech_Text` + décodeur ST (expérimental) | implémenté (délég. `1_Transformer`) | [`5_Pantagruel_multimodal/pipeline.py`](5_Pantagruel_multimodal/pipeline.py) |
+| **6** | [`6_open_baselines/`](6_open_baselines/) | ST open source zero-shot (Whisper-ST, SeamlessM4T v2, Canary-1B) | implémenté (evaluate/infer) | [`6_open_baselines/pipeline.py`](6_open_baselines/pipeline.py) |
 
 | Document | Rôle |
 |----------|------|
@@ -97,7 +98,9 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | ST L-114k **v7 SPM 5k** | `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` | 25.27 | **25.10** | ok (OVH, 17 juin — best dev **25,53** @ 70k ; ≈ papier **25,2**) |
 | ST L-114k **v10 warmup 10k** | `run_042_transformer_baseline_utterance_large_114k_v10_warmup10k` | 23.83 | **24.11** | ok (OVH, 19 juin — sous run_033 **25,10**) |
 | ST L-14k **v5 replicate** | `run_043_transformer_baseline_utterance_large_14k_v5_replicate` | 25.36 | **24.78** | ok (17 juin — réplication run_026 **26,12**, écart ~1,3) |
-| speechLLM L-114k **v5 SpecAugment** | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | — | — | **échec** Modyco (HF gated) — **à lancer sur OVH** (prochain run OVH) |
+| speechLLM L-114k **v5 SpecAugment** | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | 15.06 | **14.27** | ok (OVH, 3 juil.) — **sous** run_013 **15,24** ; waiter 053→044 |
+| speechLLM **L-114k + Llama-3.2-3B** | `run_053_speechllm_b2bis_utterance_large_114k_llama32_3b` | 13.05 | **12.61** | ok (OVH, 2 juil.) — **sous** run_052 **16,31** et run_013 **15,24** ; early stop @ ~10,4k |
+| speechLLM **L-114k couche 9** | `run_056_speechllm_b1_utterance_large_114k_layer9` | 15.30 | **14.52** | ok (OVH, 3 juil. — ~7,2 h GPU) — au-dessus run_047 L-14k couche 9 **14,00** ; **sous** run_013 **15,24** |
 | speechLLM L-14k **v9 SpecAugment fort** | `run_045_speechllm_b1_utterance_large_14k_v9_specaug_strong` | 14.40 | **13.69** | ok (17 juin — sous run_023 **14,23**) |
 | speechLLM L-14k **v3** (128 tok) | `run_021_speechllm_b1_utterance_large_14k_v3` | 5.84 | **5.48** | **échec** |
 | speechLLM L-114k **v3** (128 tok) | `run_022_speechllm_b1_utterance_large_114k_v3` | 5.28 | **4.78** | **échec** |
@@ -105,6 +108,12 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | speechLLM L-14k + **Qwen2.5-3B** | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | 13.96 | **12.95** | ok — sous Phi-2 |
 | speechLLM L-14k + **Llama-3.2-3B** | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | 18.28 | **16.31** | ok (Modyco, 30 juin — **meilleur speechLLM** ; au-dessus run_013 **15,24**) |
 | speechLLM L-14k + **Mistral-7B 4-bit** | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | 14.76 | **14.22** | ok (Modyco, 2 juil. — sous run_052 et Phi-2 ; au-dessus Qwen **12,95**) |
+| speechLLM L-14k + Llama seed 1 | `run_055_speechllm_b2bis_utterance_large_14k_llama32_3b_seed2` | 15.94 | **13.67** | ok (OVH, 3 juil. — réplicabilité ; sous run_052 **16,31** ; early stop @ 6k) |
+| speechLLM B1 **L-14k IMAG seed 1** | `run_070_aker_speechllm_l14k_seed2` | 15.82 | **15.41** | ok (IMAG, 7 juil.) — resume OAR 128406 ; meilleur seed 1 |
+| speechLLM B1 **L-14k IMAG** | `run_059_aker_speechllm_l14k` | 15.14 | **14.77** | ok (IMAG, 4 juil.) |
+| speechLLM B1 **L-14k IMAG repl.** | `run_068_aker_speechllm_l14k` | 15.14 | **13.71** | ok (IMAG, 5 juil.) — sous run_059 |
+| ST L-14k **v12 SPM 5k gel 15k** | `run_052_transformer_baseline_utterance_large_14k_v12_spm5k_freeze15k` | 21.77 | **21.20** | ok (OVH, 4–5 juil.) — piste E L-14k |
+| ST L-114k **v12 SPM 5k gel 15k** | `run_061_transformer_baseline_utterance_large_114k_v12_spm5k_freeze15k` | 21.27 | **21.28** | ok (OVH, 5 juil.) — piste E L-114k ; reprise ~55k |
 | speechLLM L-14k **unfreeze** | `run_015_speechllm_b1_utterance_large_14k_unfreeze` | 3.90 | 3.65 | ok — **sous** run_012 gelé (15,03) |
 | speechLLM L-114k **v2** (128 tok) | `run_017_speechllm_b1_utterance_large_114k_v2` | 6.56 | **5.60** | **échec** |
 
@@ -130,8 +139,9 @@ Trois axes **indépendants** (ne pas les confondre) :
 - Protocole d'évaluation **figé** : [documentation/protocole_evaluation.md](documentation/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
 - **Bench utterance** — [documentation/protocole_utterance_pantagruel.md](documentation/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
 - **Encodeur 14k / 114k** : meilleur ST **`run_026`** (**26,12**) ; **`run_049`** seed2 **ok** (**23,84**) ; **`run_046`** batch-32 **échec** (**2,76**) ; **`run_043`** **24,78** ; **`run_037`** **24,55** ; L-114k **`run_033`** **25,10** ; **`run_038`** **24,78** ; **`run_042`** **24,11** — voir [`documentation/protocole_utterance_pantagruel.md`](documentation/protocole_utterance_pantagruel.md).
-- **OVH** : chaîne **terminée** ; **`run_053`** speechLLM L-114k + Llama **à lancer** — **prochain run OVH** (~3–5 h GPU) ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
-- **Modyco** : **`run_055`** Llama seed 2 **en cours** (~3 h GPU) ; **`run_054`** Mistral **terminé** — **14,22** test ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
+- **OVH** : **`run_062` Mistral** train terminé (early stop ~17k, best dev **12,44**) — **éval en cours** ; waiter **`run_063`** ST SpecAugment fort en file ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
+- **IMAG (aker)** : **`run_071`** Phi-2 seed 42 **en cours** (OAR **128411**, 7 juil.) ; **`run_070` ok** (**15,41** test, seed 1) ; **`run_059`** **14,77** / **`run_068`** **13,71**.
+- **Modyco** : **HS** (juil. 2026) — runs reportés sur **OVH** / **IMAG** ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
 - **Gemini 3.5 Flash** : **`run_005` utterance v2 terminé** — **41,42 / 41,09** ; **`run_004` sentence_like v2 terminé** — **38,69 / 36,76** (garde-fous, `max_output_tokens=8192`, `thinking_level: minimal`) ; devant Gemini 2.5 sur les deux découpages. Runs `run_003_*` v1 **non conclusifs** (troncature).
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.
@@ -162,7 +172,8 @@ scripts_communs/bootstrap.sh
          ├─► [2_speechLLM]    train → evaluate → infer
          ├─► [3_Gemini]       evaluate → infer
          ├─► [4_cascade]      evaluate → infer   (ASR→MT)
-         └─► [5_Pantagruel_multimodal] spm → train → evaluate → infer
+         ├─► [5_Pantagruel_multimodal] spm → train → evaluate → infer
+         └─► [6_open_baselines] evaluate → infer   (ST open zero-shot)
 ```
 
 | # | Script | Routeur | Variantes |
@@ -174,6 +185,7 @@ scripts_communs/bootstrap.sh
 | — | `3_Gemini/{evaluate_gemini,infer_gemini}.py` | `3_Gemini/pipeline.py` | **3** |
 | — | `4_cascade/{evaluate_cascade,infer_cascade}.py` | `4_cascade/pipeline.py` | **4** |
 | — | `5_Pantagruel_multimodal/{train,evaluate,infer}_multimodal.py` | `5_Pantagruel_multimodal/pipeline.py` | **5** |
+| — | `6_open_baselines/{evaluate_open,infer_open}.py` | `6_open_baselines/pipeline.py` | **6** |
 
 **Découpage audio (`2_prepare`) :**
 
@@ -264,6 +276,12 @@ Ces baselines servent de points de référence pour les tâches aval (texte + pa
 - **Implémentation** : [`5_Pantagruel_multimodal/`](5_Pantagruel_multimodal/) — encodeur `Speech_Text_*` + décodeur Transformer (délégation `1_Transformer` 3–6), données `sentence_like`.
 - **Cible** : alignement futur sur le même contrat d’artefacts `runs/.../eval/` et scoring SacreBLEU.
 - **Doc** : [5_Pantagruel_multimodal/README.md](5_Pantagruel_multimodal/README.md).
+
+### 6) `6_open_baselines` — ST open source zero-shot
+- **But** : alternative **reproductible** à Gemini (variante 3) — modèles open weights évalués sur le même protocole SacreBLEU, sans API ni entraînement m-TEDx.
+- **Implémentation** : [`6_open_baselines/`](6_open_baselines/) — Whisper-ST (`task=translate`), SeamlessM4T v2, Canary-1B (NeMo optionnel) dans `open_common.py`, `evaluate` / `infer`, configs YAML.
+- **Cible** : même contrat d’artefacts `runs/.../eval/` que les variantes 3–4 ; runs OVH `run_072`–`run_074`.
+- **Doc** : [PRD §2.3.5](documentation/PRD.md#235-baselines-st-open-source--variante-6-6_open_baselines), [recommandations Piste K](documentation/recommandations.md#piste-k--baselines-st-open-source-réplicables).
 
 **PyTorch CUDA** (recommandé sur machine GPU) :
 
@@ -691,6 +709,26 @@ python 4_cascade/pipeline.py infer \
   --input-audio path/to/audio.wav -v
 ```
 
+**Open baselines (variante 6, zero-shot, open weights) :**
+
+```bash
+python 6_open_baselines/pipeline.py evaluate \
+  --config 6_open_baselines/configs/fr-en/seamless_m4t_v2_large.yaml \
+  --run-id run_073_open_seamlessm4t_v2_utterance -v
+
+python 6_open_baselines/pipeline.py infer \
+  --config 6_open_baselines/configs/fr-en/whisper_large_v3_st.yaml \
+  --input-audio path/to/audio.wav -v
+```
+
+Sur OVH (GPU libre) :
+
+```bash
+nohup bash scripts/run_ovh_open_whisper_st_072.sh > logs/run_072_launch.log 2>&1 &
+nohup bash scripts/run_ovh_open_seamless_073.sh > logs/run_073_launch.log 2>&1 &
+nohup bash scripts/run_ovh_open_canary_074.sh > logs/run_074_launch.log 2>&1 &
+```
+
 Options communes : `--verbose`, `--dry-run` (`scripts_communs/pipeline.py` : aussi `--log-file`).
 
 ---
@@ -718,6 +756,9 @@ S3T/
     pipeline.py
     configs/fr-en/
   4_cascade/                  # variante 4
+    pipeline.py
+    configs/fr-en/
+  6_open_baselines/           # variante 6 — ST open zero-shot
     pipeline.py
     configs/fr-en/
   datasets/
@@ -773,18 +814,72 @@ Raccourcis optionnels : [`scripts/tour.bashrc.snippet`](scripts/tour.bashrc.snip
 
 ## Serveur IMAG aker (déploiement pipelines)
 
-Connexion : `ssh bonapelm@aker.imag.fr` — nœud **login** (pas de `nvidia-smi` direct ; jobs GPU via nœuds compute, ex. `lig-gpu1`, souvent même `$HOME` NFS).
+Chaîne SSH : **poste → ligone (bastion) → aker (login) → nœud GPU OAR** (ex. **lig-gpu6**, RTX 2080 Ti 11 Go).  
+`aker` n’est pas joignable en direct depuis l’extérieur ; PyTorch ne tourne pas sur `aker` (ulimit RAM ~80 Mo) — les jobs GPU passent par **OAR** (même `$HOME` NFS que aker).
 
-Déployer le code des **cinq pipelines** (+ `scripts_communs`, `docs/`, tests) **sans** données lourdes (`datasets/processed*`, `runs/`, `.venv`) :
+**Données** : rsync ThinkPad → **aker** (`datasets/manifests/` + `datasets/processed/`) — pas rsync direct vers un nœud GPU.  
+**PyTorch** : sur 2080 Ti (driver CUDA 12.2), installer `torch` **cu121** — `pip install torch torchaudio torchvision --index-url https://download.pytorch.org/whl/cu121` (un `pip install -r requirements.txt` seul réinstalle CUDA 13, incompatible).  
+**HF** : `hf auth login` pour les encodeurs gated (`speech-large-114K`).
+
+### Prérequis SSH (une fois)
 
 ```bash
-ssh-copy-id bonapelm@aker.imag.fr   # une fois
+# Sur le ThinkPad — clé vers le bastion (mot de passe IMAG si demandé)
+ssh-copy-id -i ~/.ssh/id_ed25519.pub bonapelm@ligone.imag.fr
+
+# Puis depuis ligone → aker
+ssh bonapelm@ligone.imag.fr
+ssh-copy-id bonapelm@aker.imag.fr
+exit
+
+# Optionnel : raccourcis SSH (voir scripts/aker.ssh.config.example)
 ./scripts/aker.sh check
-./scripts/aker.sh rsync-code
-./scripts/aker.sh rsync-checkpoint run_005_speechllm_b1_sentence_long_unfreeze_encoder
 ```
 
-Puis sur aker : `cd ~/S3T`, créer `.venv`, `pip install -r requirements.txt`, lancer infer/eval ; se connecter à un nœud GPU si besoin (`ssh lig-gpu1` ou Slurm selon politique labo).
+### Déploiement et smoke test
+
+```bash
+./scripts/aker.sh rsync-code          # pipelines + configs (sans datasets lourds)
+./scripts/run_aker_smoke.sh check     # ligone → aker → lig-gpu1
+GPU_HOST=lig-gpu2.imag.fr ./scripts/run_aker_smoke.sh all   # si vous utilisez lig-gpu2
+```
+
+Sur **lig-gpu2** (session directe) : clone GitHub requiert une clé SSH GitHub locale (`~/.ssh/id_ed25519_github` + entrée `Host github.com` dans `~/.ssh/config`). Sinon, une fois `aker.sh check` OK depuis le ThinkPad, `rsync-code` suffit (NFS partagé).
+
+### Réservation GPU (OAR)
+
+Sur **aker**, les nœuds GPU passent par **OAR** (pas de `ssh lig-gpu6` direct depuis l’extérieur) :
+
+```bash
+# Depuis aker — session interactive (≥10 h pour speechLLM L-14k complet sur 2080 Ti)
+oarsub -I -l /gpu=1,walltime=10:00:00 -p "host='lig-gpu6.imag.fr'"
+
+# Une fois sur le nœud GPU (prompt bonapelm@lig-gpu6) :
+nvidia-smi
+cd ~/S3T && source .venv/bin/activate
+bash scripts/run_aker_smoke.sh run-local
+```
+
+Clone sans clé GitHub : `git clone https://github.com/crispyfunicular/Pantagruel_S3T.git ~/S3T`
+
+Puis sur le nœud GPU : `cd ~/S3T`, `.venv`, lancer train/eval ; voir [`scripts/run_aker_smoke.sh`](scripts/run_aker_smoke.sh).
+
+Exemple speechLLM via OAR batch (lig-gpu6, walltime **≥12 h**) :
+
+```bash
+# Phi-2 seed 42 (run_059 / run_068) :
+bash -lc 'oarsub -S -l /gpu=1,walltime=12:00:00 ~/S3T/scripts/run_oar_speechllm_l14k_aker.sh'
+# Phi-2 seed 1 — piste F (run_070, relance run_069) :
+oarsub -l gpu=1,walltime=12:00:00 -n run_070_speechllm_l14k_seed2 \
+  /home/getalp/bonapelm/S3T/scripts/run_oar_speechllm_l14k_seed2_aker.sh
+./scripts/aker.sh ssh 'tail -f ~/S3T/logs/run_070_train_eval.log'
+# ou
+tail -f ~/S3T/runs/fr-en/run_070_aker_speechllm_l14k_seed2/train.log
+```
+
+**Limite VRAM** : ST L-14k v5 SpecAugment (`run_060`) provoque **OOM** sur 2080 Ti 11 Go — réserver IMAG aux runs **speechLLM** (L-14k + Phi-2 ~6 h).
+
+Rappatriement résultats : `rsync` ThinkPad ← aker (`bonapelm@aker.imag.fr:~/S3T/runs/fr-en/<run_id>/`).
 
 ---
 

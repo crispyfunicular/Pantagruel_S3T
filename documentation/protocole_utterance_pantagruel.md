@@ -63,11 +63,12 @@ python scripts_communs/pipeline.py prepare --langpair fr-en
 | speechLLM **L-14k contrôle couche -1** | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k_encoder_control.yaml` | 20k updates | **ok** — **14,57** dev / **13,58** test (Modyco, 27 juin — piste J clos ; sous run_012 **15,03**) |
 | speechLLM **L-14k + Llama-3.2-3B** | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k_llama32_3b.yaml` | early stop @ ~10,4k | **ok** — **18,28** dev / **16,31** test (Modyco, 30 juin — **meilleur speechLLM** ; au-dessus run_013 **15,24** et run_012 **15,03**) |
 | speechLLM **L-14k + Mistral-7B 4-bit** | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k_mistral_7b.yaml` | timeout 14 h @ ~16,9k ; best @ 16k | **ok** — **14,76** dev / **14,22** test (Modyco, 2 juil.) — sous run_052 **16,31** et run_012 **15,03** ; au-dessus run_018 **12,95** |
+| speechLLM **L-114k + Llama-3.2-3B** | `run_053_speechllm_b2bis_utterance_large_114k_llama32_3b` | `2_speechLLM/configs/fr-en/b1_utterance_large_114k_llama32_3b.yaml` | early stop @ ~10,4k | **ok** — **13,05** dev / **12,61** test (OVH, 2 juil.) — **sous** run_052 **16,31** et run_013 **15,24** |
 | ST **L-14k v5 replicate** | `run_043_transformer_baseline_utterance_large_14k_v5_replicate` | `1_Transformer/configs/fr-en/base_utterance_large_14k_v5_replicate.yaml` | early stop | **ok** — 25,36 / **24,78** test (Modyco, 17 juin — réplication run_026 **26,12**, écart ~1,3) |
 | speechLLM **L-14k v5** (SpecAugment) | `run_039_speechllm_b1_utterance_large_14k_v5_specaug` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k_v5_specaug.yaml` | **20k updates** | **ok** — 14,59 / **13,84** (Modyco, 16 juin — sous run_023 **14,23**) |
 | Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | `5_Pantagruel_multimodal/configs/fr-en/base_utterance_v2.yaml` | early stop | **échec** (Modyco — HF `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` 404) |
 | ST **L-14k v10** (finetune freq) | `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` | `1_Transformer/configs/fr-en/base_utterance_large_14k_v10_specaug_freq_finetune.yaml` | finetune 69k max | **ok** — 26,37 / **25,95** test (Modyco, 16 juin — sous run_026 **26,12**) |
-| speechLLM **L-114k v5** (SpecAugment) | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | `2_speechLLM/configs/fr-en/b1_utterance_large_114k_v5_specaug.yaml` | **20k updates** | **échec** Modyco (HF gated) — **à lancer sur OVH** (prochain run OVH) |
+| speechLLM **L-114k v5** (SpecAugment) | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | `2_speechLLM/configs/fr-en/b1_utterance_large_114k_v5_specaug.yaml` | **20k updates** | **ok** — **15,06** dev / **14,27** test (OVH, 3 juil.) — **sous** run_013 **15,24** ; waiter 053→044 |
 | speechLLM **L-14k v9** (SpecAugment fort) | `run_045_speechllm_b1_utterance_large_14k_v9_specaug_strong` | `2_speechLLM/configs/fr-en/b1_utterance_large_14k_v9_specaug_strong.yaml` | **20k updates** | **ok** — 14,40 / **13,69** (Modyco, 17 juin — sous run_023 **14,23** et run_039 **13,84**) |
 
 **14k / 114k** = heures de pré-entraînement Pantagruel (LeBenchmark / INA), pas un autre corpus m-TEDx : mêmes manifests `datasets/manifests/fr-en/`. Encodeurs HF : `PantagrueLLM/speech-large-14K`, `PantagrueLLM/speech-large-114K` (Table 8 : ~24,0 et ~25,2 BLEU test).
@@ -177,11 +178,11 @@ bash scripts/pull_remote_results.sh run_035_transformer_baseline_utterance_b1k_v
 # Modyco — run_044 speechLLM L-114k SpecAugment : **échec** 17 juin (HF gated) — relancer sur OVH.
 # Modyco — run_045 speechLLM L-14k SpecAugment fort : terminé 17 juin (**13,69** test, dev 14,40).
 # État 23 juin 2026 :
-# OVH — chaîne 038→042 **terminée** ; **`run_044`** speechLLM L-114k **à lancer** (prochain run OVH).
+# OVH — chaîne **053→044 terminée** (3 juil.) : run_053 **12,61** test ; run_044 SpecAugment **14,27** test — GPU **libre**.
 # Modyco — **`run_054`** Mistral-7B 4-bit **terminé** (2 juil.) : **14,22** test — sous Llama **16,31** ; ablation B2bis Mistral **clos**.
-# **`run_052`** Llama **16,31** test reste **meilleur speechLLM** ; prochain run Modyco : **`run_055`** Llama seed 2 (réplicabilité).
-# Rappatrier : bash scripts/pull_remote_results.sh run_054_speechllm_b2bis_utterance_large_14k_mistral_7b
-# Terminés récents : run_054 (14,22), run_052 (16,31), run_051 (13,58), run_050 (14,01), run_048 (12,41), run_047 (14,00), run_042 (24,11), run_038 (24,78), run_033 (25,10), run_026 (26,12)
+# **`run_052`** Llama **16,31** test reste **meilleur speechLLM** ; **`run_055`** Llama seed 1 OVH **13,67** test (3 juil.) ; **`run_059`** Phi-2 IMAG **14,77** test (4 juil.).
+# OVH — chaîne **055→052 en cours** (4 juil.) : ST L-14k gel 15k ; waiter **061→062** en file.
+# Terminés récents : run_059 (14,77 IMAG), run_055 (13,67 OVH), run_054 (14,22), run_052 (16,31), run_051 (13,58), run_050 (14,01), run_048 (12,41), run_047 (14,00), run_042 (24,11), run_038 (24,78), run_033 (25,10), run_026 (26,12)
 # speechLLM legacy (run_012/013 déjà terminés sur OVH) :
 bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-14k
 bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-114k

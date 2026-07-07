@@ -81,7 +81,7 @@ Alternative au décodeur Transformer : **Pantagruel gelé** → downsampling →
 | Config | `2_speechLLM/configs/fr-en/b1.yaml` | — | Pilote Phi-2 ; B2bis Qwen/Llama/Mistral dans `b2bis_*.yaml` et `b1_utterance_large_14k_llama32_3b.yaml` | implémenté |
 | Orchestrateur | `2_speechLLM/pipeline.py` | `run` | `train` → `evaluate` | routeur actif |
 
-**Artifacts :** même contrat que §2.3 (`runs/<lang_pair>/<run_id>/`, `eval/sacrebleu_*.txt`, signature SacreBLEU). Checkpoints : `trainable_state` (projecteur ; + tenseurs `encoder.*` si `freeze_encoder: false`). Formats prompt LLM : `phi2`, `qwen_chatml`, `llama_inst`, `mistral_inst` (ablation Llama-3.2-3B : `run_052`, config `b1_utterance_large_14k_llama32_3b.yaml` — modèle HF gated, token requis). Voir [plan_migration_speechllm.md](plan_migration_speechllm.md) et [2_speechLLM/README.md](../2_speechLLM/README.md).
+**Artifacts :** même contrat que §2.3 (`runs/<lang_pair>/<run_id>/`, `eval/sacrebleu_*.txt`, signature SacreBLEU). Checkpoints : `trainable_state` (projecteur ; + tenseurs `encoder.*` si `freeze_encoder: false`) ; `last.pt` rafraîchi tous les `train.save_every_updates` (défaut = `eval_every_updates`) avec états optimiseur/scaler pour **`train --resume`**. Formats prompt LLM : `phi2`, `qwen_chatml`, `llama_inst`, `mistral_inst` (ablation Llama-3.2-3B : `run_052`, config `b1_utterance_large_14k_llama32_3b.yaml` — modèle HF gated, token requis). Voir [plan_migration_speechllm.md](plan_migration_speechllm.md) et [2_speechLLM/README.md](../2_speechLLM/README.md).
 
 ### 2.3.2 Baseline API — Gemini ST (audio → texte)
 
@@ -136,6 +136,28 @@ CLI (routeur `5_Pantagruel_multimodal/pipeline.py`) :
 - `train` : fine-tuning ST (`4_train.py`, encodeur Speech_Text)
 - `evaluate` : SacreBLEU dev/test + mise à jour `experiments_tracking.csv`
 - `infer` : WAV arbitraire (`6_infer.py`)
+
+### 2.3.5 Baselines ST open source — variante 6 (`6_open_baselines/`)
+
+Baselines **open weights** évaluées en **zero-shot** sur les mêmes manifests que Gemini et la cascade — alternative reproductible à la variante 3 (API fermée).
+
+Principes :
+- **Entrées** : manifests `valid.tsv` / `test.tsv` issus de `2_prepare` (`segment_mode: utterance` par défaut).
+- **Chaîne** : `audio (FR)` → modèle ST pré-entraîné → `texte EN` ; métrique finale **SacreBLEU** (signature identique aux variantes 3–4).
+- **Pas d'entraînement** sur m-TEDx — comparable à Gemini et cascade.
+- **Sorties** : contrat `runs/.../eval/` identique ; `pipeline = open_baselines_st` dans `metrics.json`.
+- **Configs** : `6_open_baselines/configs/<langpair>/*.yaml` (un fichier par modèle).
+
+Backends implémentés (YAML `model.type`) :
+- `whisper_st` : Whisper `task=translate` (HF transformers).
+- `seamless_m4t_v2` : Meta SeamlessM4T v2 (HF transformers).
+- `canary_1b` : NVIDIA Canary-1B v2 (NeMo, dépendance optionnelle).
+
+CLI (routeur `6_open_baselines/pipeline.py`) :
+- `evaluate` : décodage valid/test + SacreBLEU (`--dry-run` et `--limit` disponibles).
+- `infer` : WAV arbitraire → JSONL.
+
+Runs OVH prévus : `run_072` (Whisper-ST), `run_073` (SeamlessM4T v2), `run_074` (Canary-1B).
 
 ### 2.4 Qualité logicielle et workflow de contribution
 
