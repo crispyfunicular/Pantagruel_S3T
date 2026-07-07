@@ -217,7 +217,7 @@ Modèle pré-entraîné sur ~1 000 h de parole française (`PantagrueLLM/speech-
 | `speech-large-14K` | ~14 000 h | ~24,0 |
 | `speech-large-114K` | ~114 000 h | ~25,2 |
 
-**État speechLLM :** meilleur utterance = **`run_052` Llama-3.2-3B** (**16,31** test, 30 juin) ; Phi-2 L-114k `run_013` **15,24** ; L-14k `run_012` **15,03**. Mistral B2bis `run_054` **14,22** (2 juil., sous Phi-2). Piste J **clos** (`run_047`–`run_051`). Qwen B2bis `run_018` **12,95**.
+**État speechLLM :** meilleur utterance = **`run_052` Llama-3.2-3B** (**16,31** test, 30 juin) ; Phi-2 L-114k `run_013` **15,24** ; L-14k `run_012` **15,03**. **`run_059`** Phi-2 IMAG **14,77** (4 juil.) ; **`run_055`** Llama seed 1 OVH **13,67** (3 juil.) — sous run_052. **`run_053`** Llama L-114k **12,61** (OVH) ; Mistral `run_054` **14,22**. Piste J **clos**.
 
 ---
 
@@ -277,11 +277,13 @@ Bench **utterance** (même segmentation) — ordre décroissant BLEU test :
 | speechLLM B1 L-14k contrôle couche -1 | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | **14,57** | **13,58** |
 | speechLLM B2bis L-14k + Qwen2.5-3B | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | **13,96** | **12,95** |
 | speechLLM B2bis L-14k + Llama-3.2-3B | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | **18,28** | **16,31** |
+| speechLLM B2bis L-114k + Llama-3.2-3B | `run_053_speechllm_b2bis_utterance_large_114k_llama32_3b` | **13,05** | **12,61** |
+| speechLLM B1 L-114k SpecAugment | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | **15,06** | **14,27** |
 | speechLLM B2bis L-14k + Mistral-7B 4-bit | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | **14,76** | **14,22** |
 | **speechLLM B1** | `run_003_speechllm_b1_utterance_long` | **10,00** | **7,47** |
 | ST Transformer B-1k (échec) | `run_002_transformer_baseline_utterance` | 3,90 | 3,79 |
 
-**Lecture :** meilleur speechLLM utterance = **16,31** test (`run_052` Llama) ; au-dessus de Phi-2 (`run_013` **15,24**, `run_012` **15,03**) ; Mistral 4-bit **14,22** (sous Phi-2) ; Qwen sous Phi-2. La cascade/Gemini fixent le plafond pratique sur m-TEDx.
+**Lecture :** meilleur speechLLM utterance = **16,31** test (`run_052` Llama L-14k) ; **`run_053`** Llama L-114k **12,61** — passer de L-14k à L-114k **dégrade** avec Llama. Phi-2 : `run_013` **15,24**, `run_012` **15,03**. Mistral 4-bit **14,22** (sous Phi-2) ; Qwen sous Phi-2.
 
 ---
 
@@ -327,7 +329,7 @@ bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-114k
 2. **Fait mais invalide** : `run_004` speechLLM (bug checkpoint) — exclu des tableaux.
 3. **B2bis Llama** : `run_052` **16,31** test (Modyco, 30 juin) — **meilleur speechLLM** utterance.
 4. **B2bis Mistral** : `run_054` **14,22** test (Modyco, 2 juil.) — sous Phi-2 ; ablation **clos**.
-5. **À faire** : `run_055` Llama seed 2 (réplicabilité) ; relecture qualitative `run_003`.
+5. **Réplicabilité Llama** : `run_055` **13,67** test (OVH, 3 juil.) — sous run_052 ; **`run_059`** Phi-2 IMAG **14,77** (4 juil.) ; relecture qualitative `run_003`.
 
 ---
 

@@ -39,6 +39,7 @@ train:
   gradient_clip_norm: 1.0
   amp_dtype: "fp16"
   eval_every_updates: 1000
+  save_every_updates: 1000  # last.pt périodique (reprise --resume après walltime)
   max_eval_batches: 20
   max_target_tokens: 256
 

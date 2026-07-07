@@ -117,6 +117,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_train.add_argument("--run-id", required=True)
     p_train.add_argument("--output-dir", type=Path, default=None)
     p_train.add_argument("--prefer-cpu", action="store_true")
+    p_train.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reprendre depuis checkpoints/last.pt ou best.pt",
+    )
+    p_train.add_argument("--resume-from", type=Path, default=None)
+    p_train.add_argument("--overwrite", action="store_true")
     p_train.set_defaults(func=cmd_train)
 
     p_eval = subparsers.add_parser("evaluate", help="SacreBLEU valid/test")
@@ -150,6 +157,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_run.add_argument("--output-dir", type=Path, default=None)
     p_run.add_argument("--prefer-cpu", action="store_true")
     p_run.add_argument("--beam-size", type=int, default=0)
+    p_run.add_argument("--resume", action="store_true")
+    p_run.add_argument("--resume-from", type=Path, default=None)
+    p_run.add_argument("--overwrite", action="store_true")
     p_run.add_argument("--from-stage", choices=STAGES, default="train")
     p_run.add_argument("--to-stage", choices=STAGES, default="evaluate")
     p_run.set_defaults(func=cmd_run)

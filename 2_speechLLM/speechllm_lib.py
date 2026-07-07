@@ -714,6 +714,50 @@ def _speechllm_checkpoint_prefixes(config: dict[str, Any]) -> tuple[str, ...]:
     return tuple(prefixes)
 
 
+def build_speechllm_checkpoint_payload(
+    *,
+    model: SpeechLLMModel,
+    config: dict[str, Any],
+    run_id: str,
+    git_commit: str,
+    update: int,
+    best_bleu_dev: float,
+    optimizer: torch.optim.Optimizer | None = None,
+    scaler: torch.cuda.amp.GradScaler | None = None,
+    patience_counter: int = 0,
+    start_timestamp_utc: str | None = None,
+) -> dict[str, Any]:
+    """
+    Assembler le payload checkpoint speechLLM (éval + reprise entraînement).
+
+    Les champs optimiseur / scaler sont optionnels pour rester compatibles avec les
+    anciens ``best.pt`` utilisables en evaluate seul.
+    """
+    prefixes = _speechllm_checkpoint_prefixes(config)
+    trainable = {
+        key: value.cpu()
+        for key, value in model.state_dict().items()
+        if key.startswith(prefixes)
+    }
+    payload: dict[str, Any] = {
+        "pipeline": "speechllm",
+        "run_id": run_id,
+        "config": config,
+        "trainable_state": trainable,
+        "git_commit": git_commit,
+        "update": update,
+        "best_bleu_dev": best_bleu_dev,
+        "patience_counter": patience_counter,
+    }
+    if start_timestamp_utc is not None:
+        payload["start_timestamp_utc"] = start_timestamp_utc
+    if optimizer is not None:
+        payload["optimizer_state"] = optimizer.state_dict()
+    if scaler is not None and scaler.is_enabled():
+        payload["scaler_state"] = scaler.state_dict()
+    return payload
+
+
 def save_projector_checkpoint(
     *,
     path: Path,
@@ -723,26 +767,74 @@ def save_projector_checkpoint(
     git_commit: str,
     update: int,
     best_bleu_dev: float,
+    optimizer: torch.optim.Optimizer | None = None,
+    scaler: torch.cuda.amp.GradScaler | None = None,
+    patience_counter: int = 0,
+    start_timestamp_utc: str | None = None,
 ) -> None:
     """Sauvegarder les poids entraînés (projecteur, encodeur si dégelé) pour evaluate/infer."""
-    prefixes = _speechllm_checkpoint_prefixes(config)
-    trainable = {
-        key: value.cpu()
-        for key, value in model.state_dict().items()
-        if key.startswith(prefixes)
-    }
-    torch.save(
-        {
-            "pipeline": "speechllm",
-            "run_id": run_id,
-            "config": config,
-            "trainable_state": trainable,
-            "git_commit": git_commit,
-            "update": update,
-            "best_bleu_dev": best_bleu_dev,
-        },
-        path,
+    payload = build_speechllm_checkpoint_payload(
+        model=model,
+        config=config,
+        run_id=run_id,
+        git_commit=git_commit,
+        update=update,
+        best_bleu_dev=best_bleu_dev,
+        optimizer=optimizer,
+        scaler=scaler,
+        patience_counter=patience_counter,
+        start_timestamp_utc=start_timestamp_utc,
     )
+    torch.save(payload, path)
+
+
+def resolve_speechllm_resume_checkpoint(
+    checkpoints_dir: Path,
+    resume_from: Path | None,
+) -> Path | None:
+    """
+    Choisir le checkpoint de reprise : explicite, sinon ``last.pt``, sinon ``best.pt``.
+
+    Retour :
+        Chemin existant, ou ``None`` si aucun checkpoint utilisable.
+    """
+    if resume_from is not None:
+        if not resume_from.is_file():
+            raise FileNotFoundError(f"Missing resume checkpoint: {resume_from}")
+        return resume_from
+    for candidate in (checkpoints_dir / "last.pt", checkpoints_dir / "best.pt"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def load_speechllm_train_checkpoint(
+    path: Path,
+    *,
+    model: SpeechLLMModel,
+    optimizer: torch.optim.Optimizer,
+    scaler: torch.cuda.amp.GradScaler,
+) -> dict[str, Any]:
+    """
+    Restaurer poids (et optimiseur/scaler si présents) depuis un checkpoint speechLLM.
+
+    Retour :
+        Dict avec ``global_update``, ``best_bleu``, ``patience_counter``, ``start_utc``.
+    """
+    payload = load_speechllm_checkpoint(path)
+    load_projector_checkpoint(model, payload)
+    optimizer_state = payload.get("optimizer_state")
+    if isinstance(optimizer_state, dict):
+        optimizer.load_state_dict(optimizer_state)
+    scaler_state = payload.get("scaler_state")
+    if isinstance(scaler_state, dict) and scaler.is_enabled():
+        scaler.load_state_dict(scaler_state)
+    return {
+        "global_update": int(payload.get("update", 0)),
+        "best_bleu": float(payload.get("best_bleu_dev", -1.0)),
+        "patience_counter": int(payload.get("patience_counter", 0)),
+        "start_utc": payload.get("start_timestamp_utc"),
+    }
 
 
 def resolve_speechllm_config_path(path: Path) -> Path:
@@ -759,13 +851,16 @@ __all__ = [
     "build_prompt_text_parts",
     "collate_speechllm_batch",
     "downsample_encoder_states",
+    "build_speechllm_checkpoint_payload",
     "load_speechllm_checkpoint",
     "load_projector_checkpoint",
     "load_speechllm_from_config",
+    "load_speechllm_train_checkpoint",
     "load_yaml_config",
     "read_manifest",
     "resolve_prompt_format",
     "resolve_run_dir",
+    "resolve_speechllm_resume_checkpoint",
     "resolve_speechllm_config_path",
     "save_projector_checkpoint",
     "set_seed",

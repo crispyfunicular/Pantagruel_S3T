@@ -4,6 +4,7 @@ Entraînement speechLLM B1 — projecteur seul (Pantagruel + LLM gelés).
 
 Entrées : config YAML, manifests m-TEDx.
 Sorties : ``runs/.../checkpoints/{best,last}.pt``, ``train.log``, ``metrics.json``.
+``last.pt`` est rafraîchi périodiquement (``train.save_every_updates``) ; ``--resume`` reprend l'entraînement.
 """
 
 from __future__ import annotations
@@ -30,10 +31,12 @@ from speechLLM.speechllm_lib import (
     collate_speechllm_batch,
     deep_get,
     load_speechllm_from_config,
+    load_speechllm_train_checkpoint,
     load_yaml_config,
     read_manifest,
     resolve_run_dir,
     resolve_speechllm_config_path,
+    resolve_speechllm_resume_checkpoint,
     save_projector_checkpoint,
     set_seed,
     write_json,
@@ -98,6 +101,9 @@ def run_train(
     dry_run: bool,
     verbose: bool,
     prefer_cpu: bool,
+    resume: bool = False,
+    resume_from: Path | None = None,
+    overwrite: bool = False,
 ) -> int:
     """
     Entraîner le projecteur speechLLM (B1) et écrire les artifacts de run.
@@ -133,6 +139,8 @@ def run_train(
     grad_accum = int(deep_get(config, "train.gradient_accumulation", 1))
     grad_clip = float(deep_get(config, "train.gradient_clip_norm", 1.0))
     eval_every = int(deep_get(config, "train.eval_every_updates", 100))
+    save_every_raw = deep_get(config, "train.save_every_updates", None)
+    save_every = int(save_every_raw) if save_every_raw is not None else eval_every
     warmup_updates = int(deep_get(config, "train.warmup_updates", 1000))
     max_eval_batches = deep_get(config, "train.max_eval_batches", 20)
     max_eval_batches = int(max_eval_batches) if max_eval_batches is not None else None
@@ -155,7 +163,22 @@ def run_train(
         print(f"  config:   {config_path}")
         print(f"  run_dir:  {run_dir}")
         print(f"  llm:      {deep_get(config, 'model.llm_name')}")
+        print(f"  resume:   {resume}")
+        print(f"  save_every_updates: {save_every}")
         return 0
+
+    existing_checkpoint = resolve_speechllm_resume_checkpoint(checkpoints_dir, None)
+    if existing_checkpoint is not None and not resume and not overwrite:
+        print(
+            "ERROR: checkpoint existant sans --resume ni --overwrite :",
+            existing_checkpoint,
+            file=sys.stderr,
+        )
+        print(
+            "  Utilisez --resume pour continuer, ou --overwrite pour repartir de zéro.",
+            file=sys.stderr,
+        )
+        return 2
 
     start_wall_s = time.time()
     start_utc = datetime.now(timezone.utc).isoformat()
@@ -225,6 +248,57 @@ def run_train(
     stop_training = False
     # Compteur de patience : incrémenté après chaque éval sans amélioration du BLEU dev
     patience_counter = 0
+
+    if resume:
+        checkpoint_path = resolve_speechllm_resume_checkpoint(
+            checkpoints_dir,
+            resume_from,
+        )
+        if checkpoint_path is None:
+            print(
+                "ERROR: --resume demandé mais aucun checkpoint trouvé",
+                file=sys.stderr,
+            )
+            return 2
+        restored = load_speechllm_train_checkpoint(
+            checkpoint_path,
+            model=model,
+            optimizer=optimizer,
+            scaler=scaler,
+        )
+        global_update = restored["global_update"]
+        best_bleu = restored["best_bleu"]
+        patience_counter = restored["patience_counter"]
+        if restored["start_utc"]:
+            start_utc = restored["start_utc"]
+        if verbose:
+            print(
+                f"Resume from {checkpoint_path} "
+                f"(update={global_update}, best_bleu_dev={best_bleu:.2f}, "
+                f"patience={patience_counter})"
+            )
+    elif overwrite and existing_checkpoint is not None:
+        for stale in (checkpoints_dir / "best.pt", checkpoints_dir / "last.pt"):
+            if stale.is_file():
+                stale.unlink()
+        if verbose:
+            print(f"Overwrite: removed existing checkpoints in {checkpoints_dir}")
+
+    def persist_checkpoint(path: Path) -> None:
+        """Écrire best/last avec état complet pour evaluate et reprise."""
+        save_projector_checkpoint(
+            path=path,
+            model=model,
+            config=config,
+            run_id=run_id,
+            git_commit=git_commit,
+            update=global_update,
+            best_bleu_dev=best_bleu if best_bleu >= 0 else 0.0,
+            optimizer=optimizer,
+            scaler=scaler,
+            patience_counter=patience_counter,
+            start_timestamp_utc=start_utc,
+        )
 
     def current_lr() -> float:
         """Scheduler simplifié : warmup linéaire puis plateau."""
@@ -298,15 +372,7 @@ def run_train(
                     if bleu_dev > best_bleu:
                         best_bleu = bleu_dev
                         patience_counter = 0
-                        save_projector_checkpoint(
-                            path=checkpoints_dir / "best.pt",
-                            model=model,
-                            config=config,
-                            run_id=run_id,
-                            git_commit=git_commit,
-                            update=global_update,
-                            best_bleu_dev=best_bleu,
-                        )
+                        persist_checkpoint(checkpoints_dir / "best.pt")
                     else:
                         patience_counter += 1
                         if (
@@ -333,6 +399,10 @@ def run_train(
                 with train_log_path.open("a", encoding="utf-8") as handle:
                     handle.write(json.dumps(asdict(event), ensure_ascii=False) + "\n")
 
+                # Sauvegarde périodique pour reprise après walltime OAR / coupure GPU.
+                if global_update % save_every == 0 or global_update == max_updates:
+                    persist_checkpoint(checkpoints_dir / "last.pt")
+
                 if verbose and (
                     global_update == 1
                     or global_update % 10 == 0
@@ -345,15 +415,7 @@ def run_train(
                         )
                     print(msg)
 
-    save_projector_checkpoint(
-        path=checkpoints_dir / "last.pt",
-        model=model,
-        config=config,
-        run_id=run_id,
-        git_commit=git_commit,
-        update=global_update,
-        best_bleu_dev=best_bleu if best_bleu >= 0 else 0.0,
-    )
+    persist_checkpoint(checkpoints_dir / "last.pt")
     if not (checkpoints_dir / "best.pt").is_file():
         shutil.copy2(checkpoints_dir / "last.pt", checkpoints_dir / "best.pt")
 
@@ -398,6 +460,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--prefer-cpu", action="store_true")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reprendre depuis checkpoints/last.pt ou best.pt",
+    )
+    parser.add_argument(
+        "--resume-from",
+        type=Path,
+        default=None,
+        help="Checkpoint explicite pour --resume",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Repartir de zéro même si un checkpoint existe déjà",
+    )
     return parser
 
 
@@ -410,6 +488,9 @@ def run_from_namespace(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         verbose=args.verbose,
         prefer_cpu=args.prefer_cpu,
+        resume=getattr(args, "resume", False),
+        resume_from=getattr(args, "resume_from", None),
+        overwrite=getattr(args, "overwrite", False),
     )
 
 
@@ -423,6 +504,9 @@ def main(argv: list[str] | None = None) -> int:
         dry_run=args.dry_run,
         verbose=args.verbose,
         prefer_cpu=args.prefer_cpu,
+        resume=getattr(args, "resume", False),
+        resume_from=getattr(args, "resume_from", None),
+        overwrite=getattr(args, "overwrite", False),
     )
 
 
