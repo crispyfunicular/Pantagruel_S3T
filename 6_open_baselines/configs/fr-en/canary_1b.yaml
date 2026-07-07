@@ -1,0 +1,23 @@
+# Baseline open Canary-1B v2 — ST multilingue fr→en (utterance m-TEDx).
+# Dépendance optionnelle : pip install 'nemo_toolkit[asr]>=2.0' (script OVH run_074).
+
+experiment:
+  name: "fr-en_canary_1b_utterance"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_074_open_canary_1b_utterance"
+
+data:
+  segment_mode: "utterance"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+
+model:
+  type: "canary_1b"
+  model_id: "nvidia/canary-1b-v2"
+  src_lang: "fra"
+  tgt_lang: "eng"
+  device: "cuda"
+  dtype: "float16"
+
+decode:
+  max_new_tokens: 256

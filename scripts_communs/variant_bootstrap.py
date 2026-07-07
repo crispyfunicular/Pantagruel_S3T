@@ -71,3 +71,9 @@ def bootstrap_cascade() -> None:
     """Enregistrer ``Cascade`` (dépend de ``speechLLM`` pour les utilitaires communs)."""
     bootstrap_speechllm()
     register_variant_package("Cascade", PROJECT_ROOT / "4_cascade")
+
+
+def bootstrap_open_baselines() -> None:
+    """Enregistrer ``OpenBaselines`` (dépend de ``speechLLM`` pour les utilitaires communs)."""
+    bootstrap_speechllm()
+    register_variant_package("OpenBaselines", PROJECT_ROOT / "6_open_baselines")

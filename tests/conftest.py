@@ -14,12 +14,14 @@ def pytest_configure() -> None:
     from scripts_communs.variant_bootstrap import (
         bootstrap_cascade,
         bootstrap_gemini,
+        bootstrap_open_baselines,
         bootstrap_speechllm,
     )
 
     bootstrap_speechllm()
     bootstrap_gemini()
     bootstrap_cascade()
+    bootstrap_open_baselines()
 
 
 def load_stage_module(filename: str, *, root: Path | None = None):

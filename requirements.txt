@@ -16,10 +16,14 @@ pyyaml>=6.0
 timm>=0.9.0
 transformers>=4.36
 bitsandbytes>=0.43.0  # speechLLM B2bis : LLM 7B+ en 4-bit (optionnel si Phi-2 / Qwen 3B seulement)
+accelerate>=0.26.0    # requis pour Mistral-7B 4-bit (device_map) — run_062 OVH
 sacrebleu>=2.3
 sentencepiece>=0.1.99
 tensorboard>=2.14
 google-genai>=0.6.0
+
+# --- Open baselines variante 6 (optionnel ; Canary-1B uniquement) ---
+# nemo_toolkit[asr]>=2.0  # run_074 Canary — installer sur OVH via scripts/run_ovh_open_canary_074.sh
 
 # --- Développement (lint, tests, hooks ; inutiles sur une machine d'inférence seule) ---
 ruff>=0.8.0

@@ -73,6 +73,19 @@ PIPELINE_DECODE_SPECS: dict[str, dict[str, Any]] = {
         "text": "manifest_tgt_text_raw_utf8",
         "checkpoint": "none_pretrained",
     },
+    "open_baselines_st": {
+        "decode_target": {
+            "max_new_tokens": 256,
+            "zero_shot": True,
+        },
+        "decode_implemented": {
+            "max_new_tokens": 256,
+            "model_type_from": "model.type YAML (whisper_st | seamless_m4t_v2 | canary_1b)",
+            "note": "6_open_baselines/evaluate_open.py : inférence segment par segment.",
+        },
+        "text": "manifest_tgt_text_raw_utf8",
+        "checkpoint": "none_pretrained",
+    },
 }
 
 
