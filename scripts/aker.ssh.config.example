@@ -1,0 +1,49 @@
+# Exemple à fusionner dans ~/.ssh/config (chmod 600)
+# Chaîne IMAG : poste → ligone (bastion) → aker (login) → lig-gpu1/2 (GPU)
+#
+# 1. Autoriser la clé sur ligone (une fois, interactif) :
+#   ssh-copy-id -i ~/.ssh/id_ed25519.pub bonapelm@ligone.imag.fr
+#
+# 2. Depuis ligone, autoriser la même clé sur aker :
+#   ssh bonapelm@ligone.imag.fr
+#   ssh-copy-id bonapelm@aker.imag.fr
+#
+# 3. Tester :
+#   ssh imag-aker 'hostname'
+#   ./scripts/aker.sh check
+#   ./scripts/run_aker_smoke.sh check
+
+Host ligone
+    HostName ligone.imag.fr
+    User bonapelm
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    BatchMode yes
+    PreferredAuthentications publickey
+    PasswordAuthentication no
+
+Host imag-aker
+    HostName aker.imag.fr
+    User bonapelm
+    ProxyJump ligone
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    BatchMode yes
+    PreferredAuthentications publickey
+    PasswordAuthentication no
+
+Host imag-gpu1
+    HostName lig-gpu1.imag.fr
+    User bonapelm
+    ProxyJump imag-aker
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    BatchMode yes
+
+Host imag-gpu2
+    HostName lig-gpu2.imag.fr
+    User bonapelm
+    ProxyJump imag-aker
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    BatchMode yes

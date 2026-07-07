@@ -64,12 +64,19 @@ usage() {
 }
 
 cmd_check() {
-  echo "Test connexion ${AKER_USER}@${AKER_HOST}…"
+  echo "Test ligone (${LIGONE_JUMP})…"
+  if ! "${SSH_LOCAL[@]}" "${LIGONE_JUMP}" "echo OK — \$(hostname) — \$(whoami)"; then
+    echo "ÉCHEC ligone : autorisez votre clé sur le bastion :" >&2
+    echo "  ssh-copy-id -i ${SSH_ID}.pub ${LIGONE_JUMP}" >&2
+    echo "  (ou fusionnez scripts/aker.ssh.config.example dans ~/.ssh/config)" >&2
+    return 1
+  fi
+  echo "Test aker (${AKER_USER}@${AKER_HOST})…"
   if remote "echo OK — \$(hostname) — ${AKER_S3T}"; then
-    echo "Connexion OK."
+    echo "Connexion OK (ligone → aker)."
     return 0
   fi
-  echo "ÉCHEC : configure une clé SSH (ssh-copy-id ${AKER_USER}@${AKER_HOST})" >&2
+  echo "ÉCHEC aker : depuis ligone, lancez ssh-copy-id ${AKER_USER}@${AKER_HOST}" >&2
   return 1
 }
 
