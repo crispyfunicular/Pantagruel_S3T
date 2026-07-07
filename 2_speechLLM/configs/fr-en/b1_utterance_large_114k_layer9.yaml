@@ -1,14 +1,15 @@
-# speechLLM B1 — fr-en, utterance, Pantagruel-L-114k + SpecAugment (run_044).
+# speechLLM B1 — fr-en, utterance, L-114k, couche encodeur 9 (piste J, run_056).
 #
-# Base : run_032 replicate (14,15 test) + masquage temporel SpecAugment (recette run_039 / run_026).
-# Durée attendue : ~2–4 h GPU (OVH, après run_053).
+# Référence : run_013 (dernière couche, **15,24** BLEU test) ; run_047 L-14k couche 9 (**14,00**).
+# Seul changement vs run_013 : encoder_layer 9.
+# Machine cible : **OVH** (`speech-large-114K` gated sur Modyco).
 #
-# Run cible : run_044_speechllm_b1_utterance_large_114k_v5_specaug (OVH)
+# Run cible : run_056_speechllm_b1_utterance_large_114k_layer9 (~3–5 h GPU OVH)
 
 experiment:
-  name: "fr-en_speechllm_b1_utterance_large_114k_v5_specaug"
+  name: "fr-en_speechllm_b1_utterance_large_114k_layer9"
   lang_pair: "fr-en"
-  output_dir: "runs/fr-en/run_044_speechllm_b1_utterance_large_114k_v5_specaug"
+  output_dir: "runs/fr-en/run_056_speechllm_b1_utterance_large_114k_layer9"
   seed: 42
   deterministic: true
 
@@ -22,6 +23,7 @@ data:
 model:
   encoder_name: "PantagrueLLM/speech-large-114K"
   trust_remote_code: true
+  encoder_layer: 9
   llm_name: "microsoft/phi-2"
   downsample_k: 5
   projector_hidden: 2048
@@ -30,11 +32,6 @@ model:
 
 prompt:
   template: "Translate the French speech to English."
-
-spec_augment:
-  enabled: true
-  mask_time_prob: 0.05
-  mask_time_length: 10
 
 train:
   max_updates: 20000

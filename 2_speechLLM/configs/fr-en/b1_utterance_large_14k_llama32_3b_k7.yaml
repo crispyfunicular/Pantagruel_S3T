@@ -1,0 +1,67 @@
+# speechLLM B1 — fr-en, utterance, Pantagruel-L-14k gelé + Llama-3.2-3B gelé, downsample k=7.
+#
+# Base : run_052 (k=5, max_new_tokens=48, 16,31 BLEU test — meilleur speechLLM).
+# Changement : downsample_k 5 → 7 + max_new_tokens 48 → 128.
+#
+# Rationale : avec k=5, une phrase de 5 s → ~3000 frames / 5 = 600 tokens speech → projecteur
+# produit 600 vecteurs. Le LLM voit un contexte speech long + prompt + génération.
+# Avec k=7 : ~3000 / 7 ≈ 428 tokens speech — séquence 29 % plus courte.
+# Hypothèse : réduire la séquence speech permettra au LLM d'allouer plus d'attention à la
+# génération et de mieux signaler EOS (évitant les boucles à 128 tokens).
+#
+# ATTENTION : changer downsample_k change input_dim du projecteur (llm_dim * k).
+# Ce checkpoint est INCOMPATIBLE avec run_052 — entraînement from scratch requis.
+#
+# Note : si les boucles persistent avec k=7, tester repetition_penalty: 1.3 dans decode
+# (pas encore implémenté dans pipeline.py — piste technique à ouvrir séparément).
+#
+# Prérequis HF : token Llama 3.2.
+# Run cible : run_067_speechllm_b1_utterance_large_14k_llama32_3b_k7 (OVH, ~3–5 h GPU)
+
+experiment:
+  name: "fr-en_speechllm_b1_utterance_large_14k_llama32_3b_k7"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_067_speechllm_b1_utterance_large_14k_llama32_3b_k7"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  llm_name: "meta-llama/Llama-3.2-3B-Instruct"
+  llm_trust_remote_code: false
+  downsample_k: 7
+  projector_hidden: 2048
+  freeze_encoder: true
+  freeze_llm: true
+  load_in_4bit: false
+  load_in_8bit: false
+
+prompt:
+  format: "llama_inst"
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 1000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.0
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 128

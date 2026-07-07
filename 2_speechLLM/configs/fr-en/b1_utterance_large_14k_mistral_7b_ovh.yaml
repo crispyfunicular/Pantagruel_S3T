@@ -1,14 +1,14 @@
-# speechLLM B1 — fr-en, utterance, Pantagruel-L-114k + SpecAugment (run_044).
+# speechLLM B2bis — fr-en, utterance, L-14k gelé + Mistral-7B 4-bit gelé (réplication OVH).
 #
-# Base : run_032 replicate (14,15 test) + masquage temporel SpecAugment (recette run_039 / run_026).
-# Durée attendue : ~2–4 h GPU (OVH, après run_053).
+# Même recette que run_054 (Modyco, **14,22** test) ; machine cible **OVH** (32 Go VRAM).
+# Impraticable sur IMAG 2080 Ti 11 Go (Mistral 4-bit ~10–14 Go + encodeur).
 #
-# Run cible : run_044_speechllm_b1_utterance_large_114k_v5_specaug (OVH)
+# Run cible : run_062_speechllm_b2bis_utterance_large_14k_mistral_7b_ovh (~12–15 h GPU)
 
 experiment:
-  name: "fr-en_speechllm_b1_utterance_large_114k_v5_specaug"
+  name: "fr-en_speechllm_b2bis_utterance_large_14k_mistral_7b_ovh"
   lang_pair: "fr-en"
-  output_dir: "runs/fr-en/run_044_speechllm_b1_utterance_large_114k_v5_specaug"
+  output_dir: "runs/fr-en/run_062_speechllm_b2bis_utterance_large_14k_mistral_7b_ovh"
   seed: 42
   deterministic: true
 
@@ -20,24 +20,24 @@ data:
   sample_rate: 16000
 
 model:
-  encoder_name: "PantagrueLLM/speech-large-114K"
+  encoder_name: "PantagrueLLM/speech-large-14K"
   trust_remote_code: true
-  llm_name: "microsoft/phi-2"
+  llm_name: "mistralai/Mistral-7B-Instruct-v0.3"
+  llm_trust_remote_code: true
   downsample_k: 5
   projector_hidden: 2048
   freeze_encoder: true
   freeze_llm: true
+  load_in_4bit: true
+  load_in_8bit: false
 
 prompt:
+  format: "mistral_inst"
   template: "Translate the French speech to English."
-
-spec_augment:
-  enabled: true
-  mask_time_prob: 0.05
-  mask_time_length: 10
 
 train:
   max_updates: 20000
+  early_stopping_patience: 3
   warmup_updates: 1000
   learning_rate_peak: 0.0001
   weight_decay: 0.0
