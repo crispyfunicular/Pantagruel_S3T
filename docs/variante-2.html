@@ -328,7 +328,7 @@
               </td>
               <td class="col-expl">Quel modèle de texte génératif utiliser pour produire la traduction. Chacun a ses forces et ses faiblesses selon la tâche.</td>
               <td>Phi-2 (défaut) · Qwen2.5-3B · Llama-3.2-3B · Mistral</td>
-              <td>Qwen2.5-3B 13 test (<code>run_018</code>) ; Llama-3.2-3B dégel <strong>20,1</strong> test (<code>run_066</code>) ; Llama gelé <strong>16,3</strong> (<code>run_052</code>) — au-dessus de Phi-2 (<code>run_012</code> 15 test)</td>
+              <td>Qwen2.5-3B 13 test (<code>run_018</code>) ; Llama dégel <strong>20,1</strong> (<code>run_066</code>) ; réplication Llama <strong>18,9</strong> ; Llama seed 2 <strong>17,8</strong> (<code>run_055</code>) ; Llama gelé <strong>16,3</strong> (<code>run_052</code>) — au-dessus de Phi-2 (<code>run_012</code> 15 test)</td>
               <td><span class="tag tag-green">Llama ok</span></td>
             </tr>
             <tr>
@@ -460,7 +460,47 @@
               <td><em>utterance</em></td>
               <td>20,1</td>
               <td>~8 h</td>
-              <td><strong>Meilleur speechLLM</strong> — encodeur dégelé, LR 1e-5</td>
+              <td><strong>Meilleur speechLLM</strong> — record ; encodeur dégelé, LR 1e-5</td>
+            </tr>
+            <tr id="run_066_modyco">
+              <td><code>run_066</code> (répl.)</td>
+              <td>L-14k + Llama-3.2-3B (encodeur dégelé)</td>
+              <td><em>utterance</em></td>
+              <td>18,9</td>
+              <td>~10 h</td>
+              <td>Réplication juil. 2026 — sous record 20,1</td>
+            </tr>
+            <tr id="run_055">
+              <td><code>run_055</code></td>
+              <td>L-14k + Llama-3.2-3B (gelé, seed 2)</td>
+              <td><em>utterance</em></td>
+              <td>17,8</td>
+              <td>~3,7 h</td>
+              <td>Entre run_052 (16,3) et run_066 répl. (18,9)</td>
+            </tr>
+            <tr id="run_023">
+              <td><code>run_023</code></td>
+              <td>L-14k + Phi-2 (gelé, replicate)</td>
+              <td><em>utterance</em></td>
+              <td>15,3</td>
+              <td>~2 h</td>
+              <td>Réplication run_012 — proche 15,0</td>
+            </tr>
+            <tr id="run_079">
+              <td><code>run_079</code></td>
+              <td>L-14k + Phi-2 (gelé, 4e répl.)</td>
+              <td><em>utterance</em></td>
+              <td>15,4</td>
+              <td>~4 h</td>
+              <td>Réplication cross-machine seed 42</td>
+            </tr>
+            <tr id="run_078">
+              <td><code>run_078</code></td>
+              <td>L-14k contrôle encoder_layer -1</td>
+              <td><em>utterance</em></td>
+              <td>14,7</td>
+              <td>~3,5 h</td>
+              <td>Piste J — réplication cross-machine</td>
             </tr>
             <tr>
               <td><code>run_052</code></td>
@@ -540,7 +580,7 @@
         </li>
         <li>
           <span class="imp-num">3</span>
-          <div><strong>Tester d’autres LLM gelés</strong> — <code>run_066</code> Llama dégel encodeur <strong>20,1</strong> test (meilleur speechLLM) ; <code>run_052</code> Llama gelé <strong>16,3</strong> ; <code>run_070</code> Phi-2 seed 1 <strong>15,4</strong> ; <code>run_059</code> Phi-2 <strong>14,8</strong> ; <code>run_054</code> Mistral <strong>14,2</strong>.</div>
+          <div><strong>Tester d’autres LLM gelés</strong> — <code>run_066</code> Llama dégel <strong>20,1</strong> (record) ; réplication <strong>18,9</strong> ; <code>run_055</code> seed 2 <strong>17,8</strong> ; <code>run_052</code> Llama gelé <strong>16,3</strong> ; <code>run_079</code> / <code>run_070</code> Phi-2 <strong>~15,4</strong> ; <code>run_054</code> Mistral <strong>14,2</strong>.</div>
         </li>
         <li>
           <span class="imp-num">4</span>
