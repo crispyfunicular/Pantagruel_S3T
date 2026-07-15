@@ -118,6 +118,11 @@ cmd_rsync_code() {
     "${ROOT}/README.md" \
     "${ROOT}/rapport.md" \
     "${AKER_USER}@${AKER_HOST}:${AKER_S3T}/"
+  # Variante 6 : préserver le sous-dossier (le rsync multi-sources aplatit sinon).
+  rsync -avz --progress -e "${RSYNC_SSH}" \
+    --exclude '__pycache__/' \
+    "${ROOT}/6_open_baselines/" \
+    "${AKER_USER}@${AKER_HOST}:${AKER_S3T}/6_open_baselines/"
   echo "Terminé. Sur aker : cd ${AKER_S3T} && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
 }
 

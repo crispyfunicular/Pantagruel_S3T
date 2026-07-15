@@ -13,6 +13,7 @@ set -euo pipefail
 cd "${HOME}/S3T"
 source .venv/bin/activate
 mkdir -p logs
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 
 CFG="1_Transformer/configs/fr-en/base_utterance_large_14k_v5_aker.yaml"
 RUN_ID="run_060_aker_st_l14k_v5"
@@ -56,10 +57,16 @@ else
 fi
 
 {
+  TRAIN_ARGS=()
+  if [[ -f "runs/fr-en/${RUN_ID}/checkpoints/last.pt" ]]; then
+    TRAIN_ARGS+=(--resume)
+    echo "=== $(date -u -Iseconds) Reprise checkpoint (--resume) ==="
+  fi
   timeout "$((MAX_HOURS * 3600))" \
     python 1_Transformer/pipeline.py train \
       --config "$CFG" \
       --run-id "$RUN_ID" \
+      "${TRAIN_ARGS[@]}" \
       -v
   ec=$?
   if [[ "$ec" -eq 124 ]]; then

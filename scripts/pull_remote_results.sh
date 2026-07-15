@@ -13,8 +13,12 @@ cd "$ROOT"
 OVH_HOST="${OVH_HOST:-ubuntu@145.239.52.158}"
 TOUR_USER="${TOUR_USER:-mpellissier}"
 TOUR_HOST="${TOUR_HOST:-10.8.0.2}"
+AKER_USER="${AKER_USER:-bonapelm}"
+AKER_HOST="${AKER_HOST:-aker.imag.fr}"
+LIGONE_JUMP="${LIGONE_JUMP:-bonapelm@ligone.imag.fr}"
 SSH_ID="${SSH_IDENTITY_FILE:-$HOME/.ssh/id_ed25519}"
 SSH_M="ssh -i ${SSH_ID} -o IdentitiesOnly=yes -o BatchMode=yes"
+RSYNC_AKER="ssh -i ${SSH_ID} -o IdentitiesOnly=yes -o BatchMode=yes ${LIGONE_JUMP} ssh -o BatchMode=yes"
 LOCAL_RUNS="${ROOT}/runs/fr-en"
 
 DEFAULT_MODY=(
@@ -38,6 +42,9 @@ DEFAULT_MODY=(
   run_047_speechllm_b1_utterance_large_14k_layer9
   run_039_speechllm_b1_utterance_large_14k_v5_specaug
   run_045_speechllm_b1_utterance_large_14k_v9_specaug_strong
+  run_074_modyco_open_canary_1b_utterance
+  run_075_modyco_open_whisper_st_utterance
+  run_075b_modyco_open_seamlessm4t_v2_utterance
 )
 DEFAULT_OVH=(
   run_012_speechllm_b1_utterance_large_14k
@@ -57,7 +64,40 @@ DEFAULT_OVH=(
   run_052_transformer_baseline_utterance_large_14k_v12_spm5k_freeze15k
   run_061_transformer_baseline_utterance_large_114k_v12_spm5k_freeze15k
   run_062_speechllm_b2bis_utterance_large_14k_mistral_7b_ovh
+  run_063_transformer_baseline_utterance_large_14k_v13_spm5k_freeze15k_specaug_strong
+  run_064_transformer_baseline_utterance_large_114k_v13_heavy_specaug
+  run_065_transformer_baseline_utterance_large_14k_v13_batch32_safe
+  run_072_open_whisper_st_utterance
+  run_073_open_seamlessm4t_v2_utterance
+  run_074_open_canary_1b_utterance
 )
+# Runs IMAG aker (ligone → aker, pas OVH/Modyco)
+DEFAULT_AKER=(
+  run_077_aker_speechllm_l14k_layer6
+  run_076_aker_speechllm_l14k_layer9
+  run_075_aker_open_whisper_st_utterance
+  run_075b_aker_open_seamlessm4t_v2_utterance
+  run_066_aker_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze
+  run_067_aker_speechllm_llama_k7
+)
+
+pull_aker() {
+  local run="$1"
+  local dest="${LOCAL_RUNS}/${run}"
+  mkdir -p "${dest}/eval"
+  rsync -az -e "${RSYNC_AKER}" \
+    "${AKER_USER}@${AKER_HOST}:~/S3T/runs/fr-en/${run}/eval/" "${dest}/eval/" 2>/dev/null || true
+  rsync -az -e "${RSYNC_AKER}" \
+    "${AKER_USER}@${AKER_HOST}:~/S3T/runs/fr-en/${run}/metrics.json" \
+    "${AKER_USER}@${AKER_HOST}:~/S3T/runs/fr-en/${run}/config.yaml" \
+    "${AKER_USER}@${AKER_HOST}:~/S3T/runs/fr-en/${run}/train.log" \
+    "${dest}/" 2>/dev/null || true
+  if [[ -f "${dest}/eval/sacrebleu_test.txt" ]]; then
+    echo "  ${run}: $(head -1 "${dest}/eval/sacrebleu_test.txt")"
+  else
+    echo "  ${run}: (pas d'éval test)"
+  fi
+}
 
 pull_one() {
   local host="$1"
@@ -91,6 +131,10 @@ done
 echo "=== OVH ==="
 for run in "${DEFAULT_OVH[@]}"; do
   pull_one "${OVH_HOST}" "$run"
+done
+echo "=== IMAG aker ==="
+for run in "${DEFAULT_AKER[@]}"; do
+  pull_aker "$run"
 done
 
 echo "=== Logs distants (légers) ==="

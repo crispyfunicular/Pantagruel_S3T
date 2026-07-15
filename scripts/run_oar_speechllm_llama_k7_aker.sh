@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # Job OAR IMAG — speechLLM L-14k + Llama-3.2-3B, downsample k=7, max_new_tokens=128 (piste L).
 #
-# Soumission depuis aker (login shell) :
-#   bash -lc 'oarsub -S -l /gpu=1,walltime=12:00:00 -p "host='\''lig-gpu6.imag.fr'\''" ~/S3T/scripts/run_oar_speechllm_llama_k7_aker.sh'
+# Job OAR IMAG — speechLLM L-14k + Llama-3.2-3B, downsample k=7 (run_067 OVH backlog).
 #
-# Run cible : run_067_aker_speechllm_llama_k7 (~4–8 h GPU sur 2080 Ti 11 Go)
-# Prérequis HF : token Llama 3.2 (huggingface-cli login ou HF_TOKEN sur aker).
+# Relance après OOM 1080 Ti (OAR 128586). Demander lig-gpu10 (H100) :
+#   oarsub -l /gpu=1,walltime=12:00:00 -p "host='lig-gpu10.imag.fr'" \
+#     -n run_067_speechllm_llama_k7 \
+#     /home/getalp/bonapelm/S3T/scripts/run_oar_speechllm_llama_k7_aker.sh
+#
+# Run cible : run_067_aker_speechllm_llama_k7 (~4–8 h GPU).
 
+#OAR -l /gpu=1,walltime=12:00:00
+#OAR -p host='lig-gpu10.imag.fr'
 #OAR -n run_067_speechllm_llama_k7
 set -euo pipefail
 
@@ -25,6 +30,6 @@ python -c "import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is
 python 2_speechLLM/pipeline.py run \
   --config "${CFG}" \
   --run-id "${RUN_ID}" \
-  -v 2>&1 | tee "${LOG}"
+  -v 2>&1 | tee -a "${LOG}"
 
 echo "=== $(date -u -Iseconds) done exit=$? ==="

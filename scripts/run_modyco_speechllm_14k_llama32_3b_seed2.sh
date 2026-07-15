@@ -33,20 +33,30 @@ gpu_vram_used_mib() {
   nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d ' '
 }
 
+gpu_vram_free_mib() {
+  nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d ' '
+}
+
 require_gpu_free() {
-  local vram
-  vram="$(gpu_vram_used_mib || echo 99999)"
+  local vram_used vram_free
+  vram_used="$(gpu_vram_used_mib || echo 99999)"
+  vram_free="$(gpu_vram_free_mib || echo 0)"
   if pgrep -af "^python.*pipeline\.py (train|run)" >/dev/null 2>&1; then
     echo "ERROR: entraînement GPU encore actif sur Modyco :" >&2
     pgrep -af "^python.*pipeline\.py (train|run)" >&2 || true
     exit 2
   fi
-  if [[ "${vram}" =~ ^[0-9]+$ ]] && (( vram > VRAM_MAX_MIB )); then
-    echo "ERROR: VRAM occupée (${vram} MiB > ${VRAM_MAX_MIB}) :" >&2
-    nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader 2>/dev/null | head -5 >&2 || true
-    exit 2
+  if [[ "${vram_used}" =~ ^[0-9]+$ ]] && (( vram_used <= VRAM_MAX_MIB )); then
+    echo "OK: GPU libre (VRAM ${vram_used} MiB)."
+    return 0
   fi
-  echo "OK: GPU libre (VRAM ${vram} MiB)."
+  if [[ "${vram_free}" =~ ^[0-9]+$ ]] && (( vram_free >= 20000 )); then
+    echo "OK: VRAM partielle (${vram_used} MiB used, ${vram_free} MiB free) — Llama seed2."
+    return 0
+  fi
+  echo "ERROR: VRAM insuffisante (${vram_used} used, ${vram_free} free) :" >&2
+  nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader 2>/dev/null | head -5 >&2 || true
+  exit 2
 }
 
 FORCE=0
