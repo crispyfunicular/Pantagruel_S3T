@@ -388,7 +388,7 @@
               <td><em>utterance</em></td>
               <td><span class="result-best">25,1</span></td>
               <td>~12 h</td>
-              <td class="col-notes"><span class="term">v7<span class="term-tip term-tip-left">Version 7 de la config.</span></span> <span class="term">SPM 5k<span class="term-tip term-tip-left">Vocabulaire SentencePiece de 5 000 sous-mots — configuration proche du protocole LeBenchmark / Table 8 pour L-114k.</span></span> ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé @ 78k (best dev 25,53 @ 70k).</span></span> (17 juin OVH) — <strong>≈ article Table 8 (25,2)</strong></td>
+              <td class="col-notes"><span class="term">v7<span class="term-tip term-tip-left">Version 7 de la config.</span></span> <span class="term">SPM 5k<span class="term-tip term-tip-left">Vocabulaire SentencePiece de 5 000 sous-mots — configuration proche du protocole LeBenchmark / Table 8 pour L-114k.</span></span> ; <span class="term">early stop<span class="term-tip term-tip-left">Arrêt anticipé @ 78k (best dev 25,53 @ 70k).</span></span> (17 juin) — <strong>≈ article Table 8 (25,2)</strong></td>
             </tr>
             <tr>
               <td><code>run_035</code></td>
@@ -436,7 +436,7 @@
               <td><em>utterance</em></td>
               <td>24,78</td>
               <td>9–12 h</td>
-              <td class="col-notes">v9 SpecAugment <span class="term">temporel + fréquentiel<span class="term-tip term-tip-left">Masquage à la fois dans le temps et dans les fréquences du spectrogramme — régularisation plus complète. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> (OVH, 18 juin — early stop @ 30k)</td>
+              <td class="col-notes">v9 SpecAugment <span class="term">temporel + fréquentiel<span class="term-tip term-tip-left">Masquage à la fois dans le temps et dans les fréquences du spectrogramme — régularisation plus complète. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> (18 juin — early stop @ 30k)</td>
             </tr>
             <tr id="run_042">
               <td><code>run_042</code></td>
@@ -444,7 +444,7 @@
               <td><em>utterance</em></td>
               <td>24,11</td>
               <td>9–12 h</td>
-              <td class="col-notes">v10 warmup 10k + SpecAugment (OVH, 19 juin — early stop @ 38k ; sous run_033 <strong>25,10</strong>)</td>
+              <td class="col-notes">v10 warmup 10k + SpecAugment (19 juin — early stop @ 38k ; sous run_033 <strong>25,10</strong>)</td>
             </tr>
             <tr id="run_037">
               <td><code>run_037</code></td>
@@ -452,7 +452,7 @@
               <td><em>utterance</em></td>
               <td>24,55</td>
               <td>8–10 h</td>
-              <td class="col-notes">v9 SpecAugment fort <code>mask_time_prob: 0.10</code> (Modyco, 17 juin)</td>
+              <td class="col-notes">v9 SpecAugment fort <code>mask_time_prob: 0.10</code> (17 juin)</td>
             </tr>
             <tr id="run_046">
               <td><code>run_046</code></td>
@@ -460,7 +460,7 @@
               <td><em>utterance</em></td>
               <td>2,76</td>
               <td>~4 h</td>
-              <td class="col-notes">v11 batch effectif 32 — <span class="term">collapse<span class="term-tip term-tip-left">Effondrement de l’entraînement : le modèle produit des sorties dégénérées (répétitions, score proche de zéro).</span></span> @ 12k (Modyco, 19 juin)</td>
+              <td class="col-notes">v11 batch effectif 32 — <span class="term">collapse<span class="term-tip term-tip-left">Effondrement de l’entraînement : le modèle produit des sorties dégénérées (répétitions, score proche de zéro).</span></span> @ 12k (19 juin)</td>
             </tr>
             <tr id="run_049">
               <td><code>run_049</code></td>
@@ -468,7 +468,7 @@
               <td><em>utterance</em></td>
               <td>23,84</td>
               <td>~8 h</td>
-              <td class="col-notes">v5 seed 2 — réplicabilité (Modyco, 19 juin ; vs run_026 <strong>26,12</strong>)</td>
+              <td class="col-notes">v5 seed 2 — réplicabilité (19 juin ; vs run_026 <strong>26,12</strong>)</td>
             </tr>
             <tr>
               <td><code>run_020</code></td>
@@ -655,7 +655,7 @@
               <span class="tag tag-green">&#10003; impl&eacute;ment&eacute;</span>
             </div>
             <p class="imp-detail">Masquage al&eacute;atoire de bandes de fr&eacute;quences ou d&rsquo;instants dans le spectrogramme audio &mdash; force le mod&egrave;le &agrave; &ecirc;tre robuste aux occultations partielles. Actif en masquage temporel + fr&eacute;quentiel pour la variante ST, temporel uniquement pour speechLLM.</p>
-            <p class="imp-note"><code>run_026</code> &mdash; L-14k (<strong>26,12</strong>, meilleur local) &middot; <code>run_033</code> &mdash; L-114k SPM 5k (<strong>25,10</strong>, ≈ article) &middot; <code>run_037</code> &mdash; fort L-14k (<strong>24,55</strong>) &middot; <code>run_038</code> / <code>run_042</code> &mdash; L-114k (<strong>24,78</strong> / <strong>24,11</strong>)</p>
+            <p class="imp-note"><code>run_026</code> &mdash; L-14k (<strong>26,12</strong>, meilleur ST) &middot; <code>run_033</code> &mdash; L-114k SPM 5k (<strong>25,10</strong>, ≈ article) &middot; <code>run_037</code> &mdash; fort L-14k (<strong>24,55</strong>) &middot; <code>run_038</code> / <code>run_042</code> &mdash; L-114k (<strong>24,78</strong> / <strong>24,11</strong>)</p>
           </div>
         </li>
 
@@ -692,7 +692,7 @@
             <div class="run-grid">
               <div class="run-card">
                 <div class="run-card-id"><code>run_026</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
-                <div class="run-card-desc">SpecAugment v5 &middot; <strong>26,12</strong> BLEU test (vocab 1k) &mdash; meilleur ST local</div>
+                <div class="run-card-desc">SpecAugment v5 &middot; <strong>26,12</strong> BLEU test (vocab 1k) &mdash; meilleur ST</div>
               </div>
               <div class="run-card">
                 <div class="run-card-id"><code>run_041</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
@@ -716,11 +716,11 @@
               </div>
               <div class="run-card">
                 <div class="run-card-id"><code>run_038</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
-                <div class="run-card-desc">L-114k &middot; SpecAugment freq &middot; <strong>24,78</strong> BLEU test (OVH)</div>
+                <div class="run-card-desc">L-114k &middot; SpecAugment freq &middot; <strong>24,78</strong> BLEU test</div>
               </div>
               <div class="run-card">
                 <div class="run-card-id"><code>run_042</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>
-                <div class="run-card-desc">L-114k &middot; warmup 10k &middot; <strong>24,11</strong> BLEU test (OVH)</div>
+                <div class="run-card-desc">L-114k &middot; warmup 10k &middot; <strong>24,11</strong> BLEU test</div>
               </div>
               <div class="run-card">
                 <div class="run-card-id"><code>run_037</code> <span class="tag tag-green" style="font-size:0.68rem;">&#10003; ok</span></div>

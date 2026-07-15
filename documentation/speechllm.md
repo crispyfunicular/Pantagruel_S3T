@@ -143,7 +143,7 @@ Ces valeurs sont **identiques** sauf mention contraire dans la fiche run :
 | **Config** | `2_speechLLM/configs/fr-en/b1_utterance_long.yaml` |
 | **Différence principale vs run_002** | Segmentation **`utterance`** : manifests `datasets/manifests/fr-en/` (segments natifs m-TEDx). |
 | **Paramètres** | Identiques à `run_002` (B-1k gelé, Phi-2 gelé, 20k updates, LR `1e-4`, beam 1 / 48 tok). |
-| **Machine** | Tour GPU Modyco (`mpellissier@10.8.0.2`), terminé **2026-06-05** (~1 h 51 train + ~11 min éval ; ~31 Go VRAM en train). |
+| **Machine** | Tour GPU machine GPU locale (`mpellissier@10.8.0.2`), terminé **2026-06-05** (~1 h 51 train + ~11 min éval ; ~31 Go VRAM en train). |
 | **Résultat** | BLEU dev **10,00** / test **7,47** — statut **ok**. |
 | **Lecture** | Fort écart vs `run_002` sentence_like (**15,89** test) : la segmentation compte ; speechLLM **sous** la ST utterance v2 (**16,68**) et loin du papier (~17,5). |
 | **Signal qualitatif** | Hypothèses **~2,3× plus longues** que les références (`hyp_len/ref_len` SacreBLEU) ; TER > 100 % — relecture `eval/dev_predictions.txt` prioritaire. |
@@ -217,7 +217,7 @@ Modèle pré-entraîné sur ~1 000 h de parole française (`PantagrueLLM/speech-
 | `speech-large-14K` | ~14 000 h | ~24,0 |
 | `speech-large-114K` | ~114 000 h | ~25,2 |
 
-**État speechLLM :** meilleur utterance = **`run_052` Llama-3.2-3B** (**16,31** test, 30 juin) ; Phi-2 L-114k `run_013` **15,24** ; L-14k `run_012` **15,03**. **`run_059`** Phi-2 IMAG **14,77** (4 juil.) ; **`run_055`** Llama seed 1 OVH **13,67** (3 juil.) — sous run_052. **`run_053`** Llama L-114k **12,61** (OVH) ; Mistral `run_054` **14,22**. Piste J **clos**.
+**État speechLLM :** meilleur utterance = **`run_052` Llama-3.2-3B** (**16,31** test, 30 juin) ; Phi-2 L-114k `run_013` **15,24** ; L-14k `run_012` **15,03**. **`run_059`** Phi-2 cluster GETALP **14,77** (4 juil.) ; **`run_055`** Llama seed 1 serveur cloud GPU **13,67** (3 juil.) — sous run_052. **`run_053`** Llama L-114k **12,61** (serveur cloud GPU) ; Mistral `run_054` **14,22**. Piste J **clos**.
 
 ---
 
@@ -312,7 +312,7 @@ python 2_speechLLM/pipeline.py infer \
   --input-audio datasets/processed/fr-en/test/<fichier>.wav -v
 ```
 
-Déploiement code sur serveur IMAG : `./scripts/aker.sh rsync-code` (voir [README.md](../README.md) § Serveur IMAG aker).
+Déploiement code sur le cluster GETALP : `./scripts/<deploy-cluster>.sh rsync-code` (voir [README.md](../README.md) § Déploiement sur cluster GPU).
 
 ### Prochain run GPU (tour ou cluster) — encodeurs Large
 
@@ -327,9 +327,9 @@ bash scripts/run_pantagruel_encoder_scale_utterance.sh speechllm-114k
 
 1. **Fait et valide** : B1 gelé `sentence_like` (**15,89** test, `run_002`) ; ablation dégel (**18,83** test, `run_005`) ; utterance L-14k/114k (**15,03** / **15,24** test, `run_012`/`run_013`) ; piste J **clos** (`run_047`–`run_051`, sous `run_012`) ; Qwen B2bis (**12,95** test, `run_018`).
 2. **Fait mais invalide** : `run_004` speechLLM (bug checkpoint) — exclu des tableaux.
-3. **B2bis Llama** : `run_052` **16,31** test (Modyco, 30 juin) — **meilleur speechLLM** utterance.
-4. **B2bis Mistral** : `run_054` **14,22** test (Modyco, 2 juil.) — sous Phi-2 ; ablation **clos**.
-5. **Réplicabilité Llama** : `run_055` **13,67** test (OVH, 3 juil.) — sous run_052 ; **`run_059`** Phi-2 IMAG **14,77** (4 juil.) ; relecture qualitative `run_003`.
+3. **B2bis Llama** : `run_052` **16,31** test (machine GPU locale, 30 juin) — **meilleur speechLLM** utterance.
+4. **B2bis Mistral** : `run_054` **14,22** test (machine GPU locale, 2 juil.) — sous Phi-2 ; ablation **clos**.
+5. **Réplicabilité Llama** : `run_055` **13,67** test (serveur cloud GPU, 3 juil.) — sous run_052 ; **`run_059`** Phi-2 cluster GETALP **14,77** (4 juil.) ; relecture qualitative `run_003`.
 
 ---
 

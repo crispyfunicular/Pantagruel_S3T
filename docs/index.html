@@ -630,7 +630,7 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). <strong>Variante 6</strong> (open baselines : Whisper-ST, SeamlessM4T v2, Canary-1B) est en cours d’évaluation sur OVH (<code>run_072</code>–<code>run_074</code>) — alternative reproductible à Gemini. Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>16,3</strong> (<code>run_052</code> Llama-3.2-3B).",
+          "Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). <strong>Variante 6</strong> (open baselines) : Canary-1B <strong>40,0</strong> (<code>run_074</code>) ; SeamlessM4T v2 <strong>38,0</strong> et Whisper-ST <strong>36,6</strong>. Meilleur ST entraîné : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>20,1</strong> (<code>run_066</code> Llama dégel encodeur) ; avant <code>run_052</code> Llama gelé <strong>16,3</strong>.",
         rows: [
           {
             id: 3,
@@ -676,16 +676,25 @@
             chartLabel: '1 · Transformer',
             tableLabel: 'Transformer ST',
             score: 26.1,
-            params: '<code>run_026</code> — L-14k, SpecAugment v5 ; meilleur modèle entraîné localement.'
+            params: '<code>run_026</code> — L-14k, SpecAugment v5 ; meilleur modèle entraîné du projet.'
+          },
+          {
+            id: 6,
+            color: 'v6',
+            href: 'variante-6.html',
+            chartLabel: '6 · Open baselines',
+            tableLabel: 'Canary-1B (open ST)',
+            score: 40.0,
+            params: '<code>run_074</code> — zero-shot NeMo ; meilleur open ST reproductible.'
           },
           {
             id: 2,
             color: 'v2',
             href: 'variante-2.html',
             chartLabel: '2 · speechLLM',
-            tableLabel: 'speechLLM B1',
-            score: 16.3,
-            params: '<code>run_052</code> — L-14k gelé, Llama-3.2-3B, 48 tokens max ; meilleur speechLLM.'
+            tableLabel: 'speechLLM Llama dégel',
+            score: 20.1,
+            params: '<code>run_066</code> — L-14k dégelé, Llama-3.2-3B ; meilleur speechLLM.'
           }
         ]
       },

@@ -1,7 +1,7 @@
 # Multimodalité : speech-to-text translation avec Pantagruel
 # Traduction parole français → anglais sur m-TEDx : réplication Pantagruel et variantes multimodales
 
-Statut : bench utterance partiel ; … **`run_064` ST L-114k** en cours (OVH) ; **`run_070` IMAG** (**15,41**, seed 1) ; **`run_071` IMAG** en cours ; Qwen **`run_018`** (12,95) ; Gemini 3.5 v2 **`run_005`** (41,09) ; sentence_like v2 **`run_004`** (36,76)
+Statut : bench utterance partiel ; **open baselines** Canary machine GPU locale **40,04** ; Seamless **~38** / Whisper **~36,6** ; **`run_066`** speechLLM **20,12** (cluster GETALP H100, meilleur absolu) / **18,88** (machine GPU locale) ; **`run_079`/`run_078`** réplications Phi-2 cluster GETALP **15,37** / **14,71** ; ST L-114k **`run_033`** **25,10** ; Gemini 3.5 v2 **`run_005`** **41,09**
 
 Références : [Pantagruel (2026)](documentation/Pantagruel_2026.pdf) ; dépôt et protocole [PRD](documentation/PRD.md), [README](README.md).
 
@@ -11,7 +11,7 @@ Références : [Pantagruel (2026)](documentation/Pantagruel_2026.pdf) ; dépôt 
 
 Nous étudions la traduction de la parole (ST) français → anglais sur le corpus multilingual TEDx (m-TEDx), en nous appuyant sur les encodeurs Pantagruel et le protocole d’évaluation SacreBLEU de l’article *Pantagruel: Unified Self-Supervised Encoders for French Text and Speech* (2026). Le dépôt S3T implémente la réplication end-to-end (encodeur SSL + décodeur Transformer 6 couches, Table 8 du papier) ainsi que quatre approches alternatives : speechLLM (projecteur + LLM gelé), API Gemini 2.5 Flash, cascade Whisper → Marian, et une variante expérimentale Speech_Text multimodale.
 
-Les expériences couvrent deux segmentations : **`sentence_like`** (fusion de segments, runs historiques) et **`utterance`** (segments m-TEDx natifs, bench Pantagruel). Sur **utterance**, **Gemini 3.5 Flash v2** (`run_005`, juin 2026) atteint **41,42 / 41,09** BLEU — devant la cascade (**38,17 / 37,41**) et Gemini **2.5** (**33,76 / 33,72**), avec garde-fous anti-boucles et budget `max_output_tokens=8192`. Les runs 3.5 v1 (`run_003`, troncature sous 256 tokens) restent **non conclusifs**. La réplication ST Table 8 B-1k est **partielle** : run_002 en échec (**3,79** test) ; run_004 v2 **terminé** (**16,84 / 16,68**). L’encodeur **L-14k** ST (`run_010`) a **échoué** ; **`run_014` v2 terminé** (**17,12 / 17,21**, Modyco). speechLLM B-1k (`run_003`) : **10,00 / 7,47** ; speechLLM **L-14k** (`run_012`) : **15,49 / 15,03** ; L-114k **`run_013` ok** (**15,92 / 15,24**). ST **L-114k** (`run_016` v2) : **20,30 / 19,63** (OVH, sous papier ~25,2). Sur **sentence_like**, Gemini 3.5 v2 **terminé** (**38,69 / 36,76**) ; devant Gemini 2.5 (**21,44 / 23,15**), speechLLM dégelé (**19,25 / 18,83**), ST greedy (**16,12 / 14,97**). Les tableaux détaillés sont en **§5** ; ne pas mélanger utterance et sentence_like.
+Les expériences couvrent deux segmentations : **`sentence_like`** (fusion de segments, runs historiques) et **`utterance`** (segments m-TEDx natifs, bench Pantagruel). Sur **utterance**, **Gemini 3.5 Flash v2** (`run_005`, juin 2026) atteint **41,42 / 41,09** BLEU — devant la cascade (**38,17 / 37,41**) et Gemini **2.5** (**33,76 / 33,72**), avec garde-fous anti-boucles et budget `max_output_tokens=8192`. Les runs 3.5 v1 (`run_003`, troncature sous 256 tokens) restent **non conclusifs**. La réplication ST Table 8 B-1k est **partielle** : run_002 en échec (**3,79** test) ; run_004 v2 **terminé** (**16,84 / 16,68**). L’encodeur **L-14k** ST (`run_010`) a **échoué** ; **`run_014` v2 terminé** (**17,12 / 17,21**, machine GPU locale). speechLLM B-1k (`run_003`) : **10,00 / 7,47** ; speechLLM **L-14k** (`run_012`) : **15,49 / 15,03** ; L-114k **`run_013` ok** (**15,92 / 15,24**). ST **L-114k** (`run_016` v2) : **20,30 / 19,63** (serveur cloud GPU, sous papier ~25,2). Sur **sentence_like**, Gemini 3.5 v2 **terminé** (**38,69 / 36,76**) ; devant Gemini 2.5 (**21,44 / 23,15**), speechLLM dégelé (**19,25 / 18,83**), ST greedy (**16,12 / 14,97**). Les tableaux détaillés sont en **§5** ; ne pas mélanger utterance et sentence_like.
 
 Ce document synthétise le cadre expérimental, les différences entre variantes, les hyperparamètres testés, les résultats et les écarts de protocole par rapport au papier — matière première pour un article ou un chapitre expérimental.
 
@@ -385,20 +385,20 @@ Métrique : **SacreBLEU corpus** (signature habituelle `tok:13a|smooth:exp|versi
 | ST E2E Transformer B-1k | `run_002_transformer_baseline_utterance` | `speech-base-1K` + décodeur 6L + SPM 1k | greedy (v1) | 3,90 | 3,79 | **échec** (collapse ~26k) |
 | ST E2E Transformer B-1k **v2** | `run_004_transformer_baseline_utterance_v2` | idem + gel 5k + early stop | greedy (v1) | **16,84** | **16,68** | ok (tour) |
 | speechLLM B1 | `run_003_speechllm_b1_utterance_long` | `speech-base-1K` gelé → Phi-2 gelé | beam 1, max 48 tok | **10,00** | **7,47** | ok (tour) |
-| speechLLM B1 **L-14k** | `run_012_speechllm_b1_utterance_large_14k` | `speech-large-14K` gelé → Phi-2 gelé | beam 1, max 48 tok | **15,49** | **15,03** | ok (OVH, ~1,4 h GPU) |
-| speechLLM B1 **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | `speech-large-114K` gelé → Phi-2 gelé | beam 1, max 48 tok | **15,92** | **15,24** | ok (OVH) |
-| speechLLM B1 L-14k couche 9 | `run_047_speechllm_b1_utterance_large_14k_layer9` | L-14k, `encoder_layer: 9` | beam 1, max 48 tok | **15,10** | **14,00** | ok (Modyco) — sous run_012 |
-| speechLLM B1 L-14k couche 6 | `run_048_speechllm_b1_utterance_large_14k_layer6` | L-14k, `encoder_layer: 6` | beam 1, max 48 tok | **13,69** | **12,41** | ok (Modyco) — sous run_047 |
-| speechLLM B1 L-14k contrôle couche -1 | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | L-14k, `encoder_layer: -1` | beam 1, max 48 tok | **14,57** | **13,58** | ok (Modyco, ~2,9 h GPU) — sous run_012 |
-| speechLLM B2bis L-14k + Qwen2.5-3B | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | L-14k → Qwen2.5-3B gelé | beam 1, max 48 tok | **13,96** | **12,95** | ok (Modyco, ~2,7 h GPU) — sous Phi-2 |
-| speechLLM B2bis L-14k + Llama-3.2-3B | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | L-14k → Llama-3.2-3B gelé | beam 1, max 48 tok | **18,28** | **16,31** | ok (Modyco, ~2,7 h GPU, 30 juin) — **meilleur speechLLM** |
-| speechLLM B2bis L-114k + Llama-3.2-3B | `run_053_speechllm_b2bis_utterance_large_114k_llama32_3b` | L-114k → Llama-3.2-3B gelé | beam 1, max 48 tok | **13,05** | **12,61** | ok (OVH, ~4,5 h GPU, 2 juil.) — **sous** run_052 et run_013 |
-| speechLLM B1 L-114k SpecAugment | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | L-114k gelé + SpecAugment | beam 1, max 48 tok | **15,06** | **14,27** | ok (OVH, ~8 h GPU, 3 juil.) — **sous** run_013 **15,24** |
-| speechLLM B1 L-114k couche 9 | `run_056_speechllm_b1_utterance_large_114k_layer9` | L-114k, `encoder_layer: 9` | beam 1, max 48 tok | **15,30** | **14,52** | ok (OVH, ~7,2 h GPU, 3 juil.) — au-dessus run_047 L-14k couche 9 **14,00** ; **sous** run_013 **15,24** |
-| speechLLM B2bis L-14k + Mistral-7B 4-bit | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | L-14k → Mistral 4-bit gelé | beam 1, max 48 tok | **14,76** | **14,22** | ok (Modyco, ~14 h GPU timeout, 2 juil.) — sous Phi-2 et Llama |
+| speechLLM B1 **L-14k** | `run_012_speechllm_b1_utterance_large_14k` | `speech-large-14K` gelé → Phi-2 gelé | beam 1, max 48 tok | **15,49** | **15,03** | ok (serveur cloud GPU, ~1,4 h GPU) |
+| speechLLM B1 **L-114k** | `run_013_speechllm_b1_utterance_large_114k` | `speech-large-114K` gelé → Phi-2 gelé | beam 1, max 48 tok | **15,92** | **15,24** | ok (serveur cloud GPU) |
+| speechLLM B1 L-14k couche 9 | `run_047_speechllm_b1_utterance_large_14k_layer9` | L-14k, `encoder_layer: 9` | beam 1, max 48 tok | **15,10** | **14,00** | ok (machine GPU locale) — sous run_012 |
+| speechLLM B1 L-14k couche 6 | `run_048_speechllm_b1_utterance_large_14k_layer6` | L-14k, `encoder_layer: 6` | beam 1, max 48 tok | **13,69** | **12,41** | ok (machine GPU locale) — sous run_047 |
+| speechLLM B1 L-14k contrôle couche -1 | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | L-14k, `encoder_layer: -1` | beam 1, max 48 tok | **14,57** | **13,58** | ok (machine GPU locale, ~2,9 h GPU) — sous run_012 |
+| speechLLM B2bis L-14k + Qwen2.5-3B | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | L-14k → Qwen2.5-3B gelé | beam 1, max 48 tok | **13,96** | **12,95** | ok (machine GPU locale, ~2,7 h GPU) — sous Phi-2 |
+| speechLLM B2bis L-14k + Llama-3.2-3B | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | L-14k → Llama-3.2-3B gelé | beam 1, max 48 tok | **18,28** | **16,31** | ok (machine GPU locale, ~2,7 h GPU, 30 juin) — **meilleur speechLLM** |
+| speechLLM B2bis L-114k + Llama-3.2-3B | `run_053_speechllm_b2bis_utterance_large_114k_llama32_3b` | L-114k → Llama-3.2-3B gelé | beam 1, max 48 tok | **13,05** | **12,61** | ok (serveur cloud GPU, ~4,5 h GPU, 2 juil.) — **sous** run_052 et run_013 |
+| speechLLM B1 L-114k SpecAugment | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | L-114k gelé + SpecAugment | beam 1, max 48 tok | **15,06** | **14,27** | ok (serveur cloud GPU, ~8 h GPU, 3 juil.) — **sous** run_013 **15,24** |
+| speechLLM B1 L-114k couche 9 | `run_056_speechllm_b1_utterance_large_114k_layer9` | L-114k, `encoder_layer: 9` | beam 1, max 48 tok | **15,30** | **14,52** | ok (serveur cloud GPU, ~7,2 h GPU, 3 juil.) — au-dessus run_047 L-14k couche 9 **14,00** ; **sous** run_013 **15,24** |
+| speechLLM B2bis L-14k + Mistral-7B 4-bit | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | L-14k → Mistral 4-bit gelé | beam 1, max 48 tok | **14,76** | **14,22** | ok (machine GPU locale, ~14 h GPU timeout, 2 juil.) — sous Phi-2 et Llama |
 | ST E2E Transformer **L-14k** | `run_010_transformer_baseline_utterance_large_14k` | `speech-large-14K` + décodeur 6L + SPM 1k | greedy (v1) | 0,00 | 0,00 | **échec** (collapse, tour, 2026-06-09) |
-| ST E2E Transformer **L-14k v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | idem + gel 5k + early stop + LR 1e-4 | greedy (v1) | **17,12** | **17,21** | ok (Modyco) |
-| ST E2E Transformer **L-114k v2** | `run_016_transformer_baseline_utterance_large_114k_v2` | `speech-large-114K` + correctifs run_014 | beam 5 | **20,30** | **19,63** | ok (OVH, ~9,1 h GPU, early stop @~21k) |
+| ST E2E Transformer **L-14k v2** | `run_014_transformer_baseline_utterance_large_14k_v2` | idem + gel 5k + early stop + LR 1e-4 | greedy (v1) | **17,12** | **17,21** | ok (machine GPU locale) |
+| ST E2E Transformer **L-114k v2** | `run_016_transformer_baseline_utterance_large_114k_v2` | `speech-large-114K` + correctifs run_014 | beam 5 | **20,30** | **19,63** | ok (serveur cloud GPU, ~9,1 h GPU, early stop @~21k) |
 | Gemini (alias protocole) | `run_002_gemini_flash_utterance` | idem 2.5 Flash | idem | — | — | config dédiée ; scores = `run_001_gemini_flash_utterance_full` si même corpus |
 
 ### 5.3 Même paradigme : `utterance` vs `sentence_like` (BLEU test)
@@ -476,7 +476,7 @@ Lecture prudente : stack PyTorch/HF vs fairseq historique ; ST v1 en greedy vs b
 4. Écart dev/test important pour run_002 speechLLM (19,99 → 15,89) : longueur max 48 tokens, sur-adaptation valid, ou effet segmentation.
 5. Speech_Text multimodal sous-performe (8,39 / 7,95) : piste encodeur multimodal vs tâche ST pure.
 6. **run_002 utterance** : collapse décodeur (répétitions `iveive…`, BLEU 3,79). **run_004 v2** (gel 5k, early stop, LR 1e-4) : **16,84 / 16,68** (2026-06-05, tour, early stop @20k) — réplication partielle Table 8 (~0,8 BLEU sous le papier).
-7. **run_010 utterance L-14k** (2026-06-08/09, tour Modyco) : même schéma d’échec qu’en B-1k (`freeze_encoder_updates: 1000`, LR 2e-4, 80k updates sans early stop) — BLEU dev/test **0,00** (meilleur dev en cours de train ~0,025) ; hypothèses répétitives (`I I I…`, ratio hyp/réf ~7×). Durée mesurée : **~10 h 23** train GPU (`metrics.json`, 37 380 s) + **~10 min** éval (626 s) ; fenêtre 22h17 → 08h53. Retry **`run_014` v2** (correctifs calqués sur run_004) prêt, lancement nocturne Modyco.
+7. **run_010 utterance L-14k** (2026-06-08/09, tour machine GPU locale) : même schéma d’échec qu’en B-1k (`freeze_encoder_updates: 1000`, LR 2e-4, 80k updates sans early stop) — BLEU dev/test **0,00** (meilleur dev en cours de train ~0,025) ; hypothèses répétitives (`I I I…`, ratio hyp/réf ~7×). Durée mesurée : **~10 h 23** train GPU (`metrics.json`, 37 380 s) + **~10 min** éval (626 s) ; fenêtre 22h17 → 08h53. Retry **`run_014` v2** (correctifs calqués sur run_004) prêt, lancement nocturne machine GPU locale.
 8. **run_003 speechLLM utterance** : **10,00 / 7,47** (2026-06-05, tour) — fort recul vs sentence_like (15,89) et vs ST utterance (16,68) ; ratio longueur hyp/réf ~2,3× (SacreBLEU) — relecture `eval/dev_predictions.txt` avant ablation dégel (`run_006`) ou encodeurs Large.
 
 ---
@@ -514,34 +514,54 @@ Lecture prudente : stack PyTorch/HF vs fairseq historique ; ST v1 en greedy vs b
 ### 6.4 Travaux en cours techniques
 
 - **`run_004_transformer_baseline_utterance_v2`** : terminé (2026-06-05, tour) — rsync `eval/` vers ThinkPad si besoin.
-- **`run_010_transformer_baseline_utterance_large_14k`** : terminé (2026-06-09, tour Modyco) — **échec** (0,00 / 0,00) ; ~10 h 23 train + ~10 min éval.
-- **`run_014_transformer_baseline_utterance_large_14k_v2`** : **terminé** (Modyco) — **17,12 / 17,21**.
-- **`run_016_transformer_baseline_utterance_large_114k_v2`** : **terminé** (OVH, 2026-06-10) — **20,30 / 19,63** ; ~9,1 h GPU ; early stop @~21k updates.
-- **`run_012_speechllm_b1_utterance_large_14k`** : **terminé** (OVH) — **15,49 / 15,03**.
-- **`run_013_speechllm_b1_utterance_large_114k`** : **terminé** (OVH) — **15,92 / 15,24**.
-- **`run_015_speechllm_b1_utterance_large_14k_unfreeze`** : **terminé** (Modyco) — **3,90 / 3,65** (sous run_012).
+- **`run_010_transformer_baseline_utterance_large_14k`** : terminé (2026-06-09, tour machine GPU locale) — **échec** (0,00 / 0,00) ; ~10 h 23 train + ~10 min éval.
+- **`run_014_transformer_baseline_utterance_large_14k_v2`** : **terminé** (machine GPU locale) — **17,12 / 17,21**.
+- **`run_016_transformer_baseline_utterance_large_114k_v2`** : **terminé** (serveur cloud GPU, 2026-06-10) — **20,30 / 19,63** ; ~9,1 h GPU ; early stop @~21k updates.
+- **`run_012_speechllm_b1_utterance_large_14k`** : **terminé** (serveur cloud GPU) — **15,49 / 15,03**.
+- **`run_013_speechllm_b1_utterance_large_114k`** : **terminé** (serveur cloud GPU) — **15,92 / 15,24**.
+- **`run_015_speechllm_b1_utterance_large_14k_unfreeze`** : **terminé** (machine GPU locale) — **3,90 / 3,65** (sous run_012).
 - **`run_005_gemini_35_flash_utterance_v2`** : **terminé** (local, 2026-06-10) — **41,42 / 41,09** ; 66 min ; 0,94 $ API.
 - **`run_004_gemini_35_flash_sentence_like_v2`** : **terminé** (local, 2026-06-10) — **38,69 / 36,76** ; 38 min ; 1,27 $ API.
 - Optionnel : rsync `eval/` cascade utterance (tour → ThinkPad) ; cascade `run_001_cascade_sentence_like` (sentence_like) pour tableau §5.3 complet.
 - Ablations ST : greedy vs beam (nouvelle version protocole si beam 5 implémenté).
-- **`run_051_speechllm_b1_utterance_large_14k_encoder_control`** : **terminé** (Modyco, 2026-06-27) — **14,57 / 13,58** (contrôle piste J ; sous run_012).
-- **`run_052_speechllm_b2bis_utterance_large_14k_llama32_3b`** : **terminé** (Modyco, 2026-06-30) — **18,28 / 16,31** ; format `llama_inst` ; **meilleur speechLLM** (au-dessus run_013 **15,24** et run_012 **15,03**).
-- **`run_054_speechllm_b2bis_utterance_large_14k_mistral_7b`** : **terminé** (Modyco, 2026-07-02) — **14,76 / 14,22** ; 4-bit ; timeout 14 h @ ~16,9k ; sous Phi-2 et Llama — ablation Mistral **clos**.
-- **`run_053_speechllm_b2bis_utterance_large_114k_llama32_3b`** : **terminé** (OVH, 2026-07-02) — **13,05 / 12,61** ; L-114k + Llama — **sous** run_052 **16,31** et run_013 **15,24** ; ablation L-114k+Llama **sans gain**.
-- **`run_044_speechllm_b1_utterance_large_114k_v5_specaug`** : **terminé** (OVH, 2026-07-03) — **15,06 / 14,27** ; SpecAugment L-114k — **sous** run_013 **15,24** ; ablation **clos**.
-- **`run_056_speechllm_b1_utterance_large_114k_layer9`** : **terminé** (OVH, 2026-07-03) — **15,30 / 14,52** ; L-114k couche 9 (~7,2 h GPU) — au-dessus run_047 L-14k couche 9 **14,00** ; **sous** run_013 **15,24**.
-- **`run_057_aker_speechllm_l14k`** : **interrompu** (IMAG lig-gpu6, 2026-07-03) — walltime 6 h @ ~2,3k updates ; pipeline validé ; pas d’éval SacreBLEU.
-- **`run_059_aker_speechllm_l14k`** : **terminé** (IMAG lig-gpu6 OAR, 2026-07-04) — **15,14 / 14,77** ; Phi-2 L-14k ; ~6 h GPU ; proche run_012 **15,03**.
-- **`run_060_aker_st_l14k_v5`** : **échec OOM** (IMAG, 2026-07-04) — ST L-14k v5 SpecAugment @ ~5k updates ; 2080 Ti 11 Go insuffisant pour ST complet.
-- **`run_055_speechllm_b2bis_utterance_large_14k_llama32_3b_seed2`** : **terminé** (OVH, 2026-07-03) — **15,94 / 13,67** ; seed 1 (config seed2.yaml) ; early stop @ 6k ; sous run_052 **16,31**.
-- **`run_052_transformer_baseline_utterance_large_14k_v12_spm5k_freeze15k`** : **terminé** (OVH, 2026-07-04/05) — **21,77 / 21,20** ; piste E L-14k gel 15k ; early stop ~46k ; best dev **20,22** @ 42k — **sous** run_026 **26,12** ; ≈ run_020 **21,22**.
-- **`run_061_transformer_baseline_utterance_large_114k_v12_spm5k_freeze15k`** : **terminé** (OVH, 2026-07-05) — **21,27 / 21,28** ; reprise `--resume` ~55k ; piste E L-114k gel 15k — **sous** run_033 **25,10**.
-- **`run_062_speechllm_b2bis_utterance_large_14k_mistral_7b_ovh`** : **terminé** (OVH, 2026-07-06) — **12,44 / 13,68** ; early stop ~17k — vs run_054 **14,22**.
-- **`run_067_aker_speechllm_llama_k7`** : **échec OOM** (IMAG, 2026-07-04) — Llama-3.2-3B + downsampling k=7 ; 2080 Ti 11 Go insuffisant.
-- **`run_068_aker_speechllm_l14k`** : **terminé** (IMAG OAR 128303, 2026-07-05) — **15,14 / 13,71** ; Phi-2 L-14k seed 42 — sous run_059 **14,77**.
-- **`run_070_aker_speechllm_l14k_seed2`** : **terminé** (IMAG OAR 128406 resume, 2026-07-07) — **15,82 / 15,41** ; Phi-2 L-14k seed 1 — meilleur seed 1 IMAG.
-- **`run_069_aker_speechllm_l14k_seed2`** : **walltime partiel** (IMAG OAR 128315, 2026-07-06) — ~11,4k/20k ; best dev **12,19** ; **KILLED** walltime 12 h ; pas d’éval.
-- **Modyco** : **HS** (juil. 2026) — runs reportés OVH / IMAG.
+- **`run_051_speechllm_b1_utterance_large_14k_encoder_control`** : **terminé** (machine GPU locale, 2026-06-27) — **14,57 / 13,58** (contrôle piste J ; sous run_012).
+- **`run_052_speechllm_b2bis_utterance_large_14k_llama32_3b`** : **terminé** (machine GPU locale, 2026-06-30) — **18,28 / 16,31** ; format `llama_inst` ; **meilleur speechLLM** (au-dessus run_013 **15,24** et run_012 **15,03**).
+- **`run_054_speechllm_b2bis_utterance_large_14k_mistral_7b`** : **terminé** (machine GPU locale, 2026-07-02) — **14,76 / 14,22** ; 4-bit ; timeout 14 h @ ~16,9k ; sous Phi-2 et Llama — ablation Mistral **clos**.
+- **`run_053_speechllm_b2bis_utterance_large_114k_llama32_3b`** : **terminé** (serveur cloud GPU, 2026-07-02) — **13,05 / 12,61** ; L-114k + Llama — **sous** run_052 **16,31** et run_013 **15,24** ; ablation L-114k+Llama **sans gain**.
+- **`run_044_speechllm_b1_utterance_large_114k_v5_specaug`** : **terminé** (serveur cloud GPU, 2026-07-03) — **15,06 / 14,27** ; SpecAugment L-114k — **sous** run_013 **15,24** ; ablation **clos**.
+- **`run_056_speechllm_b1_utterance_large_114k_layer9`** : **terminé** (serveur cloud GPU, 2026-07-03) — **15,30 / 14,52** ; L-114k couche 9 (~7,2 h GPU) — au-dessus run_047 L-14k couche 9 **14,00** ; **sous** run_013 **15,24**.
+- **`run_057_speechllm_l14k`** : **interrompu** (cluster GETALP nœud GPU, 2026-07-03) — walltime 6 h @ ~2,3k updates ; pipeline validé ; pas d’éval SacreBLEU.
+- **`run_059_speechllm_l14k`** : **terminé** (cluster GETALP nœud GPU OAR, 2026-07-04) — **15,14 / 14,77** ; Phi-2 L-14k ; ~6 h GPU ; proche run_012 **15,03**.
+- **`run_060_st_l14k_v5`** : **échec OOM** puis **relance** (cluster GETALP OAR 129507, 2026-07-15) — ST L-14k v5 ; OOM 2080 Ti (129505) ; reprise `--resume` sur H100.
+- **`run_079_aker_speechllm_l14k`** : **terminé** (cluster GETALP, 2026-07-14) — **15,37** test ; Phi-2 L-14k 4e réplication.
+- **`run_078_aker_speechllm_l14k_encoder_control`** : **terminé** (cluster GETALP, 2026-07-14) — **14,71** test ; contrôle encoder_layer -1.
+- **`run_066_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze`** : **terminé** (machine GPU locale, 2026-07-14) — **18,88** test ; dégel encodeur — réplication cluster GETALP (sous **20,12**).
+- **`run_023_speechllm_b1_utterance_large_14k_replicate`** : **terminé** (machine GPU locale, 2026-07-14) — **15,33** test ; Phi-2 gelé replicate.
+- **`run_055_speechllm_b2bis_utterance_large_14k_llama32_3b_seed2`** : **terminé** (machine GPU locale, 2026-07-15) — **17,84** test ; seed 2.
+- **`run_054_speechllm_b2bis_utterance_large_14k_mistral_7b`** : **en cours** (machine GPU locale, 2026-07-15) — relance cap 4 h (`OVERWRITE=1`) ; run initial **14,22** (2 juil.).
+- **`run_066` Llama dégel (machine GPU locale)** : **terminé** — voir ci-dessus **18,88**.
+- **`run_055_speechllm_b2bis_utterance_large_14k_llama32_3b_seed2`** : **terminé** (serveur cloud GPU, 2026-07-03) — **15,94 / 13,67** ; seed 1 (config seed2.yaml) ; early stop @ 6k ; sous run_052 **16,31**.
+- **`run_052_transformer_baseline_utterance_large_14k_v12_spm5k_freeze15k`** : **terminé** (serveur cloud GPU, 2026-07-04/05) — **21,77 / 21,20** ; piste E L-14k gel 15k ; early stop ~46k ; best dev **20,22** @ 42k — **sous** run_026 **26,12** ; ≈ run_020 **21,22**.
+- **`run_061_transformer_baseline_utterance_large_114k_v12_spm5k_freeze15k`** : **terminé** (serveur cloud GPU, 2026-07-05) — **21,27 / 21,28** ; reprise `--resume` ~55k ; piste E L-114k gel 15k — **sous** run_033 **25,10**.
+- **`run_062_speechllm_b2bis_utterance_large_14k_mistral_7b`** : **terminé** (serveur cloud GPU, 2026-07-06) — **12,44 / 13,68** ; early stop ~17k — vs run_054 **14,22**.
+- **`run_067_speechllm_llama_k7`** : **terminé** (cluster GETALP OAR 128641, 2026-07-08) — **11,16 / 7,54** ; Llama k=7 ; early stop ~6,9k — **sans gain** vs run_066 **20,12**.
+- **`run_066_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze`** : **terminé** (cluster GETALP H100, 2026-07-08) — **19,80 / 20,12** ; dégel encodeur — **meilleur speechLLM**.
+- **`run_076_speechllm_l14k_layer9`** : **terminé** (cluster GETALP, 2026-07-08) — **12,06** test ; couche 9 Phi-2.
+- **`run_075_open_whisper_st_utterance`** : **terminé** (cluster GETALP, 2026-07-07) — **36,65** test ; Whisper-ST zero-shot.
+- **`run_075b_open_seamlessm4t_v2_utterance`** : **terminé** (cluster GETALP H100 OAR 128930, 2026-07-10) — **37,54 / 38,01** ; SeamlessM4T v2 — réplication serveur cloud GPU `run_073` ; correctif `audio=` dans `open_common.py`.
+- **`run_077_speechllm_l14k_layer6`** : **terminé** (cluster GETALP OAR 129046, 2026-07-10) — **13,50 / 12,72** ; couche 6 Phi-2 ; reprise après KILLED 128866.
+- **`run_075_open_whisper_st_utterance`** : **terminé** (machine GPU locale, 2026-07-10) — **38,36 / 36,64**.
+- **`run_075b_open_seamlessm4t_v2_utterance`** : **terminé** (machine GPU locale, 2026-07-10) — **37,57 / 38,00**.
+- **`run_074_open_canary_1b_utterance`** : **terminé** (machine GPU locale, 2026-07-10) — **41,19 / 40,04** ; **meilleur open ST**.
+- **`run_071_speechllm_l14k`** : **terminé** (cluster GETALP OAR 128411, 2026-07-07) — **15,62 / 14,69** ; Phi-2 L-14k seed 42 — 3e réplication.
+- **`run_070_speechllm_l14k_seed2`** : **terminé** (cluster GETALP OAR 128406 resume, 2026-07-07) — **15,82 / 15,41** ; Phi-2 L-14k seed 1 — meilleur seed 1 cluster GETALP.
+- **`run_068_speechllm_l14k`** : **terminé** (cluster GETALP OAR 128303, 2026-07-05) — **15,14 / 13,71** ; Phi-2 L-14k seed 42 — sous run_059 **14,77**.
+- **`run_063_transformer_baseline_utterance_large_14k_v13_spm5k_freeze15k_specaug_strong`** : **terminé** (serveur cloud GPU, 2026-07-06) — **18,82 / 17,17** ; SpecAugment fort + gel 15k.
+- **`run_064_transformer_baseline_utterance_large_114k_v13_heavy_specaug`** : **terminé** (serveur cloud GPU, 2026-07-07) — **23,53 / 22,08** ; L-114k mask 0,15 — sous run_033 **25,10**.
+- **`run_073_open_seamlessm4t_v2_utterance`** : **terminé** (serveur cloud GPU, 2026-07-07) — **37,56 / 38,02** ; SeamlessM4T v2.
+- **`run_074_open_canary_1b_utterance`** : **échec env** (serveur cloud GPU, 2026-07-07) — BLEU 0 ; incompatibilité torch/torchvision après install NeMo.
+- **`run_074_open_canary_1b_utterance`** : **terminé** (machine GPU locale, 2026-07-10) — **41,19 / 40,04** ; **meilleur open ST reproductible**.
+- **machine GPU locale / cluster GETALP** : open baselines **clos** ; speechLLM cluster GETALP **`run_066`** **20,12** ; réplications machine GPU locale **`run_066`** **18,88**, **`run_055`** **17,84**, **`run_023`** **15,33**.
 - MQM / relecture humaine en fin de projet (hors scope immédiat).
 
 ---
@@ -603,4 +623,4 @@ Pour déclinaison LaTeX / conférence :
 7. Analysis — écarts papier, erreurs qualitatives  
 8. Conclusion & future work — fr-pt/es, Large encoder, MQM  
 
-*Dernière mise à jour manuelle : 2026-06-10 — Gemini 3.5 v2 utterance 41,09 (`run_005`) et sentence_like 36,76 (`run_004`) ; run_016 ST L-114k v2 terminé 19,63 (OVH) ; run_013/014/015 terminés.*
+*Dernière mise à jour manuelle : 2026-06-10 — Gemini 3.5 v2 utterance 41,09 (`run_005`) et sentence_like 36,76 (`run_004`) ; run_016 ST L-114k v2 terminé 19,63 (serveur cloud GPU) ; run_013/014/015 terminés.*

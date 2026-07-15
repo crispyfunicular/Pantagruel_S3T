@@ -614,10 +614,10 @@
     <div class="card">
       <h2><span class="icon">🖥</span> Scripts « opérationnels » (lancer des runs)</h2>
       <p class="section-intro">
-        En plus des scripts Python, le dépôt contient des scripts shell qui automatisent des lancements (nohup, SSH, synchronisation).
+        En plus des scripts Python, le dépôt contient des scripts shell qui automatisent des lancements (nohup, synchronisation).
       </p>
       <div class="prose">
-        <p><strong>Exemples :</strong> <code>scripts_communs/bootstrap.sh</code> (créer un environnement Python), <code>scripts/extract_web_audio.py</code> (extraire les WAV d’exemples vers <code>docs/audio/</code>), et des scripts <code>run_modyco_*.sh</code>/<code>run_ovh_*.sh</code> qui enchaînent des expériences sur des machines <span class="term">GPU<span class="term-tip">Serveurs distants équipés de cartes graphiques pour l’entraînement. <a href="vocabulaire.html#gpu">→ glossaire</a></span></span>.</p>
+        <p><strong>Exemples :</strong> <code>scripts_communs/bootstrap.sh</code> (créer un environnement Python), <code>scripts/extract_web_audio.py</code> (extraire les WAV d’exemples vers <code>docs/audio/</code>), et des scripts d’orchestration dans <code>scripts/</code> qui enchaînent des expériences sur <span class="term">GPU<span class="term-tip">Carte graphique utilisée pour l’entraînement accéléré. <a href="vocabulaire.html#gpu">→ glossaire</a></span></span>.</p>
         <p>Ils facilitent l’exécution, mais <strong>la logique du pipeline</strong> (ce qui est produit à chaque étape) est dans les scripts Python listés ci‑dessus. Les lancements en arrière-plan utilisent souvent <span class="term">nohup<span class="term-tip">Commande Unix qui laisse un script tourner après fermeture du terminal — pratique pour des entraînements de plusieurs heures.</span></span>.</p>
       </div>
     </div>

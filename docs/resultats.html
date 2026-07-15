@@ -370,10 +370,10 @@
           <div class="stat-label">4 · Cascade ASR→MT</div>
           <div class="stat-sub">utterance · run_001</div>
         </a>
-        <a class="stat-card stat-card-v6" href="variante-6.html#run_072" title="run_072–074 — Open baselines ST (éval en cours sur OVH)">
-          <div class="stat-bleu stat-bleu-v6" style="font-size:1.1rem;">en cours</div>
+        <a class="stat-card stat-card-v6" href="variante-6.html#run_074" title="run_074 — Canary-1B (40,0 BLEU test)">
+          <div class="stat-bleu stat-bleu-v6">40,0</div>
           <div class="stat-label">6 · Open baselines ST</div>
-          <div class="stat-sub">utterance · run_072→074</div>
+          <div class="stat-sub">utterance · Canary-1B</div>
         </a>
         <a class="stat-card stat-card-v1" href="variante-1.html#run_026" title="run_026 — Transformer L-14k v5 SpecAugment (26,1 BLEU)">
           <div class="stat-bleu stat-bleu-v1">26,1</div>
@@ -390,10 +390,10 @@
           <div class="stat-label">Référence article</div>
           <div class="stat-sub">L-114k · Table 8 Pantagruel</div>
         </a>
-        <a class="stat-card stat-card-v2" href="variante-2.html#run_013" title="run_013 — speechLLM L-114k gelé (15,2 BLEU)">
-          <div class="stat-bleu stat-bleu-v2">15,2</div>
-          <div class="stat-label">2 · speechLLM (B1)</div>
-          <div class="stat-sub">utterance · run_013</div>
+        <a class="stat-card stat-card-v2" href="variante-2.html#run_066" title="run_066 — speechLLM Llama dégel encodeur (20,1 BLEU)">
+          <div class="stat-bleu stat-bleu-v2">20,1</div>
+          <div class="stat-label">2 · speechLLM (B2)</div>
+          <div class="stat-sub">utterance · run_066 · Llama dégel</div>
         </a>
         <a class="stat-card stat-card-v5" href="variante-5.html#run_001" title="run_001 — Speech_Text sentence_like (7,9 BLEU)">
           <div class="stat-bleu stat-bleu-v5">7,9</div>
@@ -629,14 +629,15 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>utterance</em> (segments m-TEDx natifs).',
         note:
-          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Meilleur ST local : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>16,3</strong> (<code>run_052</code> Llama-3.2-3B) ; réplication IMAG Phi-2 <code>run_059</code> <strong>14,8</strong> ; Llama seed 1 OVH <code>run_055</code> <strong>13,7</strong> ; Mistral 4-bit <code>run_054</code> 14,2.',
+          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>utterance</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_005</code>, 41,1 BLEU test) devance la cascade (37) et Gemini 2.5 (34). Open baselines : Canary-1B <strong>40,0</strong> (<code>run_074</code>) ; SeamlessM4T <strong>38,0</strong> ; Whisper <strong>36,6</strong>. Meilleur ST entraîné : <strong>26,1</strong> (L-14k v5 SpecAugment, <code>run_026</code>). <strong>L-114k + SPM 5k</strong> (<code>run_033</code>, <strong>25,1</strong>) rejoint la Table 8 Pantagruel (25,2). Meilleur speechLLM : <strong>20,1</strong> (<code>run_066</code> Llama dégel) ; avant <code>run_052</code> Llama gelé <strong>16,3</strong>.',
         chartRows: [
           { id: 3, color: 'v3', href: 'variante-3.html', chartLabel: '3 · Gemini 3.5 Flash', tableLabel: 'Gemini 3.5 Flash v2', score: 41.1 },
           { id: 4, color: 'v4', href: 'variante-4.html', chartLabel: '4 · Cascade', tableLabel: 'Cascade ASR→MT', score: 37 },
+          { id: 6, color: 'v6', href: 'variante-6.html', chartLabel: '6 · Open baselines', tableLabel: 'Canary-1B', score: 40.0 },
           { id: '—', color: 'ref', href: 'variante-1.html#run_033', chartLabel: 'S3T L-114k SPM 5k', tableLabel: 'Transformer L-114k (run_033)', score: 25.1 },
           { id: '—', color: 'ref', href: 'https://arxiv.org/abs/2601.05911', chartLabel: 'Article Pantagruel-L-114k', tableLabel: 'Pantagruel-L-114k (article)', score: 25.2 },
           { id: 1, color: 'v1', href: 'variante-1.html', chartLabel: '1 · Transformer', tableLabel: 'Transformer ST', score: 26.1 },
-          { id: 2, color: 'v2', href: 'variante-2.html', chartLabel: '2 · speechLLM', tableLabel: 'speechLLM B1', score: 16.3 }
+          { id: 2, color: 'v2', href: 'variante-2.html', chartLabel: '2 · speechLLM', tableLabel: 'speechLLM Llama dégel', score: 20.1 }
         ],
         tableRows: [
           { id: 3, color: 'v3', tableLabel: 'Gemini 3.5 Flash v2', run: 'run_005', score: 41.1,
@@ -645,6 +646,12 @@
             params: 'temp 0 · max 256 tok' },
           { id: 4, color: 'v4', tableLabel: 'Cascade ASR→MT', run: 'run_001', score: 37.4,
             params: 'Whisper large-v3 (ASR) → Marian opus-mt-fr-en (MT)' },
+          { id: 6, color: 'v6', tableLabel: 'Canary-1B', run: 'run_074', score: 40.0,
+            params: 'NeMo canary-1b-v2 · zero-shot · meilleur open ST reproductible' },
+          { id: 6, color: 'v6', tableLabel: 'SeamlessM4T v2', run: 'run_073', score: 38.0,
+            params: 'facebook/seamless-m4t-v2-large · zero-shot' },
+          { id: 6, color: 'v6', tableLabel: 'Whisper-ST', run: 'run_072', score: 36.6,
+            params: 'openai/whisper-large-v3 · task=translate' },
           { id: '—', color: 'ref', tableLabel: 'Pantagruel-L-114k (article)', run: '—', score: 25.2,
             params: 'fairseq · beam 5 · Table 8 Pantagruel (2026)' },
           { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_033', score: 25.1,
@@ -655,12 +662,14 @@
             params: 'L-114k · SpecAugment v5 vocab 1k — sous run_033' },
           { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_020', score: 21.2,
             params: 'L-14k · v3 · gel 5k puis dégel' },
+          { id: 2, color: 'v2', tableLabel: 'speechLLM Llama dégel', run: 'run_066', score: 20.1,
+            params: 'encodeur dégelé · LR 1e-5 — meilleur speechLLM' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_052', score: 16.3,
-            params: 'L-14k gelé · Llama-3.2-3B · 48 tok — meilleur speechLLM' },
-          { id: 2, color: 'v2', tableLabel: 'speechLLM B1 IMAG', run: 'run_059', score: 14.8,
-            params: 'L-14k gelé · Phi-2 · lig-gpu6 OAR · proche run_012 (15,0)' },
+            params: 'L-14k gelé · Llama-3.2-3B · 48 tok — meilleur speechLLM gelé' },
+          { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_059', score: 14.8,
+            params: 'L-14k gelé · Phi-2 · proche run_012 (15,0)' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM Llama seed 1', run: 'run_055', score: 13.7,
-            params: 'OVH · réplicabilité run_052 · early stop @ 6k' },
+            params: 'réplicabilité run_052 · early stop @ 6k' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM B2bis', run: 'run_054', score: 14.2,
             params: 'L-14k gelé · Mistral-7B 4-bit · 48 tok — sous Phi-2' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_013', score: 15.2,

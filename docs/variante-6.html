@@ -168,35 +168,42 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Backend</th><th>Modèle</th><th>Rôle</th><th>Run OVH</th><th>État</th></tr>
+            <tr><th>Backend</th><th>Modèle</th><th>Run</th><th>BLEU test</th><th>État</th></tr>
           </thead>
           <tbody>
-            <tr id="run_072">
-              <td><code>whisper_st</code></td>
-              <td><code>openai/whisper-large-v3</code></td>
-              <td>ST via <code>task=translate</code> — filet de sécurité (transformers seul)</td>
-              <td><code>run_072</code></td>
-              <td><span class="result-pending">en cours</span></td>
+            <tr id="run_074">
+              <td><code>canary_1b</code></td>
+              <td><code>nvidia/canary-1b-v2</code></td>
+              <td><code>run_074</code></td>
+              <td><strong>40,04</strong></td>
+              <td><span class="tag tag-green">ok — meilleur open ST</span></td>
             </tr>
             <tr id="run_073">
               <td><code>seamless_m4t_v2</code></td>
               <td><code>facebook/seamless-m4t-v2-large</code></td>
-              <td>Candidat #1 — ST multilingue Meta, le plus proche de Gemini</td>
-              <td><code>run_073</code></td>
-              <td><span class="tag tag-gray">file d’attente</span></td>
+              <td><code>run_073</code> / <code>075b_*</code></td>
+              <td><strong>38,02</strong></td>
+              <td><span class="tag tag-green">ok</span></td>
             </tr>
-            <tr id="run_074">
+            <tr id="run_072">
+              <td><code>whisper_st</code></td>
+              <td><code>openai/whisper-large-v3</code></td>
+              <td><code>run_072</code> / <code>075_*</code></td>
+              <td><strong>36,65</strong></td>
+              <td><span class="tag tag-green">ok</span></td>
+            </tr>
+            <tr>
               <td><code>canary_1b</code></td>
               <td><code>nvidia/canary-1b-v2</code></td>
-              <td>Alternative NVIDIA compacte (NeMo)</td>
-              <td><code>run_074</code></td>
-              <td><span class="tag tag-gray">file d’attente</span></td>
+              <td><code>run_074</code> (tentative)</td>
+              <td>0,00</td>
+              <td><span class="tag tag-orange">échec env</span> (torch/NeMo)</td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="note note-warn">
-        <strong>Juillet 2026 :</strong> la chaîne <code>run_072→073→074</code> tourne sur OVH après <code>run_064</code>. Les scores BLEU seront ajoutés dès réception des artefacts <code>sacrebleu_test.txt</code>.
+        <strong>Juillet 2026 :</strong> chaîne <code>run_072→073→074</code> — SeamlessM4T (**38,02**) et Whisper (**36,60**) proches de la cascade (**37,4**) ; Canary **40,04** test (meilleur open ST). Une tentative Canary a échoué (compatibilité torch/NeMo).
       </div>
     </div>
 
@@ -212,7 +219,7 @@
             </tr>
             <tr>
               <td><span class="tag tag-orange">Faiblesses</span></td>
-              <td>Scores encore inconnus ; Canary nécessite NeMo (dépendance lourde) ; inférence segment par segment (lente) ; zero-shot sans adaptation m-TEDx</td>
+              <td>Canary-1B <strong>40,0</strong> BLEU ; SeamlessM4T <strong>38,0</strong> ; Whisper <strong>36,6</strong> — proches de Gemini (~41) et cascade (~37) en restant ouvert et reproductible</td>
             </tr>
             <tr>
               <td><span class="tag tag-blue">Références</span></td>
@@ -228,14 +235,18 @@
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
-          <div><strong>Consolider SeamlessM4T v2</strong> — si <code>run_073</code> est stable, tester aussi la version <code>medium</code> si VRAM limitée.</div>
+          <div><strong>Consolider Canary-1B</strong> — <code>run_074</code> atteint <strong>40,0</strong> BLEU test (meilleur open ST) ; documenter la dépendance NeMo pour reproductibilité.</div>
         </li>
         <li>
           <span class="imp-num">2</span>
-          <div><strong>Bench <em>sentence_like</em></strong> — étendre l’évaluation au second découpage pour alignement avec les variantes 1–2.</div>
+          <div><strong>Stabilité des scores</strong> — Whisper et SeamlessM4T : écarts &lt; 0,5 BLEU entre runs de contrôle ; Canary dépend de NeMo (stack torch/vision).</div>
         </li>
         <li>
           <span class="imp-num">3</span>
+          <div><strong>Bench <em>sentence_like</em></strong> — étendre l’évaluation au second découpage pour alignement avec les variantes 1–2.</div>
+        </li>
+        <li>
+          <span class="imp-num">4</span>
           <div><strong>Granite Speech / Ollama</strong> — candidats backlog (piste K) si les trois modèles initiaux ne suffisent pas.</div>
         </li>
       </ul>

@@ -29,7 +29,7 @@ Réplication de la **traduction de la parole** sur **m-TEDx** (`fr-en`, `fr-pt`,
 
 ---
 
-## État actuel (juin 2026) — variantes testées et résultats (fr→en)
+## État actuel (juillet 2026) — variantes testées et résultats (fr→en)
 
 Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` + signature).
 
@@ -81,39 +81,53 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | ST L-14k **v8** SPM 8k | `run_034_transformer_baseline_utterance_large_14k_v8_spm8k` | 23.36 | **22.24** | ok (14 juin) — sous run_031 |
 | ST L-114k **v5** SpecAugment | `run_028_transformer_baseline_utterance_large_114k_v5` | 24.08 | **23.51** | ok (14 juin) — **meilleur L-114k local** |
 | ST **B-1k v5** SpecAugment | `run_035_transformer_baseline_utterance_b1k_v5` | 20.18 | **19.75** | ok (15 juin) |
-| ST L-14k **v9 warmup 10k** | `run_036_transformer_baseline_utterance_large_14k_v9_warmup10k` | — | **0,60** | **échec** (Modyco, 23 juin — ne pas relancer) |
-| ST L-14k **v9 SpecAugment fort** | `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` | 24.62 | **24.55** | ok (Modyco — sous run_026) |
-| ST L-114k **v9 SpecAugment freq** | `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` | 24.21 | **24.78** | ok (OVH, 18 juin) |
+| ST L-14k **v9 warmup 10k** | `run_036_transformer_baseline_utterance_large_14k_v9_warmup10k` | — | **0,60** | **échec** (machine GPU locale, 23 juin — ne pas relancer) |
+| ST L-14k **v9 SpecAugment fort** | `run_037_transformer_baseline_utterance_large_14k_v9_specaug_strong` | 24.62 | **24.55** | ok (machine GPU locale — sous run_026) |
+| ST L-114k **v9 SpecAugment freq** | `run_038_transformer_baseline_utterance_large_114k_v9_specaug_freq` | 24.21 | **24.78** | ok (serveur cloud GPU, 18 juin) |
 | ST L-14k **v11 batch 32** | `run_046_transformer_baseline_utterance_large_14k_v11_batch32` | 3.29 | **2.76** | **échec** — collapse (piste B clos) |
-| ST L-14k **v5 seed 2** | `run_049_transformer_baseline_utterance_large_14k_v5_seed2` | 23.75 | **23.84** | ok (Modyco, 19 juin) |
-| speechLLM **L-14k couche 9** | `run_047_speechllm_b1_utterance_large_14k_layer9` | 15.10 | **14.00** | ok (Modyco, 22 juin — sous run_012 **15,03**) |
-| speechLLM **L-14k couche 6** | `run_048_speechllm_b1_utterance_large_14k_layer6` | 13.69 | **12.41** | ok (Modyco, 22 juin — piste J, sous run_012) |
-| speechLLM **L-14k seed 2** | `run_050_speechllm_b1_utterance_large_14k_seed2` | 14.56 | **14.01** | ok (Modyco, 22–23 juin — légèrement sous run_012 **15,03**) |
-| speechLLM **L-14k contrôle couche -1** | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | 14.57 | **13.58** | ok (Modyco, 27 juin — piste J clos ; sous run_012 **15,03**) |
-| speechLLM **B-1k dégel** | `run_006_speechllm_b1_utterance_unfreeze` | 9.32 | **9.60** | ok (Modyco, 19 juin) |
+| ST L-14k **v5 seed 2** | `run_049_transformer_baseline_utterance_large_14k_v5_seed2` | 23.75 | **23.84** | ok (machine GPU locale, 19 juin) |
+| speechLLM **L-14k couche 9** | `run_047_speechllm_b1_utterance_large_14k_layer9` | 15.10 | **14.00** | ok (machine GPU locale, 22 juin — sous run_012 **15,03**) |
+| speechLLM **L-14k couche 6** | `run_048_speechllm_b1_utterance_large_14k_layer6` | 13.69 | **12.41** | ok (machine GPU locale, 22 juin — piste J, sous run_012) |
+| speechLLM **L-14k seed 2** | `run_050_speechllm_b1_utterance_large_14k_seed2` | 14.56 | **14.01** | ok (machine GPU locale, 22–23 juin — légèrement sous run_012 **15,03**) |
+| speechLLM **L-14k contrôle couche -1** | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | 14.57 | **13.58** | ok (machine GPU locale, 27 juin — piste J clos ; sous run_012 **15,03**) |
+| speechLLM **B-1k dégel** | `run_006_speechllm_b1_utterance_unfreeze` | 9.32 | **9.60** | ok (machine GPU locale, 19 juin) |
 | speechLLM L-14k **v5 SpecAugment** | `run_039_speechllm_b1_utterance_large_14k_v5_specaug` | 14.59 | **13.84** | ok (16 juin — sous run_023 **14,23**) |
 | Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | — | — | **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404 — checkpoint intermédiaire retiré, modèle final en cours) |
 | ST L-14k **v10 finetune freq** | `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` | 26.37 | **25.95** | ok (16 juin — sous run_026 **26,12**) |
 | speechLLM L-114k **replicate** | `run_032_speechllm_b1_utterance_large_114k_replicate` | 15.14 | **14.15** | ok (48 tok — sous run_013 **15,24**) |
-| ST L-114k **v7 SPM 5k** | `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` | 25.27 | **25.10** | ok (OVH, 17 juin — best dev **25,53** @ 70k ; ≈ papier **25,2**) |
-| ST L-114k **v10 warmup 10k** | `run_042_transformer_baseline_utterance_large_114k_v10_warmup10k` | 23.83 | **24.11** | ok (OVH, 19 juin — sous run_033 **25,10**) |
+| ST L-114k **v7 SPM 5k** | `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` | 25.27 | **25.10** | ok (serveur cloud GPU, 17 juin — best dev **25,53** @ 70k ; ≈ papier **25,2**) |
+| ST L-114k **v10 warmup 10k** | `run_042_transformer_baseline_utterance_large_114k_v10_warmup10k` | 23.83 | **24.11** | ok (serveur cloud GPU, 19 juin — sous run_033 **25,10**) |
 | ST L-14k **v5 replicate** | `run_043_transformer_baseline_utterance_large_14k_v5_replicate` | 25.36 | **24.78** | ok (17 juin — réplication run_026 **26,12**, écart ~1,3) |
-| speechLLM L-114k **v5 SpecAugment** | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | 15.06 | **14.27** | ok (OVH, 3 juil.) — **sous** run_013 **15,24** ; waiter 053→044 |
-| speechLLM **L-114k + Llama-3.2-3B** | `run_053_speechllm_b2bis_utterance_large_114k_llama32_3b` | 13.05 | **12.61** | ok (OVH, 2 juil.) — **sous** run_052 **16,31** et run_013 **15,24** ; early stop @ ~10,4k |
-| speechLLM **L-114k couche 9** | `run_056_speechllm_b1_utterance_large_114k_layer9` | 15.30 | **14.52** | ok (OVH, 3 juil. — ~7,2 h GPU) — au-dessus run_047 L-14k couche 9 **14,00** ; **sous** run_013 **15,24** |
+| speechLLM L-114k **v5 SpecAugment** | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | 15.06 | **14.27** | ok (serveur cloud GPU, 3 juil.) — **sous** run_013 **15,24** ; waiter 053→044 |
+| speechLLM **L-114k + Llama-3.2-3B** | `run_053_speechllm_b2bis_utterance_large_114k_llama32_3b` | 13.05 | **12.61** | ok (serveur cloud GPU, 2 juil.) — **sous** run_052 **16,31** et run_013 **15,24** ; early stop @ ~10,4k |
+| speechLLM **L-114k couche 9** | `run_056_speechllm_b1_utterance_large_114k_layer9` | 15.30 | **14.52** | ok (serveur cloud GPU, 3 juil. — ~7,2 h GPU) — au-dessus run_047 L-14k couche 9 **14,00** ; **sous** run_013 **15,24** |
 | speechLLM L-14k **v9 SpecAugment fort** | `run_045_speechllm_b1_utterance_large_14k_v9_specaug_strong` | 14.40 | **13.69** | ok (17 juin — sous run_023 **14,23**) |
 | speechLLM L-14k **v3** (128 tok) | `run_021_speechllm_b1_utterance_large_14k_v3` | 5.84 | **5.48** | **échec** |
 | speechLLM L-114k **v3** (128 tok) | `run_022_speechllm_b1_utterance_large_114k_v3` | 5.28 | **4.78** | **échec** |
 | speechLLM L-14k **replicate** | `run_023_speechllm_b1_utterance_large_14k_replicate` | 15.26 | **14.23** | ok (48 tok — proche `run_012` 15,03) |
 | speechLLM L-14k + **Qwen2.5-3B** | `run_018_speechllm_b2bis_utterance_large_14k_qwen25_3b` | 13.96 | **12.95** | ok — sous Phi-2 |
-| speechLLM L-14k + **Llama-3.2-3B** | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | 18.28 | **16.31** | ok (Modyco, 30 juin — **meilleur speechLLM** ; au-dessus run_013 **15,24**) |
-| speechLLM L-14k + **Mistral-7B 4-bit** | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | 14.76 | **14.22** | ok (Modyco, 2 juil. — sous run_052 et Phi-2 ; au-dessus Qwen **12,95**) |
-| speechLLM L-14k + Llama seed 1 | `run_055_speechllm_b2bis_utterance_large_14k_llama32_3b_seed2` | 15.94 | **13.67** | ok (OVH, 3 juil. — réplicabilité ; sous run_052 **16,31** ; early stop @ 6k) |
-| speechLLM B1 **L-14k IMAG seed 1** | `run_070_aker_speechllm_l14k_seed2` | 15.82 | **15.41** | ok (IMAG, 7 juil.) — resume OAR 128406 ; meilleur seed 1 |
-| speechLLM B1 **L-14k IMAG** | `run_059_aker_speechllm_l14k` | 15.14 | **14.77** | ok (IMAG, 4 juil.) |
-| speechLLM B1 **L-14k IMAG repl.** | `run_068_aker_speechllm_l14k` | 15.14 | **13.71** | ok (IMAG, 5 juil.) — sous run_059 |
-| ST L-14k **v12 SPM 5k gel 15k** | `run_052_transformer_baseline_utterance_large_14k_v12_spm5k_freeze15k` | 21.77 | **21.20** | ok (OVH, 4–5 juil.) — piste E L-14k |
-| ST L-114k **v12 SPM 5k gel 15k** | `run_061_transformer_baseline_utterance_large_114k_v12_spm5k_freeze15k` | 21.27 | **21.28** | ok (OVH, 5 juil.) — piste E L-114k ; reprise ~55k |
+| speechLLM L-14k + **Llama-3.2-3B** | `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` | 18.28 | **16.31** | ok (machine GPU locale, 30 juin — **meilleur speechLLM** ; au-dessus run_013 **15,24**) |
+| speechLLM L-14k + **Mistral-7B 4-bit** | `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` | 14.76 | **14.22** | ok (machine GPU locale, 2 juil. — sous run_052 et Phi-2 ; au-dessus Qwen **12,95**) |
+| speechLLM L-14k + Llama seed 1 | `run_055_speechllm_b2bis_utterance_large_14k_llama32_3b_seed2` | 15.94 | **13.67** | ok (serveur cloud GPU, 3 juil. — réplicabilité ; sous run_052 **16,31** ; early stop @ 6k) |
+| speechLLM B1 **L-14k cluster GETALP repl. seed 42** | `run_071_speechllm_l14k` | 15.62 | **14.69** | ok (cluster GETALP, 7 juil.) — 3e réplication seed 42 |
+| speechLLM B1 **L-14k cluster GETALP seed 1** | `run_070_speechllm_l14k_seed2` | 15.82 | **15.41** | ok (cluster GETALP, 7 juil.) — resume OAR 128406 ; meilleur seed 1 |
+| speechLLM B1 **L-14k cluster GETALP** | `run_059_speechllm_l14k` | 15.14 | **14.77** | ok (cluster GETALP, 4 juil.) |
+| speechLLM B1 **L-14k (cluster, réplication)** | `run_068_speechllm_l14k` | 15.14 | **13.71** | ok (cluster GETALP, 5 juil.) — sous run_059 |
+| ST L-14k **v12 SPM 5k gel 15k** | `run_052_transformer_baseline_utterance_large_14k_v12_spm5k_freeze15k` | 21.77 | **21.20** | ok (serveur cloud GPU, 4–5 juil.) — piste E L-14k |
+| ST L-114k **v12 SPM 5k gel 15k** | `run_061_transformer_baseline_utterance_large_114k_v12_spm5k_freeze15k` | 21.27 | **21.28** | ok (serveur cloud GPU, 5 juil.) — piste E L-114k ; reprise ~55k |
+| ST L-14k **v13 batch32 safe** | `run_065_transformer_baseline_utterance_large_14k_v13_batch32_safe` | 19.08 | **18.91** | ok (serveur cloud GPU, 8 juil.) — timeout 16 h @ ~15k ; serveur coupé |
+| speechLLM B1 **L-14k (cluster, couche 6)** | `run_077_speechllm_l14k_layer6` | 13.50 | **12.72** | ok (cluster GETALP, 10 juil.) — piste J ; au-dessus run_048 **12,41** ; sous run_047 **14,00** |
+| speechLLM B1 **L-14k (cluster, couche 9)** | `run_076_speechllm_l14k_layer9` | — | **12.06** | ok (cluster GETALP, 8 juil.) — piste J |
+| speechLLM **Llama dégel encodeur** | `run_066_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze` | 19.80 | **20.12** | ok (cluster GETALP H100, 8 juil.) — **meilleur speechLLM** |
+| ST L-14k **v13 SpecAugment fort gel 15k** | `run_063_transformer_baseline_utterance_large_14k_v13_spm5k_freeze15k_specaug_strong` | 18.82 | **17.17** | ok (serveur cloud GPU, 6 juil.) |
+| Open ST **SeamlessM4T v2** | `run_073_open_seamlessm4t_v2_utterance` | 37.56 | **38.02** | ok (serveur cloud GPU, 7 juil.) — zero-shot ; proche cascade **37,4** |
+| Open ST **SeamlessM4T v2 (cluster)** | `run_075b_open_seamlessm4t_v2_utterance` | 37.54 | **38.01** | ok (cluster GETALP H100, 10 juil.) — réplication cross-machine |
+| Open ST **Whisper large-v3** | `run_072_open_whisper_st_utterance` | 38.37 | **36.60** | ok (serveur cloud GPU, 7 juil.) — zero-shot |
+| Open ST **Whisper (cluster)** | `run_075_open_whisper_st_utterance` | — | **36.65** | ok (cluster GETALP, 7 juil.) |
+| Open ST **Canary-1B** | `run_074_open_canary_1b_utterance` | 0.00 | **0.00** | **échec env** serveur cloud GPU (torchvision/NeMo) |
+| Open ST **Canary-1B (réplication)** | `run_074_open_canary_1b_utterance` | 41.19 | **40.04** | ok (machine GPU locale, 10 juil.) — **meilleur open ST** |
+| Open ST **Whisper (réplication)** | `run_075_open_whisper_st_utterance` | 38.36 | **36.64** | ok (machine GPU locale, 10 juil.) |
+| Open ST **SeamlessM4T v2 (réplication)** | `run_075b_open_seamlessm4t_v2_utterance` | 37.57 | **38.00** | ok (machine GPU locale, 10 juil.) |
 | speechLLM L-14k **unfreeze** | `run_015_speechllm_b1_utterance_large_14k_unfreeze` | 3.90 | 3.65 | ok — **sous** run_012 gelé (15,03) |
 | speechLLM L-114k **v2** (128 tok) | `run_017_speechllm_b1_utterance_large_114k_v2` | 6.56 | **5.60** | **échec** |
 
@@ -139,9 +153,9 @@ Trois axes **indépendants** (ne pas les confondre) :
 - Protocole d'évaluation **figé** : [documentation/protocole_evaluation.md](documentation/protocole_evaluation.md) (`2026-06-02-v1`) ; bench : `bash scripts/bench_evaluate_variants.sh`.
 - **Bench utterance** — [documentation/protocole_utterance_pantagruel.md](documentation/protocole_utterance_pantagruel.md) : cascade/Gemini OK ; ST `run_002` échoué (3,79) ; **`run_004_transformer_baseline_utterance_v2` terminé** (16,84 / 16,68, tour — proche Table 8 ~17,5) ; **speechLLM `run_003` terminé** (10,00 / 7,47, tour — sous ST 16,68 ; relecture qualitative prioritaire).
 - **Encodeur 14k / 114k** : meilleur ST **`run_026`** (**26,12**) ; **`run_049`** seed2 **ok** (**23,84**) ; **`run_046`** batch-32 **échec** (**2,76**) ; **`run_043`** **24,78** ; **`run_037`** **24,55** ; L-114k **`run_033`** **25,10** ; **`run_038`** **24,78** ; **`run_042`** **24,11** — voir [`documentation/protocole_utterance_pantagruel.md`](documentation/protocole_utterance_pantagruel.md).
-- **OVH** : **`run_062` Mistral** train terminé (early stop ~17k, best dev **12,44**) — **éval en cours** ; waiter **`run_063`** ST SpecAugment fort en file ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
-- **IMAG (aker)** : **`run_071`** Phi-2 seed 42 **en cours** (OAR **128411**, 7 juil.) ; **`run_070` ok** (**15,41** test, seed 1) ; **`run_059`** **14,77** / **`run_068`** **13,71**.
-- **Modyco** : **HS** (juil. 2026) — runs reportés sur **OVH** / **IMAG** ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
+- **serveur cloud GPU** : **serveur arrêté** (8 juil.) — **`run_065` ok** (**18,91**) ; open baselines **`run_072`/`run_073` ok** ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
+- **cluster GETALP** : **`run_066` ok** (**20,12** — meilleur speechLLM) ; **`run_077` layer6 ok** (**12,72**) ; open baselines Whisper/Seamless répliqués ; aucun job OAR actif ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
+- **machine GPU locale** : open baselines **ok** (Canary **40,04**, Whisper **36,64**, Seamless **38,00**) ; réplication `run_066` Llama dégel **en attente VRAM** ; voir [`documentation/recommandations.md`](documentation/recommandations.md).
 - **Gemini 3.5 Flash** : **`run_005` utterance v2 terminé** — **41,42 / 41,09** ; **`run_004` sentence_like v2 terminé** — **38,69 / 36,76** (garde-fous, `max_output_tokens=8192`, `thinking_level: minimal`) ; devant Gemini 2.5 sur les deux découpages. Runs `run_003_*` v1 **non conclusifs** (troncature).
 - **Cascade utterance** : **38.17 / 37.41** (`run_001_cascade_utterance`, tour) — rsync `eval/` vers ThinkPad si besoin ; cascade `sentence_like` optionnelle.
 - **Amélioration par variante** (modèle, hyperparamètres, corpus, décodage) : tableau [rapport.md §1.3](rapport.md#13-clarifications-retour-encadrant-juin-2026) ; piste bench `evaluate` multi-variantes une fois le protocole gelé.
@@ -280,7 +294,7 @@ Ces baselines servent de points de référence pour les tâches aval (texte + pa
 ### 6) `6_open_baselines` — ST open source zero-shot
 - **But** : alternative **reproductible** à Gemini (variante 3) — modèles open weights évalués sur le même protocole SacreBLEU, sans API ni entraînement m-TEDx.
 - **Implémentation** : [`6_open_baselines/`](6_open_baselines/) — Whisper-ST (`task=translate`), SeamlessM4T v2, Canary-1B (NeMo optionnel) dans `open_common.py`, `evaluate` / `infer`, configs YAML.
-- **Cible** : même contrat d’artefacts `runs/.../eval/` que les variantes 3–4 ; runs OVH `run_072`–`run_074`.
+- **Cible** : même contrat d’artefacts `runs/.../eval/` que les variantes 3–4 ; runs serveur cloud GPU `run_072`–`run_074`.
 - **Doc** : [PRD §2.3.5](documentation/PRD.md#235-baselines-st-open-source--variante-6-6_open_baselines), [recommandations Piste K](documentation/recommandations.md#piste-k--baselines-st-open-source-réplicables).
 
 **PyTorch CUDA** (recommandé sur machine GPU) :
@@ -721,12 +735,12 @@ python 6_open_baselines/pipeline.py infer \
   --input-audio path/to/audio.wav -v
 ```
 
-Sur OVH (GPU libre) :
+Sur serveur cloud GPU (GPU libre) :
 
 ```bash
-nohup bash scripts/run_ovh_open_whisper_st_072.sh > logs/run_072_launch.log 2>&1 &
-nohup bash scripts/run_ovh_open_seamless_073.sh > logs/run_073_launch.log 2>&1 &
-nohup bash scripts/run_ovh_open_canary_074.sh > logs/run_074_launch.log 2>&1 &
+nohup bash scripts/<orchestration-serveur-cloud> > logs/run_072_launch.log 2>&1 &
+nohup bash scripts/<orchestration-serveur-cloud> > logs/run_073_launch.log 2>&1 &
+nohup bash scripts/<orchestration-serveur-cloud> > logs/run_074_launch.log 2>&1 &
 ```
 
 Options communes : `--verbose`, `--dry-run` (`scripts_communs/pipeline.py` : aussi `--log-file`).
@@ -812,74 +826,76 @@ Raccourcis optionnels : [`scripts/tour.bashrc.snippet`](scripts/tour.bashrc.snip
 
 ---
 
-## Serveur IMAG aker (déploiement pipelines)
+## Déploiement sur cluster GPU (GETALP)
 
-Chaîne SSH : **poste → ligone (bastion) → aker (login) → nœud GPU OAR** (ex. **lig-gpu6**, RTX 2080 Ti 11 Go).  
-`aker` n’est pas joignable en direct depuis l’extérieur ; PyTorch ne tourne pas sur `aker` (ulimit RAM ~80 Mo) — les jobs GPU passent par **OAR** (même `$HOME` NFS que aker).
+Chaîne SSH : **poste local → bastion → serveur de login cluster → nœud GPU OAR** (ex. RTX 2080 Ti 11 Go).  
+Le serveur de login n’est pas joignable en direct depuis l’extérieur ; PyTorch ne tourne pas dessus (ulimit RAM ~80 Mo) — les jobs GPU passent par **OAR** (même `$HOME` NFS que le login).
 
-**Données** : rsync ThinkPad → **aker** (`datasets/manifests/` + `datasets/processed/`) — pas rsync direct vers un nœud GPU.  
+**Données** : rsync poste local → serveur de login (`datasets/manifests/` + `datasets/processed/`) — pas rsync direct vers un nœud GPU.  
 **PyTorch** : sur 2080 Ti (driver CUDA 12.2), installer `torch` **cu121** — `pip install torch torchaudio torchvision --index-url https://download.pytorch.org/whl/cu121` (un `pip install -r requirements.txt` seul réinstalle CUDA 13, incompatible).  
 **HF** : `hf auth login` pour les encodeurs gated (`speech-large-114K`).
+
+Les hôtes exacts et les scripts de déploiement (`*.sh`, config SSH) sont dans le répertoire `scripts/` du dépôt ; ils ne sont pas recopiés ici.
 
 ### Prérequis SSH (une fois)
 
 ```bash
-# Sur le ThinkPad — clé vers le bastion (mot de passe IMAG si demandé)
-ssh-copy-id -i ~/.ssh/id_ed25519.pub bonapelm@ligone.imag.fr
+# Sur le poste local — clé vers le bastion
+ssh-copy-id -i ~/.ssh/id_ed25519.pub utilisateur@<bastion-cluster>
 
-# Puis depuis ligone → aker
-ssh bonapelm@ligone.imag.fr
-ssh-copy-id bonapelm@aker.imag.fr
+# Puis bastion → serveur de login
+ssh utilisateur@<bastion-cluster>
+ssh-copy-id utilisateur@<serveur-login-cluster>
 exit
 
-# Optionnel : raccourcis SSH (voir scripts/aker.ssh.config.example)
-./scripts/aker.sh check
+# Optionnel : raccourcis SSH (voir scripts/*.ssh.config.example)
+./scripts/<deploy-cluster>.sh check
 ```
 
 ### Déploiement et smoke test
 
 ```bash
-./scripts/aker.sh rsync-code          # pipelines + configs (sans datasets lourds)
-./scripts/run_aker_smoke.sh check     # ligone → aker → lig-gpu1
-GPU_HOST=lig-gpu2.imag.fr ./scripts/run_aker_smoke.sh all   # si vous utilisez lig-gpu2
+./scripts/<deploy-cluster>.sh rsync-code          # pipelines + configs (sans datasets lourds)
+./scripts/<smoke-test-cluster>.sh check           # bastion → login → nœud GPU
+GPU_HOST=<nœud-gpu> ./scripts/<smoke-test-cluster>.sh all
 ```
 
-Sur **lig-gpu2** (session directe) : clone GitHub requiert une clé SSH GitHub locale (`~/.ssh/id_ed25519_github` + entrée `Host github.com` dans `~/.ssh/config`). Sinon, une fois `aker.sh check` OK depuis le ThinkPad, `rsync-code` suffit (NFS partagé).
+Sur un **nœud GPU** (session directe) : clone GitHub requiert une clé SSH GitHub locale (`~/.ssh/id_ed25519_github` + entrée `Host github.com` dans `~/.ssh/config`). Sinon, une fois le check SSH OK depuis le poste local, `rsync-code` suffit (NFS partagé).
 
 ### Réservation GPU (OAR)
 
-Sur **aker**, les nœuds GPU passent par **OAR** (pas de `ssh lig-gpu6` direct depuis l’extérieur) :
+Sur le **serveur de login**, les nœuds GPU passent par **OAR** (pas de SSH direct vers un nœud GPU depuis l’extérieur) :
 
 ```bash
-# Depuis aker — session interactive (≥10 h pour speechLLM L-14k complet sur 2080 Ti)
-oarsub -I -l /gpu=1,walltime=10:00:00 -p "host='lig-gpu6.imag.fr'"
+# Session interactive (≥10 h pour speechLLM L-14k complet sur 2080 Ti)
+oarsub -I -l /gpu=1,walltime=10:00:00 -p "host='<nœud-gpu>'"
 
-# Une fois sur le nœud GPU (prompt bonapelm@lig-gpu6) :
+# Une fois sur le nœud GPU :
 nvidia-smi
 cd ~/S3T && source .venv/bin/activate
-bash scripts/run_aker_smoke.sh run-local
+bash scripts/<smoke-test-cluster>.sh run-local
 ```
 
 Clone sans clé GitHub : `git clone https://github.com/crispyfunicular/Pantagruel_S3T.git ~/S3T`
 
-Puis sur le nœud GPU : `cd ~/S3T`, `.venv`, lancer train/eval ; voir [`scripts/run_aker_smoke.sh`](scripts/run_aker_smoke.sh).
+Puis sur le nœud GPU : `cd ~/S3T`, `.venv`, lancer train/eval ; voir les scripts de smoke test dans `scripts/`.
 
-Exemple speechLLM via OAR batch (lig-gpu6, walltime **≥12 h**) :
+Exemple speechLLM via OAR batch (walltime **≥12 h**) :
 
 ```bash
 # Phi-2 seed 42 (run_059 / run_068) :
-bash -lc 'oarsub -S -l /gpu=1,walltime=12:00:00 ~/S3T/scripts/run_oar_speechllm_l14k_aker.sh'
+bash -lc 'oarsub -S -l /gpu=1,walltime=12:00:00 ~/S3T/scripts/<script-oar-cluster>'
 # Phi-2 seed 1 — piste F (run_070, relance run_069) :
 oarsub -l gpu=1,walltime=12:00:00 -n run_070_speechllm_l14k_seed2 \
-  /home/getalp/bonapelm/S3T/scripts/run_oar_speechllm_l14k_seed2_aker.sh
-./scripts/aker.sh ssh 'tail -f ~/S3T/logs/run_070_train_eval.log'
+  ~/S3T/scripts/<script-oar-cluster-seed2>
+./scripts/<deploy-cluster>.sh ssh 'tail -f ~/S3T/logs/run_070_train_eval.log'
 # ou
-tail -f ~/S3T/runs/fr-en/run_070_aker_speechllm_l14k_seed2/train.log
+tail -f ~/S3T/runs/fr-en/run_070_speechllm_l14k_seed2/train.log
 ```
 
-**Limite VRAM** : ST L-14k v5 SpecAugment (`run_060`) provoque **OOM** sur 2080 Ti 11 Go — réserver IMAG aux runs **speechLLM** (L-14k + Phi-2 ~6 h).
+**Limite VRAM** : ST L-14k v5 SpecAugment (`run_060`) provoque **OOM** sur 2080 Ti 11 Go — réserver le cluster aux runs **speechLLM** (L-14k + Phi-2 ~6 h).
 
-Rappatriement résultats : `rsync` ThinkPad ← aker (`bonapelm@aker.imag.fr:~/S3T/runs/fr-en/<run_id>/`).
+Rappatriement résultats : `rsync` poste local ← serveur de login (`utilisateur@<serveur-login-cluster>:~/S3T/runs/fr-en/<run_id>/`).
 
 ---
 

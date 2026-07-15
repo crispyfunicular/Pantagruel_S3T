@@ -157,7 +157,11 @@ CLI (routeur `6_open_baselines/pipeline.py`) :
 - `evaluate` : décodage valid/test + SacreBLEU (`--dry-run` et `--limit` disponibles).
 - `infer` : WAV arbitraire → JSONL.
 
-Runs OVH prévus : `run_072` (Whisper-ST), `run_073` (SeamlessM4T v2), `run_074` (Canary-1B).
+Runs serveur cloud GPU (juillet 2026) : `run_072` Whisper-ST **36,60** test ; `run_073` SeamlessM4T v2 **38,02** test ; `run_074` Canary-1B **échec env** — relance machine GPU locale **ok** (**40,04** test).
+
+Runs cluster GETALP (juillet 2026) : `run_075` Whisper **36,65** ; `run_075b` Seamless **38,01** ; `run_077` layer6 **12,72** test / **13,50** dev (OAR 129046, reprise ok).
+
+Runs machine GPU locale (juillet 2026) : open baselines **ok** — Canary **40,04**, Whisper **36,64**, Seamless **38,00** ; waiter **run_066** Llama dégel **bloqué VRAM** (seuil 24 Go).
 
 ### 2.4 Qualité logicielle et workflow de contribution
 
