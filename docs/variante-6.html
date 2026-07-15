@@ -84,6 +84,78 @@
     .vchip-v5 { border: 1px solid rgba(8,145,178,0.3); background: #ecfeff; color: #0e7490; }
     .page-end { margin-top: 1.5rem; padding: 1.5rem 0 1.25rem; background: #e8eaef; border-top: 1px solid rgba(0,0,0,0.1); }
     .page-end footer { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; color: var(--muted); font-size: 0.72rem; text-align: center; }
+
+    /* ── Tooltips pour termes techniques ─────────────────────────── */
+    .term {
+      border-bottom: 1px dashed var(--accent-mid);
+      cursor: help;
+      position: relative;
+      display: inline;
+      white-space: nowrap;
+    }
+    .term-tip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 250px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 0.78rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      line-height: 1.45;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.28);
+      z-index: 999;
+      font-weight: 400;
+      white-space: normal;
+      font-style: normal;
+      font-family: var(--sans);
+      text-transform: none;
+      letter-spacing: 0;
+      pointer-events: none;
+    }
+    .term-tip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #1e293b;
+    }
+    .term-tip-down {
+      bottom: auto;
+      top: calc(100% + 8px);
+    }
+    .term-tip-down::after {
+      top: auto;
+      bottom: 100%;
+      border-top-color: transparent;
+      border-bottom-color: #1e293b;
+    }
+    .term-tip-left {
+      left: auto;
+      right: 0;
+      transform: none;
+    }
+    .term-tip-left::after {
+      left: auto;
+      right: 12px;
+      transform: none;
+    }
+    .term-tip a {
+      color: #f472b6;
+      display: inline-block;
+      margin-top: 0.3rem;
+      font-weight: 500;
+      pointer-events: auto;
+    }
+    .term-tip a:hover { color: #fbcfe8; text-decoration: underline; }
+    .term:hover > .term-tip,
+    .term.is-open > .term-tip { display: block; pointer-events: auto; }
+    .notes-hint { font-size: 0.82rem; color: var(--muted); margin-top: 0.5rem; }
   </style>
   <link rel="stylesheet" href="theme.css">
 </head>
@@ -119,15 +191,16 @@
   <header class="hero">
     <div class="variant-badge">Variante 6 / 6</div>
     <h1>Open baselines ST</h1>
-    <p class="lead">Modèles pré-entraînés <strong>open weights</strong> évalués en zero-shot sur m-TEDx — même protocole SacreBLEU que Gemini, sans API ni entraînement local. Alternative reproductible pour la recherche académique.</p>
-    <p class="tagline">« Comparer Gemini à des systèmes ouverts que n’importe qui peut relancer sur les mêmes manifests, avec la même signature BLEU. »</p>
+    <p class="lead">Modèles pré-entraînés <span class="term"><strong>open weights</strong><span class="term-tip">Modèle dont les poids sont publiés et téléchargeables — on peut relancer l’inférence sans API propriétaire. <a href="vocabulaire.html#open-weights">→ glossaire</a></span></span> évalués en <span class="term"><strong>zero-shot</strong><span class="term-tip">Le modèle est utilisé tel quel, sans entraînement ni fine-tuning sur m-TEDx. <a href="vocabulaire.html#zero-shot">→ glossaire</a></span></span> sur m-TEDx — même protocole <span class="term">SacreBLEU<span class="term-tip">Implémentation standardisée du BLEU (tokenisation figée) pour comparer les runs de façon reproductible. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> que Gemini, sans API ni entraînement local. Alternative reproductible pour la recherche académique.</p>
+    <p class="tagline">« Comparer Gemini à des systèmes ouverts que n’importe qui peut relancer sur les mêmes <span class="term">manifests<span class="term-tip">Fichiers TSV listant les segments audio à évaluer (<code>test.tsv</code>, <code>valid.tsv</code>). <a href="vocabulaire.html#manifest">→ glossaire</a></span></span>, avec la même signature <span class="term">BLEU<span class="term-tip">Score SacreBLEU calculé avec le même protocole tokenisation. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span>. »</p>
+    <p class="notes-hint">Survolez les termes <span class="term" style="border-bottom-color:#94a3b8;">soulignés en pointillés<span class="term-tip">Explication courte affichée au survol de la souris.</span></span> pour une définition en langage courant. Si la bulle contient un lien, <strong>cliquez d’abord sur le terme</strong> pour la maintenir affichée, puis sur le lien — sinon elle disparaît dès que la souris s’éloigne.</p>
   </header>
 
   <main class="container">
 
     <div class="card">
       <h2><span class="icon">⚙</span> Architecture</h2>
-      <p class="section-intro">Trois backends ST directs (audio → texte EN) ou quasi-directs, sélectionnés par <code>model.type</code> dans le YAML. Inférence seule — pas d’entraînement sur m-TEDx.</p>
+      <p class="section-intro">Trois backends <span class="term">ST<span class="term-tip"><em>Speech-to-text</em> : traduction directe audio → texte anglais, sans étape de transcription française intermédiaire. <a href="vocabulaire.html#speech-to-text">→ glossaire</a></span></span> (audio → texte EN) ou quasi-directs, sélectionnés par <code>model.type</code> dans le YAML. <span class="term">Inférence<span class="term-tip">Utilisation du modèle déjà entraîné : on charge les poids et on traduit, sans phase d’apprentissage sur m-TEDx. <a href="vocabulaire.html#inference">→ glossaire</a></span></span> seule — pas d’entraînement sur m-TEDx.</p>
       <div class="arch-container">
         <svg viewBox="0 0 820 155" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Inter',sans-serif">
           <defs>
@@ -158,8 +231,8 @@
         </svg>
       </div>
       <div class="prose">
-        <p><strong>Positionnement :</strong> la variante 3 (Gemini) donne le meilleur BLEU (~41) mais repose sur une API fermée et non reproductible. La variante 4 (cascade Whisper→Marian, ~37) est ouverte mais en deux étapes. La variante 6 teste des systèmes <em>speech-to-text</em> récents, directement comparables à Gemini sur la tâche audio→anglais.</p>
-        <p><strong>Protocole :</strong> mêmes manifests <code>valid.tsv</code> / <code>test.tsv</code> (<em>utterance</em>), mêmes artefacts <code>eval/sacrebleu_*.txt</code> et <code>protocol.json</code> que les variantes 3–4.</p>
+        <p><strong>Positionnement :</strong> la variante 3 (Gemini) donne le meilleur <span class="term">BLEU<span class="term-tip">Score standard de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> (~41) mais repose sur une API fermée et non reproductible. La variante 4 (<span class="term">cascade ASR→MT<span class="term-tip">Deux modèles en série : transcription française (ASR) puis traduction texte (MT). Voir <a href="variante-4.html">variante 4</a>.</span></span>, ~37) est ouverte mais en deux étapes. La variante 6 teste des systèmes <span class="term">speech-to-text<span class="term-tip">Traduction directe de la parole en texte anglais, en un seul modèle. <a href="vocabulaire.html#speech-to-text">→ glossaire</a></span></span> récents, directement comparables à Gemini sur la tâche audio→anglais.</p>
+        <p><strong>Protocole :</strong> mêmes <span class="term">manifests<span class="term-tip">Fichiers TSV (<code>valid.tsv</code>, <code>test.tsv</code>) listant les segments audio et leurs références pour l’évaluation. <a href="vocabulaire.html#manifest">→ glossaire</a></span></span> <code>valid.tsv</code> / <code>test.tsv</code> (<em><span class="term">utterance<span class="term-tip">Découpage par énoncé : chaque segment = une phrase parlée. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em>), mêmes artefacts <code>eval/sacrebleu_*.txt</code> et <code>protocol.json</code> que les variantes 3–4.</p>
       </div>
     </div>
 
@@ -168,7 +241,7 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Backend</th><th>Modèle</th><th>Run</th><th>BLEU test</th><th>État</th></tr>
+            <tr><th><span class="term" style="border-bottom-color:#94a3b8;">Backend<span class="term-tip term-tip-down">Identifiant du modèle dans la config YAML (<code>model.type</code>).</span></span></th><th>Modèle</th><th><span class="term" style="border-bottom-color:#94a3b8;">Run<span class="term-tip term-tip-down">Identifiant d’une expérience d’évaluation. <a href="vocabulaire.html#run">→ glossaire</a></span></span></th><th><span class="term" style="border-bottom-color:#94a3b8;">BLEU test<span class="term-tip term-tip-down">Score BLEU sur le jeu de test (échelle 0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span></th><th>État</th></tr>
           </thead>
           <tbody>
             <tr id="run_074">
@@ -203,7 +276,7 @@
         </table>
       </div>
       <div class="note note-warn">
-        <strong>Juillet 2026 :</strong> chaîne <code>run_072→073→074</code> — SeamlessM4T (**38,02**) et Whisper (**36,60**) proches de la cascade (**37,4**) ; Canary **40,04** test (meilleur open ST). Une tentative Canary a échoué (compatibilité torch/NeMo).
+        <strong>Juillet 2026 :</strong> chaîne <code>run_072→073→074</code> — SeamlessM4T (**38,02**) et Whisper (**36,60**) proches de la <span class="term">cascade<span class="term-tip">Pipeline ASR puis MT (variante 4), ~37,4 BLEU sur utterance. <a href="variante-4.html">→ variante 4</a></span></span> (**37,4**) ; Canary **40,04** test (meilleur open ST). Une tentative Canary a échoué (compatibilité torch/NeMo).
       </div>
     </div>
 
@@ -215,15 +288,15 @@
           <tbody>
             <tr>
               <td><span class="tag tag-green">Forces</span></td>
-              <td>Reproductible (poids ouverts, pas d’API) ; même protocole que Gemini ; plusieurs candidats pour maximiser les chances ; documentable pour un rapport académique</td>
+              <td>Reproductible (<span class="term">poids ouverts<span class="term-tip">Les poids du modèle sont publiés (Hugging Face, NeMo…) — pas d’API propriétaire. <a href="vocabulaire.html#open-weights">→ glossaire</a></span></span>, pas d’API) ; même protocole que Gemini ; plusieurs candidats pour maximiser les chances ; documentable pour un rapport académique</td>
             </tr>
             <tr>
               <td><span class="tag tag-orange">Faiblesses</span></td>
-              <td>Canary-1B <strong>40,0</strong> BLEU ; SeamlessM4T <strong>38,0</strong> ; Whisper <strong>36,6</strong> — proches de Gemini (~41) et cascade (~37) en restant ouvert et reproductible</td>
+              <td>Dépendances lourdes (NeMo pour Canary) ; scores encore sous Gemini (~41) ; biais « données déjà vues » possible (TED en ligne) — comme pour Whisper et Gemini</td>
             </tr>
             <tr>
               <td><span class="tag tag-blue">Références</span></td>
-              <td>Gemini ~41 BLEU (variante 3) · Cascade ~37 (variante 4) · objectif : se rapprocher de ces plafonds en restant ouvert</td>
+              <td>Gemini ~41 <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> (variante 3) · Cascade ~37 (variante 4) · baseline article Pantagruel <strong>25,2</strong> (<a href="vocabulaire.html#pantagruel">→ glossaire</a>)</td>
             </tr>
           </tbody>
         </table>
@@ -235,15 +308,15 @@
       <ul class="improvement-list">
         <li>
           <span class="imp-num">1</span>
-          <div><strong>Consolider Canary-1B</strong> — <code>run_074</code> atteint <strong>40,0</strong> BLEU test (meilleur open ST) ; documenter la dépendance NeMo pour reproductibilité.</div>
+          <div><strong>Consolider Canary-1B</strong> — <code>run_074</code> atteint <strong>40,0</strong> <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> test (meilleur open ST) ; documenter la dépendance NeMo pour reproductibilité.</div>
         </li>
         <li>
           <span class="imp-num">2</span>
-          <div><strong>Stabilité des scores</strong> — Whisper et SeamlessM4T : écarts &lt; 0,5 BLEU entre runs de contrôle ; Canary dépend de NeMo (stack torch/vision).</div>
+          <div><strong>Stabilité des scores</strong> — Whisper et SeamlessM4T : écarts &lt; 0,5 BLEU entre <span class="term">runs<span class="term-tip">Expériences identifiées par <code>run_XXX</code>. <a href="vocabulaire.html#run">→ glossaire</a></span></span> de contrôle ; Canary dépend de NeMo (stack torch/vision).</div>
         </li>
         <li>
           <span class="imp-num">3</span>
-          <div><strong>Bench <em>sentence_like</em></strong> — étendre l’évaluation au second découpage pour alignement avec les variantes 1–2.</div>
+          <div><strong>Bench <em><span class="term">sentence_like<span class="term-tip">Découpage en pseudo-phrases plus longues — scores non comparables à utterance. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em></strong> — étendre l’évaluation au second découpage pour alignement avec les variantes 1–2.</div>
         </li>
         <li>
           <span class="imp-num">4</span>
@@ -281,6 +354,27 @@
       <p>Stage LIG-GETALP · traduction de la parole FR→EN · <a href="pipeline.html">Pipeline</a> · <a href="resultats.html">Résultats</a> · <a href="corpus.html">Corpus</a> · <a href="vocabulaire.html">Glossaire</a> · <a href="index.html">Accueil</a></p>
     </footer>
   </div>
+
+  <script>
+    document.querySelectorAll('.term').forEach((term) => {
+      term.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const wasOpen = term.classList.contains('is-open');
+        document.querySelectorAll('.term.is-open').forEach((openTerm) => {
+          openTerm.classList.remove('is-open');
+        });
+        if (!wasOpen) {
+          term.classList.add('is-open');
+        }
+      });
+    });
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.term.is-open').forEach((term) => {
+        term.classList.remove('is-open');
+      });
+    });
+  </script>
 
   <script src="theme.js"></script>
 </body>

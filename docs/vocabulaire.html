@@ -120,18 +120,23 @@
         <a href="#gel">Gelé / Dégelé</a>
         <a href="#gpu">GPU</a>
         <a href="#greedy">Greedy</a>
+        <a href="#inference">Inférence</a>
         <a href="#llm">LLM</a>
+        <a href="#manifest">Manifest</a>
         <a href="#max-new-tokens">max_new_tokens</a>
+        <a href="#open-weights">Open weights</a>
         <a href="#pantagruel">Pantagruel</a>
         <a href="#projecteur">Projecteur</a>
         <a href="#prompt">Prompt / Consigne</a>
         <a href="#run">Run</a>
         <a href="#segmentation">Segmentation</a>
         <a href="#sentence-like">sentence_like</a>
+        <a href="#speech-to-text">Speech-to-text</a>
         <a href="#specaugment">SpecAugment</a>
         <a href="#token">Token</a>
         <a href="#utterance">Utterance</a>
         <a href="#warmup-lr">Warmup LR</a>
+        <a href="#zero-shot">Zero-shot</a>
       </div>
     </div>
 
@@ -151,7 +156,7 @@
           </div>
           <div class="entry-context">Le BLEU classe surtout des systèmes entre eux sur un même test ; un traducteur humain natif obtient ~26 BLEU sur le benchmark de Papineni et al. (2 références). Sur m-TEDx ST, la référence article Pantagruel est <strong>25,2</strong> (Table 8). Détail : <a href="evaluation.html#bleu">page Évaluation</a>.</div>
           <div class="entry-example">run_013 : 15,2 BLEU → meilleur run speechLLM sur <em>utterance</em>.</div>
-          <div class="backrefs">Utilisé dans : <a href="evaluation.html">Évaluation</a> <a href="variante-1.html">Variante 1</a> <a href="variante-2.html">Variante 2</a> <a href="resultats.html">Tableau global</a></div>
+          <div class="backrefs">Utilisé dans : <a href="evaluation.html">Évaluation</a> <a href="variante-1.html">Variante 1</a> <a href="variante-2.html">Variante 2</a> <a href="variante-6.html">Variante 6</a> <a href="resultats.html">Tableau global</a></div>
         </div>
 
       </div>
@@ -210,6 +215,42 @@
           <div class="backrefs">Voir aussi : <a href="#llm">LLM</a> <a href="#encodeur">Encodeur</a></div>
         </div>
 
+        <div class="glossary-entry" id="speech-to-text">
+          <div class="entry-term">
+            Speech-to-text <code>ST</code>
+            <span class="entry-cat cat-model">modèle</span>
+          </div>
+          <div class="entry-def">
+            Tâche de <strong>traduction directe de la parole en texte</strong> dans la langue cible (ici audio français → texte anglais), en un seul modèle. À distinguer de la <em>cascade</em> ASR→MT (transcription FR puis traduction texte) et des approches entraînées sur m-TEDx (variantes 1–2).
+          </div>
+          <div class="entry-context">Variante 6 : Whisper-ST (<code>task=translate</code>), SeamlessM4T v2 et Canary-1B, évalués en zero-shot sur les manifests utterance.</div>
+          <div class="backrefs">Utilisé dans : <a href="variante-6.html">Variante 6</a> · Voir aussi : <a href="#zero-shot">Zero-shot</a> <a href="#open-weights">Open weights</a></div>
+        </div>
+
+        <div class="glossary-entry" id="open-weights">
+          <div class="entry-term">
+            Open weights <em>(poids ouverts)</em>
+            <span class="entry-cat cat-model">modèle</span>
+          </div>
+          <div class="entry-def">
+            Modèle dont les <strong>poids (paramètres) sont publiés</strong> et téléchargeables (Hugging Face, NeMo, etc.). On peut relancer l’inférence localement sans API propriétaire — condition importante pour la reproductibilité académique.
+          </div>
+          <div class="entry-context">Variante 6 : alternative ouverte à Gemini (API fermée). Canary-1B atteint 40,0 BLEU test en zero-shot.</div>
+          <div class="backrefs">Utilisé dans : <a href="variante-6.html">Variante 6</a></div>
+        </div>
+
+        <div class="glossary-entry" id="zero-shot">
+          <div class="entry-term">
+            Zero-shot
+            <span class="entry-cat cat-model">modèle</span>
+          </div>
+          <div class="entry-def">
+            Utilisation d’un modèle <strong>sans entraînement ni fine-tuning</strong> sur les données du projet : on charge les poids pré-entraînés et on évalue directement sur m-TEDx. Les performances reflètent le savoir général du modèle, pas un apprentissage spécifique au corpus.
+          </div>
+          <div class="entry-context">Tous les runs de la variante 6 sont zero-shot. À comparer aux variantes 1–2 qui entraînent ou adaptent un modèle sur m-TEDx.</div>
+          <div class="backrefs">Utilisé dans : <a href="variante-6.html">Variante 6</a> · Voir aussi : <a href="#inference">Inférence</a></div>
+        </div>
+
       </div>
     </div>
 
@@ -258,9 +299,21 @@
             <span class="entry-cat cat-train">entraînement</span>
           </div>
           <div class="entry-def">
-            <strong>Identifiant d’une expérience d’entraînement</strong>. Chaque run teste une combinaison précise de paramètres (encodeur, segmentation, LLM, max_new_tokens, etc.). Les résultats sont tracés par run pour faciliter les comparaisons.
+            <strong>Identifiant d’une expérience</strong> (entraînement ou évaluation). Chaque run teste une combinaison précise de paramètres (encodeur, segmentation, LLM, modèle ST, etc.). Les résultats sont tracés par run pour faciliter les comparaisons.
           </div>
-          <div class="entry-context">Exemples : run_012 (L-14k gelé, utterance, 48 tok), run_005 (B-1k dégelé, sentence_like).</div>
+          <div class="entry-context">Exemples : run_012 (L-14k gelé, utterance, 48 tok), run_074 (Canary-1B zero-shot, variante 6).</div>
+        </div>
+
+        <div class="glossary-entry" id="inference">
+          <div class="entry-term">
+            Inférence
+            <span class="entry-cat cat-train">entraînement</span>
+          </div>
+          <div class="entry-def">
+            Phase où le modèle <strong>produit des traductions</strong> à partir d’audio, sans mettre à jour ses poids. Les variantes 3–4–6 n’entraînent rien sur m-TEDx : elles chargent des modèles pré-entraînés et passent directement à l’inférence (souvent en zero-shot).
+          </div>
+          <div class="entry-context">À l’opposé de l’entraînement (variantes 1–2), où les poids sont optimisés sur le corpus du projet.</div>
+          <div class="backrefs">Utilisé dans : <a href="variante-6.html">Variante 6</a> · Voir aussi : <a href="#zero-shot">Zero-shot</a></div>
         </div>
 
       </div>
@@ -369,7 +422,19 @@
           <div class="entry-def">
             Mode de segmentation qui <strong>regroupe des énoncés consécutifs</strong> en pseudo-phrases plus longues, en cherchant des pauses naturelles. Les segments sont plus longs et la référence de traduction aussi, ce qui peut donner de meilleurs scores BLEU absolus mais représente une tâche légèrement différente.
           </div>
-          <div class="entry-context">run_005 et run_002 utilisent sentence_like et atteignent 16–19 BLEU, mais ce n’est pas comparable directement aux 15 BLEU utterance de run_013.</div>
+          <div class="entry-context">run_005 et run_002 utilisent sentence_like et atteignent 16–19 BLEU, mais ce n’est pas comparable directement aux 15 BLEU utterance de run_013. La variante 6 n’a pas encore de bench sentence_like.</div>
+        </div>
+
+        <div class="glossary-entry" id="manifest">
+          <div class="entry-term">
+            Manifest <code>*.tsv</code>
+            <span class="entry-cat cat-data">données</span>
+          </div>
+          <div class="entry-def">
+            Fichier tabulé (<code>train.tsv</code>, <code>valid.tsv</code>, <code>test.tsv</code>) qui <strong>liste les segments audio</strong> à utiliser pour l’entraînement ou l’évaluation, avec leurs chemins et références de traduction. Toutes les variantes évaluent sur les mêmes manifests pour garantir la comparabilité des scores BLEU.
+          </div>
+          <div class="entry-context">Les runs open baselines (variante 6) consomment les mêmes <code>test.tsv</code> utterance que Gemini et la cascade.</div>
+          <div class="backrefs">Utilisé dans : <a href="variante-6.html">Variante 6</a> <a href="corpus.html">Corpus</a> · Voir aussi : <a href="#utterance">Utterance</a></div>
         </div>
 
       </div>
