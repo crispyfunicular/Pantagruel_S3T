@@ -460,9 +460,9 @@
       </div>
 
       <div class="note note-info" style="margin-top:0.75rem;">
-        <strong>Pourquoi Gemini et Cascade font mieux ?</strong> Ces deux variantes s’appuient sur des modèles pré-entraînés sur d’immenses corpus — Gemini via une API cloud, Cascade en chaînant Whisper (transcription) et Marian MT (traduction). La <strong>variante 6</strong> teste des alternatives <em>open weights</em> reproductibles (Whisper-ST, SeamlessM4T v2, Canary-1B) sur le même protocole. Les variantes 1, 2 et 5 entraînent un modèle de zéro ou presque sur les seules données m-TEDx.
+        <strong>Pourquoi certains scores dépassent la baseline article ?</strong> La référence Pantagruel (Table 8, <strong>25,2 BLEU</strong>) sert de point de comparaison pour les modèles entraînés sur m-TEDx. Les variantes <strong>3</strong> (Gemini), <strong>6</strong> (baselines <em>open weights</em>) et <strong>4</strong> (cascade ASR→MT) partent de modèles pré-entraînés à très grande échelle : Gemini via une API cloud (<strong>41,1</strong>) ; Canary-1B, SeamlessM4T v2 et Whisper-ST en zero-shot reproductible (meilleur : <strong>40,0</strong>) ; cascade Whisper + Marian MT (<strong>37,4</strong>). Les variantes <strong>1</strong>, <strong>2</strong> et <strong>5</strong> entraînent ou adaptent un modèle sur les seules données m-TEDx — le meilleur ST entraîné (<strong>26,1</strong>) dépasse à peine cette baseline.
         <br><br>
-        <strong>Données déjà vues ?</strong> Gemini et Whisper ont peut-être déjà rencontré des enregistrements proches de m-TEDx lors de leur entraînement initial : les conférences TED sont librement téléchargeables sur Internet. Ce biais potentiel complique la comparaison directe avec les approches entraînées uniquement sur le corpus du projet.
+        <strong>Données déjà vues ?</strong> Gemini, Whisper et les modèles open ST ont peut-être déjà croisé des enregistrements proches de m-TEDx lors de leur pré-entraînement : les conférences TED sont librement accessibles en ligne. Ce biais complique la comparaison directe avec les approches limitées au corpus du projet.
       </div>
     </div>
 
