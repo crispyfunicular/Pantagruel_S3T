@@ -36,8 +36,25 @@ for split in train valid test; do
 done
 
 {
-  echo "=== $(date -Is) RUN ${RUN} (L-14k v3: max 128 tok, eval dev complet) ==="
-  python 2_speechLLM/pipeline.py run --config "$CFG" --run-id "$RUN" -v
-
+  RUN_ARGS=()
+  if [[ "${OVERWRITE:-0}" == "1" ]]; then
+    RUN_ARGS+=(--overwrite)
+    echo "=== $(date -Is) Repart de zéro (--overwrite) ==="
+  elif [[ "${RESUME:-0}" == "1" ]]; then
+    RUN_ARGS+=(--resume)
+    echo "=== $(date -Is) Reprise checkpoint (--resume) ==="
+  fi
+  MAX_HOURS="${MAX_RUN_HOURS:-4}"
+  echo "=== $(date -Is) RUN ${RUN} (L-14k v3: max 128 tok, eval dev complet, max ${MAX_HOURS}h) ==="
+  timeout "$((MAX_HOURS * 3600))" \
+    python 2_speechLLM/pipeline.py run --config "$CFG" --run-id "$RUN" "${RUN_ARGS[@]}" -v
+  ec=$?
+  if [[ "$ec" -eq 124 ]]; then
+    echo "=== $(date -Is) TIMEOUT après ${MAX_HOURS}h ===" >&2
+    exit 124
+  fi
+  if [[ "$ec" -ne 0 ]]; then
+    exit "$ec"
+  fi
   echo "=== $(date -Is) DONE ==="
 } 2>&1 | tee -a "$LOG"

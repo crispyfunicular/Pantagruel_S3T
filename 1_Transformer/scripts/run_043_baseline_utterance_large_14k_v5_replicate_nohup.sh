@@ -62,7 +62,12 @@ with manifest.open(encoding='utf-8') as handle_in, target.open('w', encoding='ut
   fi
 
   echo "=== $(date -Is) TRAIN ${RUN} (réplication run_026 v5 SpecAugment) ==="
-  python 1_Transformer/pipeline.py train --config "$CFG" --run-id "$RUN" -v
+  TRAIN_EXTRA=()
+  if [[ -f "${ROOT}/runs/fr-en/${RUN}/checkpoints/last.pt" ]]; then
+    echo "=== $(date -Is) Checkpoint existant — reprise avec --resume ==="
+    TRAIN_EXTRA=(--resume)
+  fi
+  python 1_Transformer/pipeline.py train --config "$CFG" --run-id "$RUN" "${TRAIN_EXTRA[@]}" -v
 
   echo "=== $(date -Is) EVALUATE ${RUN} (beam 5) ==="
   python 1_Transformer/pipeline.py evaluate --config "$CFG" --run-id "$RUN" --beam-size 5 -v

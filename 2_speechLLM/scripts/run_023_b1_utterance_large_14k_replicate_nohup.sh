@@ -32,7 +32,12 @@ for split in train valid test; do
 done
 
 {
+  OVERWRITE_ARGS=()
+  if [[ "${OVERWRITE:-0}" == "1" ]]; then
+    OVERWRITE_ARGS=(--overwrite)
+    echo "=== $(date -Is) Repart de zéro (--overwrite) ==="
+  fi
   echo "=== $(date -Is) RUN ${RUN} (L-14k gelé, max 48 tok — réplication run_012) ==="
-  python 2_speechLLM/pipeline.py run --config "$CFG" --run-id "$RUN" -v
+  python 2_speechLLM/pipeline.py run --config "$CFG" --run-id "$RUN" "${OVERWRITE_ARGS[@]}" -v
   echo "=== $(date -Is) DONE ==="
 } 2>&1 | tee -a "$LOG"

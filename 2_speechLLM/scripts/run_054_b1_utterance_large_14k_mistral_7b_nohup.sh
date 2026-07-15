@@ -41,9 +41,14 @@ for split in train valid test; do
 done
 
 {
+  RUN_ARGS=()
+  if [[ "${OVERWRITE:-0}" == "1" ]]; then
+    RUN_ARGS+=(--overwrite)
+    echo "=== $(date -Is) Repart de zéro (--overwrite) ==="
+  fi
   echo "=== $(date -Is) RUN ${RUN} (L-14k gelé + Mistral-7B 4-bit gelé, utterance, max ${MAX_HOURS}h) ==="
   timeout "$((MAX_HOURS * 3600))" \
-    python 2_speechLLM/pipeline.py run --config "$CFG" --run-id "$RUN" -v
+    python 2_speechLLM/pipeline.py run --config "$CFG" --run-id "$RUN" "${RUN_ARGS[@]}" -v
   ec=$?
   if [[ "$ec" -eq 124 ]]; then
     echo "=== $(date -Is) TIMEOUT après ${MAX_HOURS}h ===" >&2
