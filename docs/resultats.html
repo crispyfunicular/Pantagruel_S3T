@@ -250,6 +250,60 @@
     .vd-1 { background: var(--v1); } .vd-2 { background: var(--v2); }
     .vd-3 { background: var(--v3); } .vd-4 { background: var(--v4); }
     .vd-6 { background: var(--v6); } .vd-5 { background: var(--v5); } .vd-r { background: var(--ref); }
+
+    /* Lignes baseline / au-dessus de la référence article */
+    .table-legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 1rem;
+      margin: 0.65rem 0 0.5rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .table-legend--hidden { display: none; }
+    .legend-swatch {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      vertical-align: -2px;
+      margin-right: 0.25rem;
+    }
+    .legend-swatch--baseline { background: #cbd5e1; border: 2px solid var(--ref); }
+    .legend-swatch--above { background: #ecfdf5; border: 1px solid #86efac; }
+    tr.tr-above-baseline td { background: #f0fdf4; }
+    tr.tr-above-baseline td .score-above-baseline {
+      display: inline-block;
+      padding: 0.12rem 0.5rem;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.84rem;
+      font-weight: 700;
+      background: #dcfce7;
+      color: #166534;
+    }
+    tr.tr-baseline td {
+      background: linear-gradient(90deg, #e2e8f0 0%, var(--ref-soft) 50%, #e2e8f0 100%);
+      border-top: 2px solid #94a3b8;
+      border-bottom: 2px solid #94a3b8;
+      font-weight: 600;
+    }
+    tr.tr-baseline td:first-child { box-shadow: inset 4px 0 0 var(--ref); }
+    tr.tr-baseline .model-name--ref { color: #334155; }
+    .baseline-tag {
+      display: inline-block;
+      margin-left: 0.45rem;
+      padding: 0.12rem 0.5rem;
+      border-radius: 5px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--ref);
+      color: #fff;
+      vertical-align: middle;
+    }
     .note { margin-top: 0.75rem; padding: 0.8rem 1rem; border-radius: 10px; background: #fffbeb; border: 1px solid #fde68a; font-size: 0.84rem; color: #78350f; }
     .note-info { background: var(--accent-soft); border-color: rgba(37,99,235,0.2); color: #1e40af; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -427,6 +481,7 @@
       <p class="section-intro" id="results-intro"></p>
       <div class="chart" id="chart-root" aria-label="Graphique des scores BLEU test"></div>
       <h3 class="results-subheading">Paramètres des runs</h3>
+      <p class="table-legend table-legend--hidden" id="table-legend" aria-hidden="true"></p>
       <div class="table-wrap">
         <table>
           <thead>
@@ -655,7 +710,7 @@
             params: 'facebook/seamless-m4t-v2-large · zero-shot' },
           { id: 6, color: 'v6', tableLabel: 'Whisper-ST', run: 'run_072', score: 36.6,
             params: 'openai/whisper-large-v3 · task=translate' },
-          { id: '—', color: 'ref', tableLabel: 'Pantagruel-L-114k (article)', run: '—', score: 25.2,
+          { id: '—', color: 'ref', isBaseline: true, tableLabel: 'Pantagruel-L-114k (article)', run: '—', score: 25.2,
             params: 'fairseq · beam 5 · Table 8 Pantagruel (2026)' },
           { id: 1, color: 'v1', tableLabel: 'Transformer ST', run: 'run_033', score: 25.1,
             params: 'L-114k · SPM 5k — réplication Table 8 (article 25,2)' },
@@ -740,6 +795,34 @@
       return '<a class="' + cls + '" href="' + row.href + '"' + external + '>' + text + '</a>';
     }
 
+    function formatTableScore(row, baselineScore) {
+      const text = formatScore(row.score);
+      if (row.isBaseline) {
+        return '<span class="result-best rb-ref">' + text + '</span>';
+      }
+      if (baselineScore != null && row.score > baselineScore) {
+        return '<span class="score-above-baseline">' + text + '</span>';
+      }
+      return text;
+    }
+
+    function formatTableLabel(row, baselineScore) {
+      const name = row.isBaseline
+        ? '<strong>' + row.tableLabel + '</strong>'
+        : row.tableLabel;
+      let html = '<span class="model-name model-name--' + row.color + '">' + name + '</span>';
+      if (row.isBaseline) {
+        html += ' <span class="baseline-tag">Baseline article</span>';
+      }
+      return html;
+    }
+
+    function tableRowClass(row, baselineScore) {
+      if (row.isBaseline) return 'tr-baseline';
+      if (baselineScore != null && row.score > baselineScore) return 'tr-above-baseline';
+      return '';
+    }
+
     function renderSegment(segmentKey) {
       const data = SEGMENTS[segmentKey];
       const chartRows = data.chartRows || data.rows;
@@ -747,9 +830,24 @@
       const sortedChartRows = [...chartRows].sort((a, b) => b.score - a.score);
       const sortedTableRows = [...tableRows].sort((a, b) => b.score - a.score);
       const maxScore = Math.max(...sortedChartRows.map((row) => row.score));
+      const baselineRow = sortedTableRows.find((row) => row.isBaseline);
+      const baselineScore = baselineRow ? baselineRow.score : null;
 
       document.getElementById('results-intro').innerHTML = data.intro;
       document.getElementById('results-note').innerHTML = data.note;
+
+      const legendEl = document.getElementById('table-legend');
+      if (baselineScore != null) {
+        legendEl.className = 'table-legend';
+        legendEl.removeAttribute('aria-hidden');
+        legendEl.innerHTML =
+          '<span><span class="legend-swatch legend-swatch--above"></span>Scores au-dessus de la baseline (' + formatScore(baselineScore) + ')</span>' +
+          '<span><span class="legend-swatch legend-swatch--baseline"></span><strong>Baseline article</strong> · Table 8 Pantagruel</span>';
+      } else {
+        legendEl.className = 'table-legend table-legend--hidden';
+        legendEl.setAttribute('aria-hidden', 'true');
+        legendEl.innerHTML = '';
+      }
 
       document.getElementById('chart-root').innerHTML = sortedChartRows
         .map((row) => {
@@ -773,15 +871,18 @@
         .join('');
 
       document.getElementById('table-body').innerHTML = sortedTableRows
-        .map((row) => (
-          '<tr>' +
+        .map((row) => {
+          const rowClass = tableRowClass(row, baselineScore);
+          return (
+          '<tr' + (rowClass ? ' class="' + rowClass + '"' : '') + '>' +
             '<td>' + row.id + '</td>' +
-            '<td><span class="model-name model-name--' + row.color + '">' + row.tableLabel + '</span></td>' +
+            '<td>' + formatTableLabel(row, baselineScore) + '</td>' +
             '<td>' + formatRun(row.run) + '</td>' +
-            '<td>' + formatScore(row.score) + '</td>' +
+            '<td>' + formatTableScore(row, baselineScore) + '</td>' +
             '<td>' + row.params + '</td>' +
           '</tr>'
-        ))
+          );
+        })
         .join('');
     }
 
