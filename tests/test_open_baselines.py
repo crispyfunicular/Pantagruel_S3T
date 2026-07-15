@@ -13,6 +13,7 @@ from OpenBaselines.open_common import (
     OpenModelSettings,
     OpenPipelineNotReadyError,
     _canary_lang_code,
+    _seamless_text_token_ids,
     clear_open_model_cache,
     load_open_settings,
     open_translate_audio,
@@ -52,6 +53,62 @@ def test_load_open_settings_seamless() -> None:
 def test_canary_lang_code_maps_iso639_3() -> None:
     assert _canary_lang_code("fra") == "fr"
     assert _canary_lang_code("eng") == "en"
+
+
+def test_seamless_text_token_ids_tensor() -> None:
+    import torch
+
+    generated = torch.tensor([[1, 2, 3]])
+    assert _seamless_text_token_ids(generated) == [1, 2, 3]
+
+
+def test_seamless_text_token_ids_model_output() -> None:
+    class FakeOutput:
+        sequences = [[10, 11, 12]]
+
+    assert _seamless_text_token_ids(FakeOutput()) == [10, 11, 12]
+
+
+def test_canary_transcribe_api_on_engine() -> None:
+    """_Canary1bEngine utilise l'API NeMo 2.x (audio=, task=ast)."""
+    captured: dict = {}
+
+    class FakeModel:
+        def transcribe(self, **kwargs):
+            captured.update(kwargs)
+            return [type("Out", (), {"text": "translated"})()]
+
+    engine = open_common_mod._Canary1bEngine.__new__(open_common_mod._Canary1bEngine)
+    engine.model = FakeModel()
+    out = engine.translate_file(Path("/tmp/x.wav"), "fra", "eng")
+    assert out == "translated"
+    assert captured["task"] == "ast"
+    assert captured["source_lang"] == "fr"
+    assert captured["target_lang"] == "en"
+    assert captured["audio"] == [str(Path("/tmp/x.wav").resolve())]
+
+
+def test_canary_translate_uses_engine(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """open_translate_audio délègue au moteur Canary."""
+    audio = tmp_path / "a.wav"
+    audio.write_bytes(b"RIFF")
+
+    class FakeEngine:
+        def translate_file(self, audio_path: Path, src_lang: str, tgt_lang: str) -> str:
+            assert src_lang == "fra"
+            assert tgt_lang == "eng"
+            return "hello"
+
+    clear_open_model_cache()
+    monkeypatch.setattr(
+        open_common_mod,
+        "_get_canary_engine",
+        lambda _settings: FakeEngine(),
+    )
+    settings = load_open_settings({"model": {"type": "canary_1b"}})
+    assert open_translate_audio(audio, settings) == "hello"
 
 
 def test_unsupported_model_type(tmp_path: Path) -> None:

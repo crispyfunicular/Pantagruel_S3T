@@ -161,6 +161,29 @@ def _resolve_dtype(dtype_name: str) -> torch.dtype:
     return mapping[key]
 
 
+def _seamless_text_token_ids(generated: Any) -> list[int]:
+    """
+    Extraire les IDs de tokens texte depuis la sortie ``generate`` SeamlessM4T v2.
+
+    Selon la version ``transformers``, ``generate(..., generate_speech=False)`` renvoie
+    un ``ModelOutput`` (``.sequences``), un tenseur ou un tuple — pas toujours la forme
+    imbriquée ``[0].tolist()[0]`` documentée historiquement.
+    """
+    if hasattr(generated, "sequences"):
+        row = generated.sequences[0]
+    elif isinstance(generated, (tuple, list)):
+        row = generated[0]
+    else:
+        row = generated[0]
+    if isinstance(row, torch.Tensor):
+        return row.tolist()
+    if isinstance(row, list):
+        if row and isinstance(row[0], list):
+            return row[0]
+        return row
+    raise TypeError(f"Unexpected Seamless generate output: {type(generated)!r}")
+
+
 def _move_batch_to_device(
     batch: dict[str, torch.Tensor],
     device: torch.device,
@@ -256,22 +279,21 @@ class _SeamlessM4Tv2Engine:
         """Traduire un WAV via SeamlessM4T v2 (génération texte uniquement)."""
         waveform = load_waveform(audio_path, sample_rate)
         inputs = self.processor(
-            audios=waveform.numpy(),
+            audio=waveform.numpy(),
             sampling_rate=sample_rate,
+            src_lang=self.src_lang,
             return_tensors="pt",
         )
         inputs = _move_batch_to_device(inputs, self.device, self.model.dtype)
         with torch.inference_mode():
-            output_tokens = self.model.generate(
+            generated = self.model.generate(
                 **inputs,
                 tgt_lang=self.tgt_lang,
                 generate_speech=False,
                 max_new_tokens=self.max_new_tokens,
             )
-        return self.processor.decode(
-            output_tokens[0].tolist()[0],
-            skip_special_tokens=True,
-        ).strip()
+        token_ids = _seamless_text_token_ids(generated)
+        return self.processor.decode(token_ids, skip_special_tokens=True).strip()
 
 
 class _Canary1bEngine:
@@ -300,8 +322,9 @@ class _Canary1bEngine:
         source = _canary_lang_code(src_lang)
         target = _canary_lang_code(tgt_lang)
         outputs = self.model.transcribe(
-            paths2audio_files=[str(audio_path.resolve())],
+            audio=[str(audio_path.resolve())],
             batch_size=1,
+            task="ast",
             source_lang=source,
             target_lang=target,
         )

@@ -23,13 +23,47 @@ CFG="6_open_baselines/configs/fr-en/canary_1b.yaml"
 RUN_ID="run_074_open_canary_1b_utterance"
 LOG="logs/${RUN_ID}_eval.log"
 
+ensure_torch_stack_compat() {
+  # OVH = Tesla V100 (CC 7.0) : utiliser l'index cu124 (cu130 / torch 2.12+ exclut le V100).
+  # NeMo 2.7 requiert torch>=2.6 ; aligner torchvision/torchaudio sur la même série.
+  local cuda_tag="cu124"
+  if python -c "
+import torch
+import torchvision
+import torchaudio
+boxes = torch.tensor([[0.0, 0.0, 1.0, 1.0], [2.0, 2.0, 3.0, 3.0]])
+scores = torch.tensor([0.9, 0.8])
+torchvision.ops.nms(boxes, scores, 0.5)
+_ = torch.tensor([1.0], device='cuda') + 1
+print('torch', torch.__version__, 'torchvision', torchvision.__version__, 'torchaudio', torchaudio.__version__)
+" 2>/dev/null; then
+    echo "Stack torch/torchvision/torchaudio compatible (V100)."
+    return 0
+  fi
+  echo "=== Réalignement torch 2.6 + torchvision/torchaudio (${cuda_tag}, V100) ==="
+  pip install "torch==2.6.0" "torchvision==0.21.0" "torchaudio==2.6.0" \
+    --index-url "https://download.pytorch.org/whl/${cuda_tag}"
+  python -c "
+import torch
+import torchvision
+import torchaudio
+boxes = torch.tensor([[0.0, 0.0, 1.0, 1.0], [2.0, 2.0, 3.0, 3.0]])
+scores = torch.tensor([0.9, 0.8])
+torchvision.ops.nms(boxes, scores, 0.5)
+_ = torch.tensor([1.0], device='cuda') + 1
+print('torch', torch.__version__, 'torchvision', torchvision.__version__, 'torchaudio', torchaudio.__version__, 'OK')
+"
+}
+
 ensure_nemo() {
+  ensure_torch_stack_compat
   if python -c "import nemo.collections.asr" 2>/dev/null; then
     echo "NeMo déjà installé."
     return 0
   fi
   echo "=== Installation nemo_toolkit[asr] (Canary-1B) ==="
   pip install 'nemo_toolkit[asr]>=2.0'
+  ensure_torch_stack_compat
 }
 
 echo "=== $(date -Is) GPU ==="
