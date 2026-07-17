@@ -116,6 +116,7 @@
         <strong style="font-size:0.8rem;color:var(--muted);align-self:center;margin-right:0.3rem;">Accès rapide :</strong>
         <a href="#beam-search">Beam search</a>
         <a href="#bleu">BLEU</a>
+        <a href="#contexte">Contexte</a>
         <a href="#encodeur">Encodeur</a>
         <a href="#gel">Gelé / Dégelé</a>
         <a href="#gpu">GPU</a>
@@ -157,6 +158,18 @@
           <div class="entry-context">Le BLEU classe surtout des systèmes entre eux sur un même test ; un traducteur humain natif obtient ~26 BLEU sur le benchmark de Papineni et al. (2 références). Sur m-TEDx ST, la référence article Pantagruel est <strong>25,2</strong> (Table 8). Détail : <a href="evaluation.html#bleu">page Évaluation</a>.</div>
           <div class="entry-example">run_013 : 15,2 BLEU → meilleur run speechLLM sur <em>utterance</em>.</div>
           <div class="backrefs">Utilisé dans : <a href="evaluation.html">Évaluation</a> <a href="variante-1.html">Variante 1</a> <a href="variante-2.html">Variante 2</a> <a href="variante-6.html">Variante 6</a> <a href="resultats.html">Tableau global</a></div>
+        </div>
+
+        <div class="glossary-entry" id="contexte">
+          <div class="entry-term">
+            Contexte (entrée / sortie)
+            <span class="entry-cat cat-decode">décodage</span>
+          </div>
+          <div class="entry-def">
+            Dans ce projet, le <strong>contexte</strong> désigne ce que le modèle « voit » et produit à l’inférence : <em>taille de l’entrée audio</em> + <em>prompt</em> (s’il y en a un) + <em>input modèle</em> (représentations audio / tokens) + <em>plafond de sortie</em> (ex. <code>max_new_tokens</code>). Ce n’est pas le « contexte conversationnel » d’un chatbot, mais la fenêtre utile pour une traduction ST.
+          </div>
+          <div class="entry-context">Comparer utterance vs sentence_like (et des buckets de durée) permet de voir sur quelle taille de contexte un modèle comme Canary reste performant. Voir <a href="resultats.html#contexte">page Résultats · contexte</a>.</div>
+          <div class="backrefs">Voir aussi : <a href="#prompt">Prompt</a> <a href="#max-new-tokens">max_new_tokens</a> <a href="#utterance">Utterance</a> <a href="#sentence-like">sentence_like</a> · Utilisé dans : <a href="resultats.html#contexte">Résultats</a> <a href="variante-6.html#canary-best">Variante 6</a></div>
         </div>
 
       </div>
@@ -422,7 +435,7 @@
           <div class="entry-def">
             Mode de segmentation qui <strong>regroupe des énoncés consécutifs</strong> en pseudo-phrases plus longues, en cherchant des pauses naturelles. Les segments sont plus longs et la référence de traduction aussi, ce qui peut donner de meilleurs scores BLEU absolus mais représente une tâche légèrement différente.
           </div>
-          <div class="entry-context">run_005 et run_002 utilisent sentence_like et atteignent 16–19 BLEU, mais ce n’est pas comparable directement aux 15 BLEU utterance de run_013. La variante 6 n’a pas encore de bench sentence_like.</div>
+          <div class="entry-context">run_005 et run_002 utilisent sentence_like et atteignent 16–19 BLEU, mais ce n’est pas comparable directement aux 15 BLEU utterance de run_013. Variante 6 : Whisper/Seamless sentence_like mesurés (<code>run_080</code>/<code>080b</code>, baisse vs utterance) ; Canary sentence_like (<code>run_081</code>) préparé.</div>
         </div>
 
         <div class="glossary-entry" id="manifest">

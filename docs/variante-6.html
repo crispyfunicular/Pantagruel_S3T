@@ -67,6 +67,29 @@
     .imp-num { flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 0.15rem; }
     .note { margin-top: 1rem; padding: 0.9rem 1rem; border-radius: 12px; background: var(--accent-soft); border: 1px solid rgba(190,24,93,0.3); font-size: 0.87rem; color: #9d174d; }
     .note-warn { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+    .best-run {
+      border: 1.5px solid rgba(190,24,93,0.45);
+      background: linear-gradient(135deg, #fdf2f8 0%, #ffffff 55%);
+      box-shadow: 0 4px 18px rgba(190,24,93,0.08);
+    }
+    .best-run-header {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 0.75rem; margin-bottom: 0.85rem;
+    }
+    .best-run-scores { display: flex; gap: 0.65rem; flex-wrap: wrap; }
+    .best-score {
+      display: flex; flex-direction: column; align-items: center;
+      min-width: 5.5rem; padding: 0.45rem 0.75rem; border-radius: 10px;
+      background: #fff; border: 1px solid rgba(190,24,93,0.25);
+    }
+    .best-score-val { font-family: var(--mono); font-size: 1.35rem; font-weight: 700; color: var(--accent); line-height: 1.1; }
+    .best-score-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .param-grid {
+      display: grid; grid-template-columns: minmax(8rem, 11rem) 1fr;
+      gap: 0.35rem 1rem; font-size: 0.88rem; margin: 0.85rem 0 0.25rem;
+    }
+    .param-grid dt { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .param-grid dd { margin: 0; color: var(--text); }
     .prose p { margin-bottom: 0.7rem; font-size: 0.92rem; line-height: 1.65; }
     .prose p:last-child { margin-bottom: 0; }
     .btn { display: inline-block; padding: 0.5rem 0.9rem; border-radius: 10px; font-size: 0.86rem; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
@@ -280,6 +303,55 @@
       </div>
     </div>
 
+    <div class="card best-run" id="canary-best">
+      <div class="best-run-header">
+        <h2 style="margin:0;"><span class="icon">★</span> Meilleur run · Canary-1B</h2>
+        <div class="best-run-scores">
+          <div class="best-score">
+            <span class="best-score-val">41,19</span>
+            <span class="best-score-lbl"><span class="term" style="border-bottom-color:#94a3b8;">BLEU<span class="term-tip term-tip-down">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> valid</span>
+          </div>
+          <div class="best-score">
+            <span class="best-score-val">40,04</span>
+            <span class="best-score-lbl"><span class="term" style="border-bottom-color:#94a3b8;">BLEU<span class="term-tip term-tip-down">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> test</span>
+          </div>
+        </div>
+      </div>
+      <p class="section-intro" style="margin-bottom:0.5rem;">
+        <code>run_074</code> — meilleur système <span class="term">open weights<span class="term-tip">Poids publiés, reproductibles localement (pas d’API fermée). <a href="vocabulaire.html#open-weights">→ glossaire</a></span></span> du projet, à ~1 pt de Gemini 3.5 Flash (41,1). <span class="term">Zero-shot<span class="term-tip">Modèle utilisé tel quel, sans entraînement sur m-TEDx. <a href="vocabulaire.html#zero-shot">→ glossaire</a></span></span> sur m-TEDx FR→EN, même protocole <span class="term">SacreBLEU<span class="term-tip">Implémentation standardisée du BLEU. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> que les variantes 3–4.
+      </p>
+      <dl class="param-grid">
+        <dt>Modèle</dt>
+        <dd><code>nvidia/canary-1b-v2</code> (<span class="term">NeMo<span class="term-tip">Bibliothèque NVIDIA pour modèles de parole (ASR, ST) — backend de Canary.</span></span> <code>EncDecMultiTaskModel</code>)</dd>
+        <dt>Tâche</dt>
+        <dd><code>task="ast"</code> (<span class="term">speech translation<span class="term-tip">Traduction directe de la parole en texte (audio → texte cible), sans transcription française intermédiaire. <a href="vocabulaire.html#speech-to-text">→ glossaire</a></span></span>) · <code>source_lang=fr</code> · <code>target_lang=en</code></dd>
+        <dt>Config</dt>
+        <dd><code>6_open_baselines/configs/fr-en/canary_1b.yaml</code></dd>
+        <dt><span class="term">Segmentation<span class="term-tip">Façon de découper l’audio en segments. <a href="vocabulaire.html#segmentation">→ glossaire</a></span></span></dt>
+        <dd><em><span class="term">utterance<span class="term-tip">Découpage par énoncé : chaque segment = une phrase parlée. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em> — <span class="term">manifests<span class="term-tip">Fichiers TSV listant les segments audio à évaluer. <a href="vocabulaire.html#manifest">→ glossaire</a></span></span> <code>datasets/manifests/fr-en/{valid,test}.tsv</code></dd>
+        <dt>Entrée</dt>
+        <dd>Fichier WAV entier du segment (pas de chunking) · filtre m-TEDx typ. 1–30&nbsp;s</dd>
+        <dt><span class="term">Prompt<span class="term-tip">Consigne textuelle donnée au modèle. <a href="vocabulaire.html#prompt">→ glossaire</a></span></span> texte</dt>
+        <dd><em>Aucun</em> — pas de consigne naturelle ; les langues source/cible sont passées à l’API NeMo</dd>
+        <dt>Sortie</dt>
+        <dd>Texte anglais libre · <code><span class="term">max_new_tokens<span class="term-tip">Nombre maximal de tokens générés. <a href="vocabulaire.html#max-new-tokens">→ glossaire</a></span></span>: 256</code> dans le YAML (non branché côté Canary S3T)</dd>
+        <dt>Précision</dt>
+        <dd><span class="term">float16<span class="term-tip">Nombres à demi-précision : moins de mémoire GPU, calcul plus rapide.</span></span> · <code>device: cuda</code> (<span class="term">GPU<span class="term-tip">Processeur graphique utilisé pour l’inférence. <a href="vocabulaire.html#gpu">→ glossaire</a></span></span>)</dd>
+        <dt>Machine</dt>
+        <dd>Modyco (venv <code>.venv-canary</code> + NeMo) · 10 juil. 2026 · script <code>run_modyco_open_canary_074.sh</code></dd>
+        <dt>Échec antérieur</dt>
+        <dd>OVH : incompatibilité torch/NeMo → <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> 0 (environnement, pas le modèle)</dd>
+      </dl>
+      <div class="note" style="margin-top:1rem;">
+        <strong><span class="term">Contexte<span class="term-tip">Ensemble audio + consignes + plafond de sortie à l’inférence. <a href="vocabulaire.html#contexte">→ glossaire</a></span></span> vs taille d’entrée :</strong> Canary traduit chaque <span class="term">utterance<span class="term-tip">Énoncé isolé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span> isolément. Pour savoir sur quelle longueur audio il est le plus performant, un bench <em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em> (<code>run_081</code>, config préparée) et une analyse par buckets de durée sur <code>run_074</code> sont prévus — voir <a href="resultats.html#contexte">page Résultats · contexte</a>.
+      </div>
+      <div class="links" style="margin-top:0.85rem;">
+        <a class="btn" href="https://huggingface.co/nvidia/canary-1b-v2" target="_blank" rel="noopener noreferrer">Fiche Hugging Face ↗</a>
+        <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/blob/main/6_open_baselines/configs/fr-en/canary_1b.yaml" target="_blank" rel="noopener noreferrer">YAML run_074 ↗</a>
+        <a class="btn" href="resultats.html#contexte">Contexte entrée / sortie</a>
+      </div>
+    </div>
+
     <div class="card">
       <h2><span class="icon">⚖</span> Avantages et inconvénients</h2>
       <div class="table-wrap">
@@ -316,10 +388,14 @@
         </li>
         <li>
           <span class="imp-num">3</span>
-          <div><strong>Bench <em><span class="term">sentence_like<span class="term-tip">Découpage en pseudo-phrases plus longues — scores non comparables à utterance. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em></strong> — étendre l’évaluation au second découpage pour alignement avec les variantes 1–2.</div>
+          <div><strong>Taille de <span class="term">contexte<span class="term-tip">Ensemble audio + consignes + plafond de sortie à l’inférence. <a href="vocabulaire.html#contexte">→ glossaire</a></span></span></strong> — Whisper/Seamless <em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em> déjà mesurés (Modyco <code>run_080</code>/<code>080b</code> : baisse nette vs <span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span>). Priorité : <strong>Canary sentence_like</strong> (<code>run_081</code>) + buckets de durée sur <code>run_074</code> pour localiser la fenêtre audio optimale.</div>
         </li>
         <li>
           <span class="imp-num">4</span>
+          <div><strong>Cohérence intra-textuelle</strong> — au-delà du <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> segment isolé : mesurer la variation / dérive sur un discours entier (prochaine étape transversale, toutes variantes).</div>
+        </li>
+        <li>
+          <span class="imp-num">5</span>
           <div><strong>Granite Speech / Ollama</strong> — candidats backlog (piste K) si les trois modèles initiaux ne suffisent pas.</div>
         </li>
       </ul>
@@ -329,6 +405,7 @@
       <h2><span class="icon">🔗</span> Liens</h2>
       <div class="links">
         <a class="btn" href="https://github.com/crispyfunicular/Pantagruel_S3T/tree/main/6_open_baselines" target="_blank" rel="noopener noreferrer">Code <code>6_open_baselines/</code> ↗</a>
+        <a class="btn" href="https://huggingface.co/nvidia/canary-1b-v2" target="_blank" rel="noopener noreferrer">Canary-1B v2 (HF) ↗</a>
         <a class="btn" href="https://huggingface.co/facebook/seamless-m4t-v2-large" target="_blank" rel="noopener noreferrer">SeamlessM4T v2 (HF) ↗</a>
         <a class="btn" href="variante-3.html">Comparer avec Gemini (v3)</a>
         <a class="btn" href="variante-4.html">Comparer avec Cascade (v4)</a>
