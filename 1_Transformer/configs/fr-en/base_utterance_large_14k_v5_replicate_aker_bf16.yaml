@@ -1,0 +1,55 @@
+# Baseline ST utterance Large 14k v5 — réplication aker H100 (run_043).
+#
+# Même recette que run_026 / run_060, mais amp_dtype bf16 (H100) et patience
+# élargie : le run from-scratch en fp16 sur lig-gpu10 a collapsé après dégel
+# (BLEU max ~1,09, early stop @12k, OAR 129663).
+#
+# Run cible : run_043_aker_st_l14k_v5_replicate (~8–12 h GPU H100)
+
+experiment:
+  name: "fr-en_baseline_utterance_large_14k_v5_replicate_aker_bf16"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_043_aker_st_l14k_v5_replicate"
+  seed: 42
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  spm_model: "datasets/processed/spm/fr-en_1000.model"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  decoder_layers: 6
+  decoder_heads: 8
+  hidden_dim: 1024
+  dropout: 0.1
+
+spec_augment:
+  enabled: true
+  mask_time_prob: 0.05
+  mask_time_length: 10
+
+train:
+  max_updates: 80000
+  warmup_updates: 4000
+  freeze_encoder_updates: 5000
+  learning_rate_peak: 0.0001
+  weight_decay: 0.01
+  label_smoothing: 0.1
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "bf16"
+  eval_every_updates: 2000
+  max_eval_batches: null
+  max_target_tokens: 256
+  early_stopping_patience: 10
+
+decode:
+  beam_size: 5
+  max_len_b: 128
