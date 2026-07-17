@@ -98,6 +98,8 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | ST L-114k **v7 SPM 5k** | `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` | 25.27 | **25.10** | ok (serveur cloud GPU, 17 juin — best dev **25,53** @ 70k ; ≈ papier **25,2**) |
 | ST L-114k **v10 warmup 10k** | `run_042_transformer_baseline_utterance_large_114k_v10_warmup10k` | 23.83 | **24.11** | ok (serveur cloud GPU, 19 juin — sous run_033 **25,10**) |
 | ST L-14k **v5 replicate** | `run_043_transformer_baseline_utterance_large_14k_v5_replicate` | 25.36 | **24.78** | ok (17 juin — réplication run_026 **26,12**, écart ~1,3) |
+| ST L-14k **v5 aker** | `run_060_aker_st_l14k_v5` | 25.01 | **25.00** | ok (15 juil. — cluster GETALP H100, resume après OOM 2080 Ti) |
+| ST L-14k **v5 replicate aker** | `run_043_aker_st_l14k_v5_replicate` | 26.65 | **25.96** | ok (16 juil. — H100 bf16 ; proche run_026 **26,12**) |
 | speechLLM L-114k **v5 SpecAugment** | `run_044_speechllm_b1_utterance_large_114k_v5_specaug` | 15.06 | **14.27** | ok (serveur cloud GPU, 3 juil.) — **sous** run_013 **15,24** ; waiter 053→044 |
 | speechLLM **L-114k + Llama-3.2-3B** | `run_053_speechllm_b2bis_utterance_large_114k_llama32_3b` | 13.05 | **12.61** | ok (serveur cloud GPU, 2 juil.) — **sous** run_052 **16,31** et run_013 **15,24** ; early stop @ ~10,4k |
 | speechLLM **L-114k couche 9** | `run_056_speechllm_b1_utterance_large_114k_layer9` | 15.30 | **14.52** | ok (serveur cloud GPU, 3 juil. — ~7,2 h GPU) — au-dessus run_047 L-14k couche 9 **14,00** ; **sous** run_013 **15,24** |

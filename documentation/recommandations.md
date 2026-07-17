@@ -45,7 +45,7 @@ Compléter les variantes **Pantagruel entraînées sur m-TEDx** (1–2) par des 
 
 ## File d'attente GPU
 
-Dernière mise à jour : **15 juillet 2026** — machine GPU locale : **`run_066`** Llama dégel **18,88**, **`run_023`** replicate **15,33**, **`run_055`** seed 2 **17,84** ; **`run_054` Mistral** relancé (cap 4 h) ; cluster GETALP : réplications Phi-2 **`run_078`** **14,71** / **`run_079`** **15,37** ; **`run_060` ST** relancé OAR **129507** (H100, `--resume` après OOM 2080 Ti).
+Dernière mise à jour : **16 juillet 2026** — machine GPU locale : chaîne 13 h **terminée** (`run_044` **13,32** ; `run_046` batch32 **échec** **2,75**) ; cluster GETALP : **`run_060` ST** **25,00** test ; **`run_043` ST replicate bf16** **25,96** test / **26,65** dev (OAR train **129671** + éval **129744**) ; `run_077` layer6 **12,72**.
 
 ### serveur cloud GPU
 
@@ -113,11 +113,13 @@ flowchart LR
 
 Chaîne : ThinkPad → **ligone** → **cluster GETALP** (NFS) → **OAR** → nœud GPU (RTX 2080 Ti 11 Go ; **nœud GPU** H100 pour Llama / Seamless).
 
-**État (15 juil. 2026) :** aucun job OAR actif ou **`run_060` ST** en attente/exécution H100 (OAR **129507**). Derniers runs speechLLM : **`run_078`** encoder control **14,71** ; **`run_079`** Phi-2 r4 **15,37** (waiter week-end 078→079).
+**État (16 juil. 2026) :** **idle** — aucun job OAR `bonapelm` actif. **`run_060` ST** **25,00** test. **`run_043` ST replicate bf16** **25,96** test / **26,65** dev (train **129671** + éval **129744**). 1ʳᵉ passe fp16 **129663** = **échec** **1,11**.
 
 | Statut | Run | Script / lancement | Notes |
 |--------|-----|-------------------|-------|
-| **en attente / Running** | `run_060` ST v5 | OAR 129507 (H100) | reprise `--resume` après OOM 2080 Ti (129505) |
+| **terminé** | `run_043` ST v5 replicate | train **129671** bf16 + éval **129744** | **25,96** test / **26,65** dev — proche run_026 **26,12** |
+| **terminé** | `run_060` ST v5 | OAR 129507 (H100) | **25,00** test — reprise `--resume` après OOM 2080 Ti |
+| **terminé** | `run_077` layer6 | OAR 129046 resume | **12,72** test / **13,50** dev |
 | **terminé** | `run_079` Phi-2 r4 | waiter OAR 078→079 | **15,37** test |
 | **terminé** | `run_078` encoder control | waiter OAR 078→079 | **14,71** test |
 | **terminé** | `run_075b` SeamlessM4T | OAR 128930 | **38,01** test / **37,54** dev (H100) |
@@ -134,17 +136,22 @@ Chaîne : ThinkPad → **ligone** → **cluster GETALP** (NFS) → **OAR** → n
 | **terminé** | `run_068_speechllm_l14k` | OAR 128303 | **13,71** test / **15,14** dev |
 | **terminé** | `run_059_speechllm_l14k` | OAR 128265 | **14,77** test |
 | **échec OOM** | `run_060` ST v5 | OAR 128275 / 129505 | 2080 Ti insuffisant — relance **129507** sur H100 |
+| **échec fp16** | `run_043` ST replicate | OAR 129663 | from-scratch H100 fp16 — collapse BLEU **1,11** @12k ; relance bf16 **129671** |
 
-**Scripts OAR cluster GETALP :** `script OAR (cluster GETALP)` (**run_077** reprise), `script OAR (cluster GETALP)` (Seamless, H100).
+**Scripts OAR cluster GETALP :** `run_oar_st_l14k_v5_replicate_aker.sh` (bf16), `run_oar_eval_043_st_replicate_aker.sh`, `run_oar_st_l14k_v5_aker.sh` (`run_060`).
 
-**Relance cluster GETALP :** aucun job planifié — piste J layer6 **clos** (cluster GETALP + machine GPU locale).
+**Note H100 :** ST from-scratch en **fp16** peut collapser après dégel encodeur ; préférer **`amp_dtype: bf16`**. `run_060` a réussi en fp16 car **reprise** d’un checkpoint déjà entraîné sur 2080 Ti.
+
+**Relance cluster GETALP :** aucun job planifié — idle.
 
 ### machine GPU locale
 
-**État (15 juil. 2026) :** open baselines **terminés** ; chaîne **`run_066` → `run_023`** **terminée** (14–15 juil.) ; **`run_055`** seed 2 **17,84** ; **`run_054` Mistral** relance cap 4 h en cours.
+**État (16 juil. 2026) :** GPU **libre** ; waiter 13 h **terminé** (~02h13) — **`run_044`** L-114k SpecAug **13,32** ; **`run_046`** v11 batch32 **échec** à nouveau (**2,75** test, overwrite). Pas de run ~2–2,5 h utile en file (`run_040` multimodal toujours bloqué HF 404).
 
 | Pos. | Statut | Run | Variante | Piste | Notes |
 |------|--------|-----|----------|-------|-------|
+| — | **échec** | `run_046` | ST L-14k batch 32 (relance) | [B](#piste-b--batch-effectif-intermédiaire-machine GPU locale) | **2,75** test (16 juil., overwrite) — collapse confirmé |
+| — | **terminé** | `run_044` | speechLLM L-114k SpecAug | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | **13,32** test (15–16 juil.) — sous run_013 **15,24** |
 | **—** | **terminé** | `run_066` | Llama dégel encodeur | [L](#piste-l--speechllm--dégel-de-lencodeur-sur-llama--réduction-séquence-downsampling-k7) | **18,88** test (14 juil.) — sous cluster GETALP **20,12** ; au-dessus run_052 **16,31** |
 | **—** | **terminé** | `run_023` | Phi-2 replicate L-14k | [H](#piste-h--speechllm--suite-des-ablations-b1--b2) | **15,33** test — proche run_012 **15,03** |
 | **—** | **terminé** | `run_055` | Llama seed 2 | [F](#piste-f--réplicabilité-et-seeds-multiples) | **17,84** test (15 juil.) — entre run_052 **16,31** et run_066 machine GPU locale **18,88** |
@@ -261,7 +268,8 @@ Ordre de priorité **scientifique** (indépendant de la disponibilité GPU). Cro
 |----------|-----|-----------|--------|
 | **ST L-14k v5 SpecAugment** | `run_026` | **26,12** | ok — **meilleur ST local** |
 | ST L-14k v10 finetune freq | `run_041` | **25,95** | ok — sous run_026 |
-| ST L-14k v5 replicate (seed 42) | `run_043` | **24,78** | ok — écart ~1,3 vs run_026 |
+| ST L-14k v5 replicate (seed 42) | `run_043` | **24,78** / **25,96** | ok machine GPU locale **24,78** ; **cluster GETALP bf16** **25,96** test / **26,65** dev (proche run_026 **26,12**) |
+| ST L-14k v5 aker (seed 42) | `run_060` | **25,00** | ok cluster GETALP H100 (resume après OOM 2080 Ti) |
 | ST L-14k v5 seed 2 | `run_049` | **23,84** | ok (machine GPU locale, 19 juin) — confirme variabilité |
 | ST L-14k batch 32 | `run_046` | **2,76** | **échec** — collapse @ 12k (comme batch 64) |
 | ST L-14k SpecAugment fort | `run_037` | **24,55** | ok — sous run_026 |
@@ -416,7 +424,7 @@ Hypothèse : run_026 (SpecAugment 0.05, vocab 1k) = 26,12 > run_052_transformer 
 
 ### Contexte
 
-run_026 (26,12) vs run_043 (24,78) : écart ~1,3 BLEU avec seed et config identiques. L'écart suggère une variabilité résiduelle GPU (fp16, CuDNN, machine partagée).
+run_026 (26,12) vs run_043 machine GPU locale (24,78) : écart ~1,3 BLEU. Sur **H100**, from-scratch **fp16** a collapsé (**1,11**) ; relance **bf16** donne **25,96** test / **26,65** dev — très proche de run_026 ; privilégier bf16 sur Hopper.
 
 Le PRD §6 recommande ≥ 2 seeds avant de promouvoir une variante. **Non fait** pour les runs récents.
 
@@ -637,7 +645,18 @@ Le projet compare déjà **Pantagruel entraîné sur m-TEDx** (variantes 1–2) 
 
 ### Priorité
 
-**P3 — clos (open ST)** — matrice cross-machine complète : Canary machine GPU locale **40,04** > Seamless **~38** > Whisper **~36,6** > cascade **37,4**. **Piste J cluster GETALP** : run_077 layer6 **12,72** (répl. run_048). **machine GPU locale** : waiter run_066 **bloqué VRAM** (seuil 24 Go).
+**P3 — clos (open ST utterance)** — matrice cross-machine complète : Canary machine GPU locale **40,04** > Seamless **~38** > Whisper **~36,6** > cascade **37,4**.
+
+**Suite — taille de contexte (juillet 2026)** :
+| Run | Modèle | Seg. | BLEU test | Statut |
+|-----|--------|------|-----------|--------|
+| `run_080` | Whisper-ST | sentence_like | **32,3** | ok Modyco (sous utt. 36,6) |
+| `run_080b` | SeamlessM4T v2 | sentence_like | **30,0** | ok Modyco (sous utt. 38,0) |
+| `run_081` | Canary-1B | sentence_like | — | **préparé** (`canary_1b_sentence.yaml`, `run_modyco_open_canary_sentence_081.sh`) |
+| — | Cascade | sentence_like | — | config existante ; score à (re)mesurer |
+| — | buckets durée | utterance | — | analyse hyps `run_074` (sans nouveau train) |
+
+Objectif : localiser la fenêtre audio où Canary (et les baselines) restent performants. Ensuite : **cohérence intra-textuelle** (talk entier vs phrases isolées).
 
 ---
 
