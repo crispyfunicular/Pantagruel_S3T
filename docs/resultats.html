@@ -17,6 +17,7 @@
       --text: #1a1a2e;
       --muted: #5c5c7a;
       --accent: #2563eb;
+      --accent-mid: #3b82f6;
       --accent-soft: #dbeafe;
       --border: rgba(0,0,0,0.08);
       --radius: 16px;
@@ -251,6 +252,95 @@
     .vd-3 { background: var(--v3); } .vd-4 { background: var(--v4); }
     .vd-6 { background: var(--v6); } .vd-5 { background: var(--v5); } .vd-r { background: var(--ref); }
 
+    /* ── Contexte entrée / sortie ─── */
+    .context-formula {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.55rem;
+      margin: 0.75rem 0 1rem; font-size: 0.86rem; font-family: var(--mono);
+    }
+    .context-pill {
+      display: inline-block; padding: 0.28rem 0.65rem; border-radius: 8px;
+      background: #f1f5f9; border: 1px solid var(--border); font-weight: 600; color: var(--text);
+    }
+    .context-pill--sum { background: #fdf2f8; border-color: rgba(190,24,93,0.35); color: #be185d; }
+    .context-op { color: var(--muted); font-weight: 700; }
+    .ctx-status { font-size: 0.74rem; font-weight: 600; }
+    .ctx-ok { color: #166534; }
+    .ctx-todo { color: #9a3412; }
+    .ctx-next { color: #1e40af; }
+
+    /* ── Tooltips termes techniques (glossaire) ─── */
+    .notes-hint { font-size: 0.82rem; color: var(--muted); margin-top: 0.5rem; }
+    .term {
+      border-bottom: 1px dashed var(--accent-mid);
+      cursor: help;
+      position: relative;
+      display: inline;
+      white-space: nowrap;
+    }
+    .term-tip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 250px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 0.78rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      line-height: 1.45;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.28);
+      z-index: 999;
+      font-weight: 400;
+      white-space: normal;
+      font-style: normal;
+      font-family: var(--sans);
+      text-transform: none;
+      letter-spacing: 0;
+      pointer-events: none;
+    }
+    .term-tip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #1e293b;
+    }
+    .term-tip-down {
+      bottom: auto;
+      top: calc(100% + 8px);
+    }
+    .term-tip-down::after {
+      top: auto;
+      bottom: 100%;
+      border-top-color: transparent;
+      border-bottom-color: #1e293b;
+    }
+    .term-tip-left {
+      left: auto;
+      right: 0;
+      transform: none;
+    }
+    .term-tip-left::after {
+      left: auto;
+      right: 12px;
+      transform: none;
+    }
+    .term-tip a {
+      color: #93c5fd;
+      display: inline-block;
+      margin-top: 0.3rem;
+      font-weight: 500;
+      pointer-events: auto;
+    }
+    .term-tip a:hover { color: #bfdbfe; text-decoration: underline; }
+    .term:hover > .term-tip,
+    .term.is-open > .term-tip { display: block; pointer-events: auto; }
+    .card { overflow: visible; }
+
     /* Lignes baseline / au-dessus de la référence article */
     .table-legend {
       display: flex;
@@ -406,7 +496,8 @@
 
   <header class="hero">
     <h1>Résultats</h1>
-    <p class="lead">Synthèse des scores SacreBLEU sur m-TEDx FR→EN pour les six variantes du projet. Le BLEU (<a href="evaluation.html#bleu">voir Évaluation</a>) mesure le recouvrement lexical avec les références : il sert surtout à comparer des systèmes sur un même test, pas comme une « note sur 100 ».</p>
+    <p class="lead">Synthèse des scores <span class="term">SacreBLEU<span class="term-tip">Implémentation standardisée du BLEU (tokenisation figée) pour comparer les runs de façon reproductible. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> sur m-TEDx FR→EN pour les six variantes du projet. Le <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100) : recouvrement lexical avec les références. <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> (<a href="evaluation.html#bleu">voir Évaluation</a>) mesure le recouvrement lexical avec les références : il sert surtout à comparer des systèmes sur un même test, pas comme une « note sur 100 ».</p>
+    <p class="notes-hint">Survolez les termes <span class="term" style="border-bottom-color:#94a3b8;">soulignés en pointillés<span class="term-tip">Explication courte affichée au survol. Si la bulle contient un lien, cliquez d’abord sur le terme pour la maintenir, puis sur le lien.</span></span> pour une définition en langage courant. Glossaire complet : <a href="vocabulaire.html">vocabulaire.html</a>.</p>
   </header>
 
   <main class="container">
@@ -414,7 +505,7 @@
     <!-- ── 1. Meilleurs scores par variante ─────────────────────── -->
     <div class="card">
       <h2>Meilleur score par variante</h2>
-      <p class="section-intro">Score BLEU obtenu sur le jeu de <strong>test</strong> m-TEDx pour chaque approche. Les scores en segmentation <em>utterance</em> sont comparables entre eux ; les scores <em>sentence_like</em> ne le sont pas directement.</p>
+      <p class="section-intro">Score <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> obtenu sur le jeu de <strong>test</strong> m-TEDx pour chaque approche. Les scores en <span class="term">segmentation<span class="term-tip">Façon de découper l’audio en segments pour l’évaluation. <a href="vocabulaire.html#segmentation">→ glossaire</a></span></span> <em><span class="term">utterance<span class="term-tip">Découpage par énoncé : chaque segment = une phrase parlée. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em> sont comparables entre eux ; les scores <em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues (fusion de segments) — non comparables directement à utterance. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em> ne le sont pas directement.</p>
 
       <div class="stats-grid">
         <a class="stat-card stat-card-v3" href="variante-3.html#run_005" title="run_005 — Gemini 3.5 Flash utterance (41,1 BLEU)">
@@ -455,7 +546,7 @@
       </div>
 
       <div class="note note-info" style="margin-top:0.75rem;">
-        <strong>Pourquoi certains scores dépassent la baseline article ?</strong> La référence Pantagruel (Table 8, <strong>25,2 BLEU</strong>) sert de point de comparaison pour les modèles entraînés sur m-TEDx. Les variantes <strong>3</strong> (Gemini), <strong>6</strong> (baselines <em>open weights</em>) et <strong>4</strong> (cascade ASR→MT) partent de modèles pré-entraînés à très grande échelle : Gemini via une API cloud (<strong>41,1</strong>) ; Canary-1B, SeamlessM4T v2 et Whisper-ST en zero-shot reproductible (meilleur : <strong>40,0</strong>) ; cascade Whisper + Marian MT (<strong>37,4</strong>). Les variantes <strong>1</strong>, <strong>2</strong> et <strong>5</strong> entraînent ou adaptent un modèle sur les seules données m-TEDx — le meilleur ST entraîné (<strong>26,1</strong>) dépasse à peine cette baseline.
+        <strong>Pourquoi certains scores dépassent la baseline article ?</strong> La référence Pantagruel (Table 8, <strong>25,2 <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span></strong>) sert de point de comparaison pour les modèles entraînés sur m-TEDx. Les variantes <strong>3</strong> (Gemini), <strong>6</strong> (baselines <em><span class="term">open weights<span class="term-tip">Poids publiés et téléchargeables — pas d’API fermée. <a href="vocabulaire.html#open-weights">→ glossaire</a></span></span></em>) et <strong>4</strong> (<span class="term">cascade ASR→MT<span class="term-tip">Deux modèles en série : transcription française (ASR) puis traduction texte (MT). <a href="variante-4.html">→ variante 4</a></span></span>) partent de modèles pré-entraînés à très grande échelle : Gemini via une API cloud (<strong>41,1</strong>) ; Canary-1B, SeamlessM4T v2 et Whisper-ST en <span class="term">zero-shot<span class="term-tip">Modèle utilisé tel quel, sans entraînement sur m-TEDx. <a href="vocabulaire.html#zero-shot">→ glossaire</a></span></span> reproductible (meilleur : <strong>40,0</strong>) ; cascade Whisper + Marian MT (<strong>37,4</strong>). Les variantes <strong>1</strong>, <strong>2</strong> et <strong>5</strong> entraînent ou adaptent un modèle sur les seules données m-TEDx — le meilleur <span class="term">ST<span class="term-tip">Speech-to-text : traduction directe audio → texte. <a href="vocabulaire.html#speech-to-text">→ glossaire</a></span></span> entraîné (<strong>26,1</strong>) dépasse à peine cette baseline.
         <br><br>
         <strong>Données déjà vues ?</strong> Gemini, Whisper et les modèles open ST ont peut-être déjà croisé des enregistrements proches de m-TEDx lors de leur pré-entraînement : les conférences TED sont librement accessibles en ligne. Ce biais complique la comparaison directe avec les approches limitées au corpus du projet.
       </div>
@@ -497,7 +588,7 @@
     <!-- ── 3. Comparaison runs speechLLM ─────────────────────────── -->
     <div class="card">
       <h2><span class="icon" style="background:var(--v2-soft);color:var(--v2);">2</span> Variante 2 · speechLLM — impact des paramètres</h2>
-      <p class="section-intro">Chaque barre représente un run speechLLM. La couleur indique la configuration : bonne (48 tokens, utterance), sentence_like, ou échouée (128 tokens).</p>
+      <p class="section-intro">Chaque barre représente un <span class="term">run<span class="term-tip">Identifiant d’une expérience (<code>run_XXX</code>). <a href="vocabulaire.html#run">→ glossaire</a></span></span> speechLLM. La couleur indique la configuration : bonne (48 <span class="term">tokens<span class="term-tip">Unités de texte manipulées par le modèle. <a href="vocabulaire.html#token">→ glossaire</a></span></span>, <span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span>), <span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span>, ou échouée (128 tokens).</p>
 
       <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background:#7c3aed;"></div> Utterance · 48 tok (bon)</div>
@@ -510,14 +601,14 @@
       <p class="chart-caption">run_013 et run_012 (L-114k/L-14k gelés, 48 tok) obtiennent 15 BLEU utterance. Les runs à 128 tokens (run_017, run_021) s’effondrent à 5–6 malgré un encodeur identique.</p>
 
       <div class="note" style="margin-top:0.75rem;">
-        <strong>Effet max_new_tokens :</strong> 128 tokens → le modèle génère des traductions 3× trop longues, ce qui pénalise fortement le score BLEU même si le début de la traduction est correct.
+        <strong>Effet <span class="term">max_new_tokens<span class="term-tip">Nombre maximal de tokens générés pour la traduction. <a href="vocabulaire.html#max-new-tokens">→ glossaire</a></span></span> :</strong> 128 <span class="term">tokens<span class="term-tip">Unités de texte manipulées par le modèle. <a href="vocabulaire.html#token">→ glossaire</a></span></span> → le modèle génère des traductions 3× trop longues, ce qui pénalise fortement le score <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> même si le début de la traduction est correct.
       </div>
     </div>
 
     <!-- ── 4. Tableau récapitulatif complet ──────────────────────── -->
     <div class="card">
       <h2>Tableau récapitulatif</h2>
-      <p class="section-intro">Tous les meilleurs runs par variante, avec leur contexte. <strong>Utterance</strong> et <strong>sentence_like</strong> sont deux modes de segmentation de l’audio — leurs scores BLEU ne sont pas directement comparables.</p>
+      <p class="section-intro">Tous les meilleurs <span class="term">runs<span class="term-tip">Expériences identifiées par <code>run_XXX</code>. <a href="vocabulaire.html#run">→ glossaire</a></span></span> par variante, avec leur contexte. <strong><span class="term">Utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></strong> et <strong><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></strong> sont deux modes de <span class="term">segmentation<span class="term-tip">Façon de découper l’audio. <a href="vocabulaire.html#segmentation">→ glossaire</a></span></span> de l’audio — leurs scores <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> ne sont pas directement comparables.</p>
 
       <div class="table-wrap">
         <table>
@@ -537,7 +628,7 @@
               <td><span class="variant-dot vd-3"></span><strong>3 · Gemini</strong></td>
               <td><code>run_005</code></td>
               <td><span class="result-best rb-v3">41,1</span></td>
-              <td><em>utterance</em></td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em></td>
               <td>Gemini 3.5 Flash · max 8192 tok · thinking minimal · garde-fous anti-boucles</td>
               <td><a href="variante-3.html">→</a></td>
             </tr>
@@ -545,7 +636,7 @@
               <td></td>
               <td><code>run_004</code></td>
               <td>36,8</td>
-              <td><em>sentence_like</em></td>
+              <td><em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em></td>
               <td>Gemini 3.5 Flash v2 · sentence_like</td>
               <td><a href="variante-3.html">→</a></td>
             </tr>
@@ -563,16 +654,57 @@
               <td><code>run_001</code></td>
               <td><span class="result-best rb-v4">37,4</span></td>
               <td><em>utterance</em></td>
-              <td>Whisper large-v3 (ASR) → Marian opus-mt-fr-en (MT)</td>
+              <td>Whisper large-v3 (<span class="term">ASR<span class="term-tip">Automatic Speech Recognition : parole → texte.</span></span>) → Marian opus-mt-fr-en (<span class="term">MT<span class="term-tip">Machine Translation : texte → texte.</span></span>)</td>
               <td><a href="variante-4.html">→</a></td>
+            </tr>
+            <!-- V6 -->
+            <tr>
+              <td><span class="variant-dot vd-6"></span><strong>6 · Open baselines</strong></td>
+              <td><code>run_074</code></td>
+              <td><span class="result-best rb-v6">40,0</span></td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em></td>
+              <td>Canary-1B v2 · <span class="term">NeMo<span class="term-tip">Bibliothèque NVIDIA pour modèles de parole.</span></span> · <span class="term">zero-shot<span class="term-tip">Sans entraînement sur m-TEDx. <a href="vocabulaire.html#zero-shot">→ glossaire</a></span></span> · meilleur open <span class="term">ST<span class="term-tip">Speech-to-text. <a href="vocabulaire.html#speech-to-text">→ glossaire</a></span></span></td>
+              <td><a href="variante-6.html#canary-best">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_073</code></td>
+              <td>38,0</td>
+              <td><em>utterance</em></td>
+              <td>SeamlessM4T v2 large · zero-shot</td>
+              <td><a href="variante-6.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_072</code></td>
+              <td>36,6</td>
+              <td><em>utterance</em></td>
+              <td>Whisper large-v3 · task=translate</td>
+              <td><a href="variante-6.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_080</code></td>
+              <td>32,3</td>
+              <td><em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em></td>
+              <td>Whisper-ST sentence_like (Modyco) — sous utterance 36,6</td>
+              <td><a href="variante-6.html">→</a></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td></td>
+              <td><code>run_080b</code></td>
+              <td>30,0</td>
+              <td><em>sentence_like</em></td>
+              <td>SeamlessM4T v2 sentence_like (Modyco) — sous utterance 38,0</td>
+              <td><a href="variante-6.html">→</a></td>
             </tr>
             <!-- V1 meilleurs -->
             <tr>
               <td><span class="variant-dot vd-1"></span><strong>1 · Transformer</strong></td>
               <td><code>run_026</code></td>
               <td><span class="result-best rb-v1">26,1</span></td>
-              <td><em>utterance</em></td>
-              <td>L-14k · SpecAugment v5 · vocab 1k · dépasse référence article L-14k (24,0)</td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em></td>
+              <td>L-14k · <span class="term">SpecAugment<span class="term-tip">Masquage aléatoire du spectrogramme. <a href="vocabulaire.html#specaugment">→ glossaire</a></span></span> v5 · vocab 1k · dépasse référence article L-14k (24,0)</td>
               <td><a href="variante-1.html">→</a></td>
             </tr>
             <tr style="background:#fafaf8;">
@@ -612,7 +744,7 @@
               <td><span class="variant-dot vd-2"></span><strong>2 · speechLLM</strong></td>
               <td><code>run_013</code></td>
               <td><span class="result-best rb-v2">15,2</span></td>
-              <td><em>utterance</em></td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em></td>
               <td>L-114k gelé · Phi-2 · 48 tok</td>
               <td><a href="variante-2.html">→</a></td>
             </tr>
@@ -620,8 +752,8 @@
               <td></td>
               <td><code>run_005</code></td>
               <td>19,0</td>
-              <td><em>sentence_like</em></td>
-              <td>B-1k dégelé · Phi-2 · meilleur global B1</td>
+              <td><em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em></td>
+              <td>B-1k <span class="term">dégelé<span class="term-tip">Poids mis à jour pendant l’entraînement. <a href="vocabulaire.html#gel">→ glossaire</a></span></span> · Phi-2 · meilleur global B1</td>
               <td><a href="variante-2.html">→</a></td>
             </tr>
             <!-- V5 -->
@@ -629,7 +761,7 @@
               <td><span class="variant-dot vd-5"></span><strong>5 · Speech_Text</strong></td>
               <td><code>run_001</code></td>
               <td><span class="result-best rb-v5">7,9</span></td>
-              <td><em>sentence_like</em></td>
+              <td><em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em></td>
               <td>Speech_Text B-1k · décodeur 6 couches · réglages non optimisés</td>
               <td><a href="variante-5.html">→</a></td>
             </tr>
@@ -638,7 +770,120 @@
       </div>
 
       <div class="note" style="margin-top:0.85rem;">
-        <strong>Attention à la comparaison :</strong> les variantes 1, 2 et 5 entraînent un modèle sur m-TEDx. Les variantes 3 (Gemini) et 4 (Cascade) utilisent des modèles pré-entraînés sur bien plus de données — leurs scores élevés ne signifient pas qu’elles sont « meilleures » au sens de la contribution du projet, mais qu’elles partent d’un avantage fondamental.
+        <strong>Attention à la comparaison :</strong> les variantes 1, 2 et 5 entraînent un modèle sur m-TEDx. Les variantes 3 (Gemini), <strong>6</strong> (open <span class="term">ST<span class="term-tip">Speech-to-text. <a href="vocabulaire.html#speech-to-text">→ glossaire</a></span></span>) et 4 (Cascade) utilisent des modèles pré-entraînés sur bien plus de données — leurs scores élevés ne signifient pas qu’elles sont « meilleures » au sens de la contribution du projet, mais qu’elles partent d’un avantage fondamental.
+      </div>
+    </div>
+
+    <!-- ── Contexte : taille d'entrée + prompt + input + sortie ─── -->
+    <div class="card" id="contexte">
+      <h2>Contexte d’entrée / sortie</h2>
+      <p class="section-intro">
+        Pour chaque système, le « <span class="term">contexte<span class="term-tip">Ensemble de ce que le modèle « voit » à l’inférence : audio, consignes et plafond de sortie. <a href="vocabulaire.html#contexte">→ glossaire</a></span></span> » utile à l’<span class="term">inférence<span class="term-tip">Utilisation du modèle déjà entraîné, sans apprentissage. <a href="vocabulaire.html#inference">→ glossaire</a></span></span> se décompose ainsi&nbsp;:
+      </p>
+      <div class="context-formula" aria-label="Formule du contexte">
+        <span class="context-pill">taille entrée audio</span>
+        <span class="context-op">+</span>
+        <span class="context-pill"><span class="term">prompt<span class="term-tip">Consigne textuelle donnée au modèle. <a href="vocabulaire.html#prompt">→ glossaire</a></span></span></span>
+        <span class="context-op">+</span>
+        <span class="context-pill">input modèle</span>
+        <span class="context-op">+</span>
+        <span class="context-pill">sortie (plafond)</span>
+        <span class="context-op">=</span>
+        <span class="context-pill context-pill--sum">contexte</span>
+      </div>
+      <p class="section-intro">
+        Objectif prochain&nbsp;: localiser <strong>sur quelle taille de contexte Canary (et les autres) est le plus performant</strong>, puis mesurer les risques de <strong>variation intra-textuelle</strong> (cohérence sur un discours entier, pas seulement une phrase isolée).
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Variante · <span class="term" style="border-bottom-color:#94a3b8;">run<span class="term-tip term-tip-down">Identifiant d’expérience. <a href="vocabulaire.html#run">→ glossaire</a></span></span></th>
+              <th>Taille entrée</th>
+              <th><span class="term" style="border-bottom-color:#94a3b8;">Prompt<span class="term-tip term-tip-down">Consigne textuelle. <a href="vocabulaire.html#prompt">→ glossaire</a></span></span></th>
+              <th>Input modèle</th>
+              <th>Sortie</th>
+              <th>Statut contexte</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="variant-dot vd-6"></span><strong>6 · Canary</strong><br><code>run_074</code></td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em><br>WAV entier · typ. 1–30&nbsp;s</td>
+              <td><em>aucun texte</em><br><code>src=fr</code> · <code>tgt=en</code></td>
+              <td>audio + codes langue (<span class="term">NeMo<span class="term-tip">Bibliothèque NVIDIA pour modèles de parole (ASR, ST) — backend de Canary.</span></span> <code>task=ast</code>)</td>
+              <td>texte libre<br>(plafond YAML 256 non branché)</td>
+              <td><span class="ctx-status ctx-ok">mesuré utterance</span><br><span class="ctx-status ctx-todo">à faire · <span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span> run_081</span><br><span class="ctx-status ctx-next">buckets durée</span></td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td><span class="variant-dot vd-6"></span>6 · Whisper-ST<br><code>run_072</code> / <code>080</code></td>
+              <td><em>utt.</em> 36,6 · <em>sent.</em> 32,3</td>
+              <td>implicite (<code>task=translate</code>, lang=fr)</td>
+              <td>audio → Whisper <span class="term">encodeur<span class="term-tip">Réseau qui transforme l’audio en représentations. <a href="vocabulaire.html#encodeur">→ glossaire</a></span></span></td>
+              <td><code><span class="term">max_new_tokens<span class="term-tip">Plafond de tokens générés. <a href="vocabulaire.html#max-new-tokens">→ glossaire</a></span></span>: 256</code></td>
+              <td><span class="ctx-status ctx-ok">utt. + sentence_like</span><br>baisse sur segments longs</td>
+            </tr>
+            <tr style="background:#fafaf8;">
+              <td><span class="variant-dot vd-6"></span>6 · Seamless<br><code>run_073</code> / <code>080b</code></td>
+              <td><em>utt.</em> 38,0 · <em>sent.</em> 30,0</td>
+              <td>implicite (<code>tgt_lang</code>)</td>
+              <td>audio → Seamless</td>
+              <td><code>max_new_tokens: 256</code></td>
+              <td><span class="ctx-status ctx-ok">utt. + sentence_like</span><br>baisse nette sur longs</td>
+            </tr>
+            <tr>
+              <td><span class="variant-dot vd-3"></span><strong>3 · Gemini</strong><br><code>run_005</code></td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em><br>≤ ~75 mots réf. (~100 tok.)</td>
+              <td><code>Translate the French speech to English.</code></td>
+              <td>audio + <span class="term">prompt<span class="term-tip">Consigne textuelle. <a href="vocabulaire.html#prompt">→ glossaire</a></span></span> (API)</td>
+              <td><code>max_output_tokens: 8192</code><br>thinking minimal</td>
+              <td><span class="ctx-status ctx-ok">utt. 41,1 · sent. 36,8</span></td>
+            </tr>
+            <tr>
+              <td><span class="variant-dot vd-4"></span><strong>4 · Cascade</strong><br><code>run_001</code></td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em></td>
+              <td>aucun (<span class="term">ASR<span class="term-tip">Automatic Speech Recognition : parole → texte.</span></span>) puis <span class="term">MT<span class="term-tip">Machine Translation : texte → texte.</span></span></td>
+              <td>audio → Whisper · texte FR → Marian</td>
+              <td>hyp. MT Marian</td>
+              <td><span class="ctx-status ctx-ok">utterance 37,4</span><br><span class="ctx-status ctx-todo">relancer sentence_like</span></td>
+            </tr>
+            <tr>
+              <td><span class="variant-dot vd-2"></span><strong>2 · speechLLM</strong><br><code>run_066</code></td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em></td>
+              <td><code>llama_inst</code> + « Translate the French speech to English. »</td>
+              <td>frames <span class="term">encodeur<span class="term-tip">Réseau audio → représentations. <a href="vocabulaire.html#encodeur">→ glossaire</a></span></span> + <span class="term">tokens<span class="term-tip">Unités de texte du modèle. <a href="vocabulaire.html#token">→ glossaire</a></span></span> prompt</td>
+              <td><code><span class="term">max_new_tokens<span class="term-tip">Plafond de tokens générés. <a href="vocabulaire.html#max-new-tokens">→ glossaire</a></span></span>: 48</code></td>
+              <td><span class="ctx-status ctx-ok">48 tok critique</span><br>(128 tok → effondrement)</td>
+            </tr>
+            <tr>
+              <td><span class="variant-dot vd-1"></span><strong>1 · Transformer</strong><br><code>run_026</code></td>
+              <td><em><span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span></em></td>
+              <td>—</td>
+              <td>mel → encodeur · décodeur SPM</td>
+              <td><span class="term">beam<span class="term-tip">Beam search : plusieurs hypothèses en parallèle. <a href="vocabulaire.html#beam-search">→ glossaire</a></span></span> 5 · <code>max_len_b: 128</code></td>
+              <td><span class="ctx-status ctx-ok">utt. + sentence_like</span></td>
+            </tr>
+            <tr>
+              <td><span class="variant-dot vd-5"></span><strong>5 · Speech_Text</strong><br><code>run_001</code></td>
+              <td><em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em> seulement</td>
+              <td>—</td>
+              <td><span class="term">encodeur<span class="term-tip">Réseau audio → représentations. <a href="vocabulaire.html#encodeur">→ glossaire</a></span></span> multimodal</td>
+              <td>décodeur 6 couches</td>
+              <td><span class="ctx-status ctx-todo">manque utterance</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note note-info" style="margin-top:0.9rem;">
+        <strong><span class="term">Runs<span class="term-tip">Expériences identifiées par <code>run_XXX</code>. <a href="vocabulaire.html#run">→ glossaire</a></span></span> complémentaires préparés / à lancer</strong>
+        <ul style="margin:0.45rem 0 0 1.1rem; padding:0;">
+          <li><strong>Priorité · Canary <span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></strong> (<code>run_081</code>) — config <code>canary_1b_sentence.yaml</code> + script Modyco <code>run_modyco_open_canary_sentence_081.sh</code> — seul trou v6 pour comparer la taille d’entrée.</li>
+          <li><strong>Cascade sentence_like</strong> — config déjà présente (<code>4_cascade/configs/fr-en/cascade_sentence.yaml</code>) ; score à (re)mesurer.</li>
+          <li><strong>Buckets de durée</strong> sur hyps <code>run_074</code> (et Gemini / Cascade) — <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> vs durée audio, sans nouveau train.</li>
+          <li><strong>Intra-textuel (prochains jours)</strong> — protocole de cohérence sur un texte / talk entier (dérive, répétitions, anaphores) pour chaque variante ; distinct du BLEU segment isolé.</li>
+        </ul>
       </div>
     </div>
 
@@ -646,13 +891,25 @@
     <div class="two-col">
       <div class="card">
         <h2><span class="icon" style="background:var(--v3-soft);color:var(--v3);">3</span> Gemini — détail</h2>
-        <p class="section-intro">Le meilleur score du projet (<strong>41,1 BLEU</strong>) est obtenu avec Gemini 3.5 Flash via l’API Google. Le paramètre clé : les <em>garde-fous</em> anti-boucles et un budget <em>thinking</em> minimal. Sans ces réglages, run_004 initial ne donnait que 20,3.</p>
+        <p class="section-intro">Le meilleur score du projet (<strong>41,1 <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span></strong>) est obtenu avec Gemini 3.5 Flash via l’API Google. Le paramètre clé : les <em>garde-fous</em> anti-boucles et un budget <em>thinking</em> minimal. Sans ces réglages, run_004 initial ne donnait que 20,3.</p>
         <div class="links"><a class="btn" href="variante-3.html">Page complète →</a></div>
       </div>
       <div class="card">
+        <h2><span class="icon" style="background:var(--v6-soft);color:var(--v6);">6</span> Canary — détail</h2>
+        <p class="section-intro">Meilleur open <span class="term">ST<span class="term-tip">Speech-to-text : traduction directe audio → texte. <a href="vocabulaire.html#speech-to-text">→ glossaire</a></span></span> (<strong>40,0 <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span></strong> test, <code>run_074</code>). <span class="term">Zero-shot<span class="term-tip">Modèle utilisé tel quel, sans entraînement sur m-TEDx. <a href="vocabulaire.html#zero-shot">→ glossaire</a></span></span> <span class="term">NeMo<span class="term-tip">Bibliothèque NVIDIA pour modèles de parole — backend de Canary.</span></span>, pas de <span class="term">prompt<span class="term-tip">Consigne textuelle. <a href="vocabulaire.html#prompt">→ glossaire</a></span></span> texte — l’audio <span class="term">utterance<span class="term-tip">Découpage par énoncé. <a href="vocabulaire.html#utterance">→ glossaire</a></span></span> suffit. Prochaine mesure : performance vs longueur d’entrée (<em><span class="term">sentence_like<span class="term-tip">Pseudo-phrases plus longues. <a href="vocabulaire.html#sentence-like">→ glossaire</a></span></span></em> + buckets).</p>
+        <div class="links"><a class="btn" href="variante-6.html#canary-best">Fiche Canary →</a></div>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:1rem;">
+      <div class="card">
         <h2><span class="icon" style="background:var(--v4-soft);color:var(--v4);">4</span> Cascade — détail</h2>
-        <p class="section-intro">En chaînant Whisper large-v3 (transcription) puis Marian opus-mt-fr-en (traduction), on obtient <strong>37,4 BLEU</strong> avec un seul run. Avantage : pas d’entraînement ; inconvénient : deux modèles distincts, erreurs ASR propagées.</p>
+        <p class="section-intro">En chaînant Whisper large-v3 (transcription) puis Marian opus-mt-fr-en (traduction), on obtient <strong>37,4 <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span></strong> avec un seul <span class="term">run<span class="term-tip">Identifiant d’expérience. <a href="vocabulaire.html#run">→ glossaire</a></span></span>. Avantage : pas d’entraînement ; inconvénient : deux modèles distincts, erreurs <span class="term">ASR<span class="term-tip">Automatic Speech Recognition : parole → texte.</span></span> propagées.</p>
         <div class="links"><a class="btn" href="variante-4.html">Page complète →</a></div>
+      </div>
+      <div class="card">
+        <h2>Suite méthodologique</h2>
+        <p class="section-intro">Après le bench taille de <span class="term">contexte<span class="term-tip">Ensemble audio + consignes + plafond de sortie à l’inférence. <a href="vocabulaire.html#contexte">→ glossaire</a></span></span> : évaluer la <strong>cohérence intra-textuelle</strong> (un talk entier vs phrases isolées) pour chaque variante — risque distinct du <span class="term">BLEU<span class="term-tip">Score de qualité de traduction (0–100). <a href="vocabulaire.html#bleu">→ glossaire</a></span></span> moyen.</p>
+        <div class="links"><a class="btn" href="#contexte">Section contexte ↑</a></div>
       </div>
     </div>
 
@@ -744,9 +1001,11 @@
         intro:
           'SacreBLEU corpus — meilleur run observé par variante sur le découpage <em>sentence_like</em> (fusion de segments voisins). Ces scores ne sont pas directement comparables au protocole <em>utterance</em> de l’article.',
         note:
-          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>sentence_like</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_004</code>, 36,8 BLEU test) devance Gemini 2.5 (23) ; puis speechLLM dégelé (19) et la baseline Transformer (15). La cascade n’a pas encore de run sur ce découpage.',
+          'Un BLEU plus élevé suggère une traduction plus proche des références humaines, mais ce n’est qu’un indicateur. Sur <em>sentence_like</em>, <strong>Gemini 3.5 Flash v2</strong> (<code>run_004</code>, 36,8 BLEU test) reste en tête ; Whisper-ST open (<code>run_080</code>, 32,3) et Seamless (<code>run_080b</code>, 30,0) baissent nettement vs utterance — la taille d’entrée compte. Canary sentence_like (<code>run_081</code>) à lancer. Puis speechLLM dégelé (19) et Transformer (15).',
         chartRows: [
           { id: 3, color: 'v3', href: 'variante-3.html', chartLabel: '3 · Gemini 3.5 Flash', tableLabel: 'Gemini 3.5 Flash v2', score: 36.8 },
+          { id: 6, color: 'v6', href: 'variante-6.html', chartLabel: '6 · Whisper-ST', tableLabel: 'Whisper-ST sentence', score: 32.3 },
+          { id: 6, color: 'v6', href: 'variante-6.html', chartLabel: '6 · SeamlessM4T', tableLabel: 'Seamless sentence', score: 30.0 },
           { id: 2, color: 'v2', href: 'variante-2.html', chartLabel: '2 · speechLLM', tableLabel: 'speechLLM B1', score: 19 },
           { id: 1, color: 'v1', href: 'variante-1.html', chartLabel: '1 · Transformer', tableLabel: 'Transformer ST', score: 15 },
           { id: 5, color: 'v5', href: 'variante-5.html', chartLabel: '5 · Speech_Text', tableLabel: 'Speech_Text + ST', score: 8 }
@@ -754,6 +1013,10 @@
         tableRows: [
           { id: 3, color: 'v3', tableLabel: 'Gemini 3.5 Flash v2', run: 'run_004', score: 36.8,
             params: 'max 8192 tok · thinking minimal' },
+          { id: 6, color: 'v6', tableLabel: 'Whisper-ST', run: 'run_080', score: 32.3,
+            params: 'sentence_like · max_new_tokens 256 — sous utterance 36,6' },
+          { id: 6, color: 'v6', tableLabel: 'SeamlessM4T v2', run: 'run_080b', score: 30.0,
+            params: 'sentence_like · sous utterance 38,0' },
           { id: 3, color: 'v3', tableLabel: 'Gemini 2.5 Flash', run: 'run_001', score: 23,
             params: 'sentence_like · max 256 tok' },
           { id: 2, color: 'v2', tableLabel: 'speechLLM B1', run: 'run_005', score: 19,
@@ -937,6 +1200,25 @@
         );
       }).join('');
     })();
+
+    /* ── Tooltips glossaire (clic pour maintenir la bulle) ─────── */
+    document.querySelectorAll('.term').forEach((term) => {
+      term.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const wasOpen = term.classList.contains('is-open');
+        document.querySelectorAll('.term.is-open').forEach((openTerm) => {
+          openTerm.classList.remove('is-open');
+        });
+        if (!wasOpen) {
+          term.classList.add('is-open');
+        }
+      });
+    });
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.term.is-open').forEach((term) => {
+        term.classList.remove('is-open');
+      });
+    });
 
   </script>
 
