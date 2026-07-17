@@ -58,7 +58,12 @@ with manifest.open(encoding='utf-8') as handle_in, target.open('w', encoding='ut
   fi
 
   echo "=== $(date -Is) TRAIN ${RUN} (L-14k v11: batch effectif 32) ==="
-  python 1_Transformer/pipeline.py train --config "$CFG" --run-id "$RUN" -v
+  TRAIN_ARGS=()
+  if [[ "${RUN_046_OVERWRITE:-0}" == "1" ]]; then
+    TRAIN_ARGS+=(--overwrite)
+    echo "=== $(date -Is) Mode --overwrite (relance run_046) ==="
+  fi
+  python 1_Transformer/pipeline.py train --config "$CFG" --run-id "$RUN" "${TRAIN_ARGS[@]}" -v
 
   echo "=== $(date -Is) EVALUATE ${RUN} (beam 5) ==="
   python 1_Transformer/pipeline.py evaluate --config "$CFG" --run-id "$RUN" --beam-size 5 -v

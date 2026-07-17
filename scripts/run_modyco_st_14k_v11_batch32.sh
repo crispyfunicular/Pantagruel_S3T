@@ -32,9 +32,11 @@ require_gpu_free() {
 }
 
 FORCE=0
+OVERWRITE=0
 for arg in "$@"; do
   case "$arg" in
     --force) FORCE=1 ;;
+    --overwrite) OVERWRITE=1 ;;
     -h|--help|help)
       sed -n '1,12p' "$0" | tail -n +2
       exit 0
@@ -59,4 +61,7 @@ python 1_Transformer/pipeline.py train \
   --dry-run
 
 echo "=== $(date -Is) Délégation → ${ST_SCRIPT} ==="
+if [[ "${OVERWRITE}" == "1" ]]; then
+  export RUN_046_OVERWRITE=1
+fi
 exec bash "$ST_SCRIPT"
