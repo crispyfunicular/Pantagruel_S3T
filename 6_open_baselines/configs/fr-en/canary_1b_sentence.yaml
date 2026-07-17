@@ -1,0 +1,24 @@
+# Baseline open Canary-1B v2 — ST multilingue fr→en (sentence_like m-TEDx).
+# Comparaison taille de contexte vs run_074 (utterance, 40,04 BLEU test).
+# Machine cible : Modyco (.venv-canary + NeMo), comme run_074.
+
+experiment:
+  name: "fr-en_canary_1b_sentence"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_081_open_canary_1b_sentence"
+
+data:
+  segment_mode: "sentence_like"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+
+model:
+  type: "canary_1b"
+  model_id: "nvidia/canary-1b-v2"
+  src_lang: "fra"
+  tgt_lang: "eng"
+  device: "cuda"
+  dtype: "float16"
+
+decode:
+  max_new_tokens: 256

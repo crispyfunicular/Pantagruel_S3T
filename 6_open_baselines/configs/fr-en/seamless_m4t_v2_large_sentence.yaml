@@ -1,0 +1,23 @@
+# Baseline open SeamlessM4T v2 large — ST directe fr→en (sentence_like m-TEDx).
+# Candidat #1 piste K : le plus proche de Gemini (audio → texte EN, zero-shot).
+
+experiment:
+  name: "fr-en_seamless_m4t_v2_large_sentence"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_080b_open_seamlessm4t_v2_sentence"
+
+data:
+  segment_mode: "sentence_like"
+  valid_manifest: "datasets/manifests_sentence/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests_sentence/fr-en/test.tsv"
+
+model:
+  type: "seamless_m4t_v2"
+  model_id: "facebook/seamless-m4t-v2-large"
+  src_lang: "fra"
+  tgt_lang: "eng"
+  device: "cuda"
+  dtype: "float16"
+
+decode:
+  max_new_tokens: 256
