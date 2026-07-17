@@ -1,0 +1,57 @@
+# speechLLM B2 — fr-en, utterance, Pantagruel-L-14k dégelé + Llama-3.2-3B-Instruct gelé.
+#
+# Base : run_066 (seed 42, 20,12 test aker H100). Réplication seed 1 pour robustesse.
+#
+# VRAM : ~15–20 Go → H100 requis (OOM sur 1080 Ti 11 Go, OAR 129787).
+#
+# Prérequis HF : token Llama 3.2 (huggingface-cli login ou HF_TOKEN).
+#
+# Run cible : run_084_aker_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze_seed2 (~6–12 h GPU)
+
+experiment:
+  name: "fr-en_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze_seed2"
+  lang_pair: "fr-en"
+  output_dir: "runs/fr-en/run_084_aker_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze_seed2"
+  seed: 1
+  deterministic: true
+
+data:
+  segment_mode: "utterance"
+  train_manifest: "datasets/manifests/fr-en/train.tsv"
+  valid_manifest: "datasets/manifests/fr-en/valid.tsv"
+  test_manifest: "datasets/manifests/fr-en/test.tsv"
+  sample_rate: 16000
+
+model:
+  encoder_name: "PantagrueLLM/speech-large-14K"
+  trust_remote_code: true
+  llm_name: "meta-llama/Llama-3.2-3B-Instruct"
+  llm_trust_remote_code: false
+  downsample_k: 5
+  projector_hidden: 2048
+  freeze_encoder: false
+  freeze_llm: true
+  load_in_4bit: false
+  load_in_8bit: false
+
+prompt:
+  format: "llama_inst"
+  template: "Translate the French speech to English."
+
+train:
+  max_updates: 20000
+  early_stopping_patience: 3
+  warmup_updates: 2000
+  learning_rate_peak: 0.00001
+  weight_decay: 0.01
+  batch_size: 1
+  gradient_accumulation: 8
+  gradient_clip_norm: 1.0
+  amp_dtype: "fp16"
+  eval_every_updates: 1000
+  max_eval_batches: 20
+  max_target_tokens: 256
+
+decode:
+  beam_size: 1
+  max_new_tokens: 48
