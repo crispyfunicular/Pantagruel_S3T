@@ -73,12 +73,24 @@ DEFAULT_OVH=(
 )
 # Runs IMAG aker (ligone → aker, pas OVH/Modyco)
 DEFAULT_AKER=(
-  run_077_aker_speechllm_l14k_layer6
-  run_076_aker_speechllm_l14k_layer9
-  run_075_aker_open_whisper_st_utterance
-  run_075b_aker_open_seamlessm4t_v2_utterance
+  run_043_aker_st_l14k_v5_replicate
+  run_057_aker_speechllm_l14k
+  run_058_aker_speechllm_l14k
+  run_059_aker_speechllm_l14k
+  run_060_aker_st_l14k_v5
   run_066_aker_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze
   run_067_aker_speechllm_llama_k7
+  run_068_aker_speechllm_l14k
+  run_069_aker_speechllm_l14k_seed2
+  run_070_aker_speechllm_l14k_seed2
+  run_071_aker_speechllm_l14k
+  run_075_aker_open_whisper_st_utterance
+  run_075b_aker_open_seamlessm4t_v2_utterance
+  run_076_aker_speechllm_l14k_layer9
+  run_077_aker_speechllm_l14k_layer6
+  run_078_aker_speechllm_l14k_encoder_control
+  run_079_aker_speechllm_l14k
+  run_084_aker_speechllm_b2_utterance_large_14k_llama32_3b_unfreeze_seed2
 )
 
 pull_aker() {
