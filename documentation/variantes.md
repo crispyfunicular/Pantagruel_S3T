@@ -401,7 +401,7 @@ L’encodeur [`Speech_Text`](vocabulaire.md#speech_text--speech_text-multimodal)
 **Pistes d’amélioration :**
 - Reprendre les réglages d’entraînement de la variante 1 (gel, durée, décodage) avant de conclure sur l’encodeur multimodal.
 - Lancer un run en *utterance* pour comparer au protocole article.
-- Relancer `run_040` dès qu’un nouveau checkpoint `Speech_Text` sera publié (le checkpoint intermédiaire `Base_fr_1K_4GB` a été retiré de Hugging Face en juin 2026 ; l’entraînement du modèle multimodal final à grande échelle est en cours).
+- Relancer `run_040` une fois l’auth HF en place sur la machine cible (`hf auth login` ou `HF_TOKEN`, accès org PantagrueLLM) — le dépôt `Speech_Text_Base_fr_1K_4GB` est **privé**, pas retiré (l’échec juin 2026 venait de credentials absents/expirés).
 - Trancher : creuser l’hypothèse multimodale ou recentrer l’effort sur les variantes 1 et 2.
 
 **Dossier :** `5_Pantagruel_multimodal/`
@@ -507,7 +507,7 @@ Syntaxe : notes de bas de page Markdown (`[^n]`), supportées par Pandoc, GitHub
 [^52]: `run_052_speechllm_b2bis_utterance_large_14k_llama32_3b` — **16,31 / 18,28** test/dev (Llama-3.2-3B, machine GPU locale, 30 juin — **meilleur speechLLM**)
 [^54]: `run_054_speechllm_b2bis_utterance_large_14k_mistral_7b` — **14,22 / 14,76** test/dev (Mistral-7B 4-bit, machine GPU locale, 2 juil. — sous Phi-2 et Llama)
 [^39]: `run_039_speechllm_b1_utterance_large_14k_v5_specaug` — **13,84 / 14,59** test/dev (16 juin — sous run_023)
-[^40]: `run_040_pantagruel_multimodal_utterance_v2` — **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404 — checkpoint intermédiaire retiré ; modèle multimodal final en cours d’entraînement)
+[^40]: `run_040_pantagruel_multimodal_utterance_v2` — **échec** (juin 2026 — auth HF absente sur dépôt privé `Speech_Text_Base_fr_1K_4GB` ; smoke test encodeur validé juillet 2026 après renouvellement des credentials)
 [^41]: `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` — **en cours** (finetune run_026)
 [^032]: `run_032_speechllm_b1_utterance_large_114k_replicate` — **14,15 / 15,14** test/dev (48 tok)
 [^033]: `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` — **ok** — **25,10** test (best dev **25,53** @ 70k)

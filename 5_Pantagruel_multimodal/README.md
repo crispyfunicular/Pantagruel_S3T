@@ -19,6 +19,27 @@ Encodeur Hugging Face **`PantagrueLLM/Speech_Text_Base_fr_1K_4GB`** (API `speech
 - `datasets/manifests_sentence/fr-en/*.tsv` et `datasets/processed_sentence/fr-en/`
 - `train.target.txt` : créé par `2_prepare`, ou **généré automatiquement** depuis `train.tsv` à l'étape `spm` si absent
 
+### Accès Hugging Face (Speech_Text)
+
+| Élément | Détail |
+|---------|--------|
+| Identifiant principal | `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` |
+| Variante documentée | `PantagrueLLM/Speech_Text_Base_fr_1K_4GB_v0` (également privée) |
+| Visibilité | **Dépôt privé** — accès org PantagrueLLM requis |
+| Chargement | `trust_remote_code: true` (déjà dans les YAML) |
+| Auth machine | `hf auth login` ou `HF_TOKEN` sur **chaque** machine qui entraîne ou évalue |
+| Erreur typique sans auth | « Repository Not Found » (souvent rapportée comme 404) — **pas** une suppression du modèle |
+| Cache partagé | si le token HF global n'est pas inscriptible, `export HF_HOME=$HOME/.cache/huggingface` |
+
+Smoke test encodeur (sans entraînement long) :
+
+```bash
+source .venv/bin/activate
+export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
+python 1_Transformer/quick_eval_hf_asr.py corpus_audio/ \
+  --transcription pantagruel-encoder --limit 3
+```
+
 ## Usage (machine GPU)
 
 ```bash

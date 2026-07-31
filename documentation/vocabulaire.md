@@ -344,8 +344,8 @@ Pour la **parole**, Pantagruel utilise une perte purement JEPA (prédiction dans
 
 | | |
 |---|---|
-| **En clair** | Checkpoint Pantagruel parole + texte (pré-entraînement multimodal), testé en variante 5 avec le même décodeur ST. |
-| **Identifiant** | `PantagrueLLM/Speech_Text_Base_fr_1K_4GB`, `model.encoder_api: speech_text` |
+| **En clair** | Checkpoint Pantagruel parole + texte (pré-entraînement multimodal), testé en variante 5 avec le même décodeur ST. Dépôt **privé** sur Hugging Face — accès org PantagrueLLM + `hf auth login` ou `HF_TOKEN` requis (sinon « Repository Not Found »). |
+| **Identifiant** | `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` (variante `_v0` également privée), `model.encoder_api: speech_text` |
 | **Où** | `5_Pantagruel_multimodal/` |
 
 ### LeBenchmark

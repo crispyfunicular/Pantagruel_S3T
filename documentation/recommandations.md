@@ -146,7 +146,7 @@ Chaîne : ThinkPad → **ligone** → **cluster GETALP** (NFS) → **OAR** → n
 
 ### machine GPU locale
 
-**État (16 juil. 2026) :** GPU **libre** ; waiter 13 h **terminé** (~02h13) — **`run_044`** L-114k SpecAug **13,32** ; **`run_046`** v11 batch32 **échec** à nouveau (**2,75** test, overwrite). Pas de run ~2–2,5 h utile en file (`run_040` multimodal toujours bloqué HF 404).
+**État (16 juil. 2026) :** GPU **libre** ; waiter 13 h **terminé** (~02h13) — **`run_044`** L-114k SpecAug **13,32** ; **`run_046`** v11 batch32 **échec** à nouveau (**2,75** test, overwrite). Pas de run ~2–2,5 h utile en file (`run_040` multimodal bloqué faute d’auth HF sur dépôt privé Speech_Text — corrigé juil. 2026, smoke test OK).
 
 | Pos. | Statut | Run | Variante | Piste | Notes |
 |------|--------|-----|----------|-------|-------|

@@ -128,7 +128,8 @@ Principes :
 - **Objectif** : tester si les représentations issues d’un pré-entraînement parole+texte conjoint améliorent la ST, sans réécrire la piste B1.
 - **Sorties cibles** : contrat `runs/.../eval/` identique aux autres variantes (SacreBLEU).
 - **Statut pipeline** : **implémenté** (délégation `1_Transformer` 3–6) — encodeur `Speech_Text_*` via `model.encoder_api: speech_text` + `trust_remote_code: true` ; décodeur Transformer + SPM ; données `sentence_like` par défaut.
-- **Statut checkpoint** : le modèle `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` n’est actuellement **plus disponible** sur Hugging Face — checkpoint intermédiaire retiré entre deux phases de développement (ablations multimodales terminées, entraînement final à grande échelle en cours). `run_040` (utterance v2, juin 2026) a échoué avec une erreur 404 ; à relancer dès publication d’un nouveau checkpoint.
+- **Statut checkpoint** : le modèle `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` est **présent sur Hugging Face en dépôt privé** (collection Speech-Text ; variante `_v0` également privée). Sans authentification HF valide et accès à l’organisation PantagrueLLM, l’API renvoie « Repository Not Found » (souvent interprété comme une 404) — ce n’est **pas** une suppression du checkpoint. `run_040` (utterance v2, juin 2026) a échoué faute de credentials HF sur la machine d’exécution ; le smoke test encodeur (`quick_eval_hf_asr.py`, juillet 2026) confirme l’accès une fois authentifié.
+- **Authentification HF (obligatoire pour Speech_Text)** : `trust_remote_code: true` dans le YAML ; sur chaque machine d’entraînement, `hf auth login` ou variable `HF_TOKEN` (compte autorisé sur le dépôt privé). Sur un cache HF partagé non modifiable, définir `HF_HOME=$HOME/.cache/huggingface` dans le shell qui lance train/nohup.
 - **Limite** : fine-tuning ST sur l’encodeur audio du backbone uniquement — la perte multimodale speech+text du pré-entraînement n’est pas réactivée au fine-tuning ST.
 
 CLI (routeur `5_Pantagruel_multimodal/pipeline.py`) :
@@ -491,7 +492,7 @@ sacrebleu datasets/manifests/fr-en/valid.target.txt \
 
 ### 8.6 Smoke test local (FR→FR, hors ST)
 
-Le checkpoint `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` sert à valider l’environnement HF (encodeur seul) ou un proxy ASR Whisper — voir [README.md § Smoke test](../README.md#smoke-test-frfr-asr--encodeur-pantagruel).
+Le checkpoint `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` sert à valider l’environnement HF (encodeur seul) ou un proxy ASR Whisper — voir [README.md § Smoke test](../README.md#smoke-test-frfr-asr--encodeur-pantagruel). **Prérequis** : authentification HF et accès au dépôt privé PantagrueLLM (voir §2.3.4).
 
 ---
 

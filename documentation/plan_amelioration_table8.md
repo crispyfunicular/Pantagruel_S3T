@@ -112,7 +112,7 @@ spec_augment:
 | `run_046` | batch effectif 32 L-14k | machine GPU locale | **échec** — collapse **2,76** @ 12k |
 | `run_049` | seed 2 (v5 replicate) | machine GPU locale | **ok** — **23,84** test |
 | `run_039` | SpecAugment speechLLM L-14k | machine GPU locale | **ok** — **13,84 / 14,59** test/dev (sous run_023 **14,23**) |
-| `run_040` | Speech_Text utterance (recette run_026) | machine GPU locale | **échec** — modèle HF `Speech_Text_Base_fr_1K_4GB` introuvable (404) |
+| `run_040` | Speech_Text utterance (recette run_026) | machine GPU locale | **échec** — auth HF absente (dépôt privé `Speech_Text_Base_fr_1K_4GB`) |
 | `run_041` | Finetune run_026 + SpecAugment freq L-14k | machine GPU locale | **ok** — 26,37 / **25,95** test (sous run_026 **26,12**) |
 
 Scripts : [`script d'orchestration (machine GPU locale)`](../scripts/run_wait_chain_post_036_eval_then_039_040_037.sh) (terminée en erreur), [`script d'orchestration (machine GPU locale)`](../scripts/run_st_14k_v10_specaug_freq_finetune.sh), [`script d'orchestration (serveur cloud GPU)`](../scripts/run_wait_chain_post_032_033_st_specaug_freq.sh).
@@ -216,7 +216,7 @@ Ces benchmarks de la Table 8 ne sont **pas encore** dans le pipeline S3T :
 | improve-run026-specaug-freq-finetune | run_041 machine GPU locale (freq L-14k depuis run_026) | **ok** — **25,95** test (sous run_026) |
 | replicate-run026 | run_043 machine GPU locale (v5 replicate) | **ok** — **24,78** test (écart ~1,3 vs run_026 **26,12**) |
 | improve-run026-sllm-specaug | run_039 machine GPU locale (speechLLM) | **ok** — **13,84** test (sous run_023) |
-| improve-run026-speechtext | run_040 machine GPU locale (Speech_Text utterance) | **échec** (404 HF) |
+| improve-run026-speechtext | run_040 machine GPU locale (Speech_Text utterance) | **échec** (auth HF — dépôt privé) ; smoke test encodeur OK juil. 2026 |
 | beam-consistency | `eval_beam_during_training` ou rééval beam | à faire (beam eval **ok**) |
 | multilingual-runs | Configs fr→es / fr→pt L-14k / L-114k | à faire |
 | downstream-tasks | NER / SLU / SER (Table 8 hors ST) | à planifier |

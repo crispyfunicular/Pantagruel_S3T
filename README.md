@@ -92,7 +92,7 @@ Les scores ci-dessous sont des **SacreBLEU corpus** (cf. `eval/sacrebleu_*.txt` 
 | speechLLM **L-14k contrôle couche -1** | `run_051_speechllm_b1_utterance_large_14k_encoder_control` | 14.57 | **13.58** | ok (machine GPU locale, 27 juin — piste J clos ; sous run_012 **15,03**) |
 | speechLLM **B-1k dégel** | `run_006_speechllm_b1_utterance_unfreeze` | 9.32 | **9.60** | ok (machine GPU locale, 19 juin) |
 | speechLLM L-14k **v5 SpecAugment** | `run_039_speechllm_b1_utterance_large_14k_v5_specaug` | 14.59 | **13.84** | ok (16 juin — sous run_023 **14,23**) |
-| Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | — | — | **échec** (HF `Speech_Text_Base_fr_1K_4GB` 404 — checkpoint intermédiaire retiré, modèle final en cours) |
+| Speech_Text **utterance v2** | `run_040_pantagruel_multimodal_utterance_v2` | — | — | **échec** (juin 2026 — auth HF absente ; dépôt privé `Speech_Text_Base_fr_1K_4GB`, pas suppression du modèle) |
 | ST L-14k **v10 finetune freq** | `run_041_transformer_finetune_utterance_large_14k_v10_specaug_freq_from_run026` | 26.37 | **25.95** | ok (16 juin — sous run_026 **26,12**) |
 | speechLLM L-114k **replicate** | `run_032_speechllm_b1_utterance_large_114k_replicate` | 15.14 | **14.15** | ok (48 tok — sous run_013 **15,24**) |
 | ST L-114k **v7 SPM 5k** | `run_033_transformer_baseline_utterance_large_114k_v7_spm5k` | 25.27 | **25.10** | ok (serveur cloud GPU, 17 juin — best dev **25,53** @ 70k ; ≈ papier **25,2**) |
@@ -942,6 +942,8 @@ Promouvoir une variante seulement si **BLEU dev** progresse de façon stable sur
 ## Smoke test FR→FR (ASR / encodeur Pantagruel)
 
 Hors pipeline ST m-TEDx : valider l'environnement sur un petit corpus local (`corpus_audio/`).
+
+**Accès Hugging Face (Speech_Text)** : le checkpoint `PantagrueLLM/Speech_Text_Base_fr_1K_4GB` est un **dépôt privé** (org PantagrueLLM). Sans `hf auth login` ou `HF_TOKEN` valide, Hugging Face renvoie « Repository Not Found ». Sur une machine avec cache HF partagé non inscriptible, exporter `HF_HOME=$HOME/.cache/huggingface` avant le smoke test ou l'entraînement. Voir aussi [5_Pantagruel_multimodal/README.md](5_Pantagruel_multimodal/README.md).
 
 ```bash
 source .venv/bin/activate
